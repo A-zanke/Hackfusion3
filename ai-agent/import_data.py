@@ -6,6 +6,28 @@ import numpy as np
 from dotenv import load_dotenv
 
 load_dotenv(dotenv_path="../backend/.env")
+conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+cursor = conn.cursor()
+
+# CREATE TABLE FIRST
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS medicines (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        category VARCHAR(100),
+        stock_packets INTEGER NOT NULL DEFAULT 0,
+        tablets_per_packet INTEGER NOT NULL DEFAULT 1,
+        total_tablets INTEGER GENERATED ALWAYS AS (stock_packets * tablets_per_packet) STORED,
+        price_per_tablet DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        expiry_date DATE,
+        low_stock_threshold INTEGER DEFAULT 30,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+''')
+conn.commit()
+
+# ...existing code...
+# Now insert data 
 
 def get_db_connection():
     db_url = os.getenv("DATABASE_URL")
@@ -135,4 +157,4 @@ def import_orders(file_path):
 
 if __name__ == "__main__":
     import_products("Product_Export.xlsx")
-    import_orders("Consumer Order History 1.xlsx")
+    import_orders("Consumer Order History 1  .xlsx")

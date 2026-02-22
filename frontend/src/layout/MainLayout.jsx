@@ -1,11 +1,12 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../ui/Sidebar';
-import { Bell, Settings } from 'lucide-react';
+import { Bell } from 'lucide-react';
+import '../App.css';
 
 const MainLayout = () => {
     const today = new Date();
-    const dateStr = today.toLocaleDateString('en-US', {
+    const dateStr = today.toLocaleDateString('en-GB', {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
@@ -13,40 +14,32 @@ const MainLayout = () => {
     });
 
     return (
-        <div className="flex h-screen overflow-hidden" style={{ background: '#f0f4f8' }}>
+        <div className="app-container">
             <Sidebar />
 
-            <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Top Header */}
-                <header className="h-16 flex items-center justify-between px-8 bg-white border-b"
-                    style={{ borderColor: '#e2e8f0' }}>
+            <div className="main-content-wrapper">
+                <header className="top-header">
                     <div>
-                        <p className="text-sm font-semibold" style={{ color: '#0f172a' }}>
+                        <p className="header-greeting">
                             Welcome, Dr. Rajesh Gupta
                         </p>
-                        <p className="text-xs" style={{ color: '#94a3b8' }}>{dateStr}</p>
+                        <p className="header-date">{dateStr}</p>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <span className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
-                            style={{ background: '#10b981', color: 'white' }}>
-                            <span className="w-1.5 h-1.5 rounded-full bg-white inline-block"></span>
+                    <div className="header-actions">
+                        <span className="admin-badge">
+                            <span className="admin-badge-dot"></span>
                             Admin
                         </span>
 
-                        <button className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-colors hover:bg-gray-100"
-                            style={{ color: '#64748b' }}>
-                            <Bell size={18} />
-                            <span className="absolute top-1 right-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center"
-                                style={{ background: '#ef4444', color: 'white' }}>
-                                7
-                            </span>
+                        <button className="notification-btn">
+                            <Bell size={20} />
+                            <span className="notification-dot">7</span>
                         </button>
                     </div>
                 </header>
 
-                {/* Page Content */}
-                <main className="flex-1 overflow-y-auto p-8">
+                <main className="page-viewport">
                     <Outlet />
                 </main>
             </div>

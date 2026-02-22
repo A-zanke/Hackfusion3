@@ -1,6 +1,10 @@
 import psycopg2
 
-conn = psycopg2.connect("postgresql://postgres:sumitjain@localhost:5432/phrmaAi")
+import os
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path="../backend/.env")
+conn = psycopg2.connect(os.getenv('DATABASE_URL'))
 cur = conn.cursor()
 
 # Drop dependent tables first (order_items references medicines)

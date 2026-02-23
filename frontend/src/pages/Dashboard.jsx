@@ -52,10 +52,8 @@ const Dashboard = () => {
 
     if (loading) {
         return (
-            <div className="h-[60vh] flex items-center justify-center">
-                <div className="flex items-center gap-3 font-bold animate-pulse" style={{ color: '#10b981' }}>
-                    <div className="w-8 h-8 rounded-full border-4 border-t-transparent animate-spin"
-                        style={{ borderColor: '#10b981', borderTopColor: 'transparent' }}></div>
+            <div style={{ height: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 'bold', color: '#10b981' }}>
                     Loading Dashboard...
                 </div>
             </div>
@@ -63,15 +61,15 @@ const Dashboard = () => {
     }
 
     return (
-        <div>
+        <div className="dashboard-container">
             {/* Page title */}
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold" style={{ color: '#0f172a' }}>Dashboard</h1>
-                <p className="text-sm" style={{ color: '#10b981' }}>Real-time pharmacy intelligence at a glance</p>
+            <div className="dashboard-title-area">
+                <h1 className="dashboard-title">Dashboard</h1>
+                <p className="dashboard-subtitle">Real-time pharmacy intelligence at a glance</p>
             </div>
 
             {/* Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+            <div className="top-stats-grid">
                 <DashboardCard
                     icon={TrendingUp}
                     title="TODAY'S SALES"
@@ -103,169 +101,190 @@ const Dashboard = () => {
             </div>
 
             {/* Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Fast Moving Medicines */}
-                <div className="bg-white rounded-2xl p-6 border animate-fade-in" style={{ borderColor: '#f1f5f9' }}>
-                    <div className="flex items-center gap-2 mb-5">
-                        <Zap size={18} style={{ color: '#3b82f6' }} />
-                        <h3 className="font-bold text-base" style={{ color: '#0f172a' }}>Fast Moving Medicines</h3>
-                    </div>
-                    <div className="space-y-4">
-                        {fastMoving.map((med, i) => {
-                            const maxVal = fastMoving[0]?.total_tablets || 1;
-                            const pct = Math.round((med.total_tablets / maxVal) * 100);
-                            return (
-                                <div key={med.id} className="flex items-center gap-3">
-                                    <span className="w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-bold text-white"
-                                        style={{ background: '#3b82f6' }}>{i + 1}</span>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-medium" style={{ color: '#0f172a' }}>{med.name}</p>
-                                        <div className="h-1.5 rounded-full mt-1" style={{ background: '#f1f5f9' }}>
-                                            <div className="progress-bar h-full" style={{ width: `${pct}%` }}></div>
-                                        </div>
-                                    </div>
-                                    <span className="text-sm font-semibold" style={{ color: '#64748b' }}>{med.total_tablets} units</span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
+            <div className="dashboard-main-grid">
 
-                {/* Low Stock Medicines */}
-                <div className="bg-white rounded-2xl p-6 border animate-fade-in" style={{ borderColor: '#f1f5f9' }}>
-                    <div className="flex items-center gap-2 mb-5">
-                        <AlertCircle size={18} style={{ color: '#ef4444' }} />
-                        <h3 className="font-bold text-base" style={{ color: '#0f172a' }}>Low Stock Medicines</h3>
-                        <span className="ml-1 px-2 py-0.5 rounded-full text-[11px] font-bold"
-                            style={{ background: '#dbeafe', color: '#2563eb' }}>{lowStockMeds.length}</span>
-                    </div>
-                    <div className="space-y-3">
-                        {lowStockMeds.length === 0 ? (
-                            <p className="text-sm py-4 text-center" style={{ color: '#94a3b8' }}>All stock levels are healthy</p>
-                        ) : (
-                            lowStockMeds.map(med => (
-                                <div key={med.id} className="flex items-center justify-between py-2">
-                                    <div className="flex items-center gap-2">
-                                        <Pill size={14} style={{ color: '#ef4444' }} />
-                                        <span className="text-sm font-medium" style={{ color: '#0f172a' }}>{med.name}</span>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <span className="px-2 py-0.5 rounded-full text-[11px] font-bold"
-                                            style={{ background: '#fee2e2', color: '#dc2626' }}>{med.total_tablets} units</span>
-                                        <span className="px-2 py-0.5 rounded-full text-[11px] font-bold"
-                                            style={{ background: '#fee2e2', color: '#dc2626' }}>Low</span>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
+                {/* Left Column */}
+                <div className="dashboard-column animate-fade-in" style={{ animationDelay: '0.1s' }}>
 
-                {/* Near Expiry Medicines */}
-                <div className="bg-white rounded-2xl p-6 border animate-fade-in" style={{ borderColor: '#f1f5f9' }}>
-                    <div className="flex items-center gap-2 mb-5">
-                        <Clock size={18} style={{ color: '#f97316' }} />
-                        <h3 className="font-bold text-base" style={{ color: '#0f172a' }}>Near Expiry Medicines</h3>
-                        <span className="ml-1 px-2 py-0.5 rounded-full text-[11px] font-bold"
-                            style={{ background: '#dbeafe', color: '#2563eb' }}>{nearExpiryMeds.length}</span>
-                    </div>
-                    <div className="space-y-3">
-                        {nearExpiryMeds.length === 0 ? (
-                            <p className="text-sm py-4 text-center" style={{ color: '#94a3b8' }}>No medicines near expiry</p>
-                        ) : (
-                            nearExpiryMeds.map(med => {
-                                const daysTillExpiry = Math.ceil((new Date(med.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
+                    {/* Fast Moving Medicines */}
+                    <div className="dashboard-card">
+                        <div className="card-header">
+                            <div className="stat-icon-wrapper stat-icon-blue" style={{ width: '36px', height: '36px', borderRadius: '10px' }}>
+                                <Zap size={18} />
+                            </div>
+                            <h3 className="card-title">Fast Moving Medicines</h3>
+                        </div>
+                        <div className="space-y-4">
+                            {fastMoving.map((med, i) => {
+                                const maxVal = fastMoving[0]?.total_tablets || 1;
+                                const pct = Math.round((med.total_tablets / maxVal) * 100);
                                 return (
-                                    <div key={med.id} className="flex items-center justify-between py-2">
-                                        <div>
-                                            <p className="text-sm font-medium" style={{ color: '#0f172a' }}>{med.name}</p>
-                                            <p className="text-[11px]" style={{ color: '#94a3b8' }}>Batch: B2025-{String(med.id).padStart(3, '0')}</p>
+                                    <div key={med.id} className="dash-list-item" style={{ paddingTop: i === 0 ? 0 : '12px' }}>
+                                        <span className="med-rank">{i + 1}</span>
+                                        <div className="med-info">
+                                            <p className="med-name">{med.name}</p>
+                                            <div className="progress-track">
+                                                <div className="progress-fill" style={{ width: `${pct}%`, backgroundColor: i === 0 ? '#3b82f6' : '#10b981' }}></div>
+                                            </div>
                                         </div>
-                                        <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold"
-                                            style={{
-                                                background: daysTillExpiry <= 10 ? '#fee2e2' : '#fef3c7',
-                                                color: daysTillExpiry <= 10 ? '#dc2626' : '#d97706'
-                                            }}>
-                                            Expires in {daysTillExpiry} days
-                                        </span>
+                                        <span className="med-units">{med.total_tablets} units</span>
                                     </div>
                                 );
-                            })
-                        )}
+                            })}
+                        </div>
                     </div>
-                </div>
 
-                {/* Predictive Stock Alerts */}
-                <div className="bg-white rounded-2xl p-6 border animate-fade-in" style={{ borderColor: '#f1f5f9' }}>
-                    <div className="flex items-center gap-2 mb-5">
-                        <AlertTriangle size={18} style={{ color: '#f97316' }} />
-                        <h3 className="font-bold text-base" style={{ color: '#0f172a' }}>Predictive Stock Alerts</h3>
-                    </div>
-                    <div className="space-y-3">
-                        {lowStockMeds.length === 0 ? (
-                            <p className="text-sm py-4 text-center" style={{ color: '#94a3b8' }}>No alerts at this time</p>
-                        ) : (
-                            lowStockMeds.slice(0, 3).map(med => (
-                                <div key={med.id} className="py-2">
-                                    <p className="text-sm font-semibold" style={{ color: '#0f172a' }}>{med.name}</p>
-                                    <p className="text-[11px]" style={{ color: '#94a3b8' }}>
-                                        Current: {med.total_tablets} units | Expected demand: 4/month
-                                    </p>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-
-                {/* Missed Medicine Reminders */}
-                <div className="bg-white rounded-2xl p-6 border animate-fade-in" style={{ borderColor: '#f1f5f9' }}>
-                    <div className="flex items-center gap-2 mb-5">
-                        <AlertCircle size={18} style={{ color: '#ef4444' }} />
-                        <h3 className="font-bold text-base" style={{ color: '#0f172a' }}>Missed Medicine Reminders</h3>
-                    </div>
-                    <div className="space-y-3">
-                        {[
-                            { name: 'Rajesh Kumar', med: 'Metformin 500mg' },
-                            { name: 'Priya Sharma', med: 'Cetirizine 10mg' },
-                            { name: 'Amit Patel', med: 'Aspirin 75mg' },
-                            { name: 'Mohammed Ali', med: 'Metformin 500mg' },
-                        ].map((item, i) => (
-                            <div key={i} className="flex items-center justify-between py-2">
-                                <div>
-                                    <p className="text-sm" style={{ color: '#0f172a' }}>
-                                        {item.name} missed <span className="font-semibold">{item.med}</span>
-                                    </p>
-                                    <p className="text-[11px]" style={{ color: '#ef4444' }}>Not purchased this month</p>
-                                </div>
-                                <button className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-white flex items-center gap-1"
-                                    style={{ background: '#ef4444' }}>
-                                    <Send size={10} /> Send Reminder
-                                </button>
+                    {/* Near Expiry Medicines */}
+                    <div className="dashboard-card dashboard-card-custom-orange">
+                        <div className="card-header">
+                            <div className="stat-icon-wrapper stat-icon-orange" style={{ width: '36px', height: '36px', borderRadius: '10px' }}>
+                                <Clock size={18} />
                             </div>
-                        ))}
+                            <h3 className="card-title" style={{ width: '100%', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    Near Expiry Medicines
+                                    <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '9999px', background: '#ffedd5', color: '#ea580c' }}>{nearExpiryMeds.length}</span>
+                                </div>
+                            </h3>
+                        </div>
+                        <div>
+                            {nearExpiryMeds.length === 0 ? (
+                                <p className="sub-text" style={{ textAlign: 'center', padding: '16px 0' }}>No medicines near expiry</p>
+                            ) : (
+                                nearExpiryMeds.map((med, idx) => {
+                                    const daysTillExpiry = Math.ceil((new Date(med.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
+                                    const isCritical = daysTillExpiry <= 10;
+                                    return (
+                                        <div key={med.id} className={`expiry-item ${isCritical ? 'critical' : ''}`}>
+                                            <div>
+                                                <p className="med-name" style={{ marginBottom: '2px' }}>{med.name}</p>
+                                                <p className="sub-text">Batch: B2025-{String(med.id).padStart(3, '0')}</p>
+                                            </div>
+                                            <span className={isCritical ? 'badge-red-light' : 'badge-orange-light'}>
+                                                Expires in {daysTillExpiry} days
+                                            </span>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
+
                 </div>
 
-                {/* Repeat Customers */}
-                <div className="bg-white rounded-2xl p-6 border animate-fade-in" style={{ borderColor: '#f1f5f9' }}>
-                    <div className="flex items-center gap-2 mb-5">
-                        <Users size={18} style={{ color: '#3b82f6' }} />
-                        <h3 className="font-bold text-base" style={{ color: '#0f172a' }}>Repeat Customers</h3>
-                    </div>
-                    <div className="space-y-3">
-                        {[
-                            { name: 'Rajesh Kumar', orders: 4 },
-                            { name: 'Priya Sharma', orders: 2 },
-                            { name: 'Amit Patel', orders: 3 },
-                            { name: 'Sunita Deshmukh', orders: 2 },
-                        ].map((cust, i) => (
-                            <div key={i} className="flex items-center justify-between py-2">
-                                <span className="text-sm font-medium" style={{ color: '#0f172a' }}>{cust.name}</span>
-                                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold"
-                                    style={{ background: '#dbeafe', color: '#2563eb' }}>{cust.orders} orders</span>
+                {/* Right Column */}
+                <div className="dashboard-column animate-fade-in" style={{ animationDelay: '0.2s' }}>
+
+                    {/* Low Stock Medicines */}
+                    <div className="dashboard-card dashboard-card-custom-red">
+                        <div className="card-header">
+                            <div className="stat-icon-wrapper stat-icon-red" style={{ width: '36px', height: '36px', borderRadius: '10px' }}>
+                                <AlertCircle size={18} />
                             </div>
-                        ))}
+                            <h3 className="card-title" style={{ width: '100%', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    Low Stock Medicines
+                                    <span className="alert-pill pill-red-light">{lowStockMeds.length}</span>
+                                </div>
+                            </h3>
+                        </div>
+                        <div>
+                            {lowStockMeds.length === 0 ? (
+                                <p className="sub-text" style={{ textAlign: 'center', padding: '16px 0' }}>All stock levels are healthy</p>
+                            ) : (
+                                lowStockMeds.map((med, idx) => (
+                                    <div key={med.id} className="dash-list-item" style={{ paddingTop: idx === 0 ? 0 : '12px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                                            <Pill size={14} style={{ color: '#ef4444' }} />
+                                            <span className="med-name" style={{ margin: 0 }}>{med.name}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <span className="text-[11px] font-bold" style={{ color: '#ef4444' }}>{med.total_tablets} units</span>
+                                            <span className="alert-pill pill-red">Low</span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
+
+                    {/* Predictive Stock Alerts */}
+                    <div className="dashboard-card dashboard-card-custom-orange">
+                        <div className="card-header">
+                            <div className="stat-icon-wrapper stat-icon-orange" style={{ width: '36px', height: '36px', borderRadius: '10px' }}>
+                                <AlertTriangle size={18} />
+                            </div>
+                            <h3 className="card-title">Predictive Stock Alerts</h3>
+                        </div>
+                        <div>
+                            {lowStockMeds.length === 0 ? (
+                                <p className="sub-text" style={{ textAlign: 'center', padding: '16px 0' }}>No alerts at this time</p>
+                            ) : (
+                                lowStockMeds.slice(0, 3).map((med, idx) => (
+                                    <div key={med.id} className="expiry-item" style={{ backgroundColor: '#fff7ed', borderColor: '#ffedd5', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                        <p className="med-name" style={{ marginBottom: '4px' }}>{med.name}</p>
+                                        <p className="sub-text">
+                                            Current: {med.total_tablets} units | Expected demand: 4/month
+                                        </p>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Missed Medicine Reminders */}
+                    <div className="dashboard-card dashboard-card-custom-red">
+                        <div className="card-header">
+                            <div className="stat-icon-wrapper stat-icon-red" style={{ width: '36px', height: '36px', borderRadius: '10px' }}>
+                                <AlertCircle size={18} />
+                            </div>
+                            <h3 className="card-title">Missed Medicine Reminders</h3>
+                        </div>
+                        <div>
+                            {[
+                                { name: 'Rajesh Kumar', med: 'Metformin 500mg' },
+                                { name: 'Priya Sharma', med: 'Cetirizine 10mg' },
+                                { name: 'Amit Patel', med: 'Aspirin 75mg' },
+                                { name: 'Mohammed Ali', med: 'Metformin 500mg' },
+                            ].map((item, i) => (
+                                <div key={i} className="dash-list-item" style={{ paddingTop: i === 0 ? 0 : '12px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <p className="med-name" style={{ marginBottom: '4px' }}>
+                                            {item.name} missed <span style={{ fontWeight: 800 }}>{item.med}</span>
+                                        </p>
+                                        <p className="sub-text" style={{ color: '#ef4444' }}>Not purchased this month</p>
+                                    </div>
+                                    <button className="dash-btn-small btn-red-outline">
+                                        Send Reminder
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Repeat Customers */}
+                    <div className="dashboard-card">
+                        <div className="card-header">
+                            <div className="stat-icon-wrapper stat-icon-blue" style={{ width: '36px', height: '36px', borderRadius: '10px' }}>
+                                <Users size={18} />
+                            </div>
+                            <h3 className="card-title">Repeat Customers</h3>
+                        </div>
+                        <div>
+                            {[
+                                { name: 'Rajesh Kumar', orders: 4 },
+                                { name: 'Priya Sharma', orders: 2 },
+                                { name: 'Amit Patel', orders: 3 },
+                                { name: 'Sunita Deshmukh', orders: 2 },
+                            ].map((cust, i) => (
+                                <div key={i} className="dash-list-item" style={{ paddingTop: i === 0 ? 0 : '12px' }}>
+                                    <span className="med-name" style={{ margin: 0, flex: 1 }}>{cust.name}</span>
+                                    <span className="alert-pill pill-blue">{cust.orders} orders</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

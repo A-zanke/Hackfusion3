@@ -894,3 +894,328 @@
   gap: 6px;
   justify-content: flex-end;
 }
+
+/* Dashboard Page Layout */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.dashboard-title-area {
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.dashboard-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.025em;
+}
+
+.dashboard-subtitle {
+  font-size: 14px;
+  margin-top: 4px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.top-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.stat-card {
+  background-color: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.stat-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.stat-subtitle {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.stat-trend-up {
+  color: #10b981;
+}
+
+.stat-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Base styles for the different stat colors */
+.stat-icon-green {
+  background-color: #ecfdf5;
+  color: #10b981;
+}
+
+.stat-icon-blue {
+  background-color: #eff6ff;
+  color: #3b82f6;
+}
+
+.stat-icon-orange {
+  background-color: #fff7ed;
+  color: #f97316;
+}
+
+.stat-icon-red {
+  background-color: #fef2f2;
+  color: #ef4444;
+}
+
+.dashboard-main-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.dashboard-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Card Component */
+.dashboard-card {
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* General Layout Items inside Dashboard Cards */
+.dash-list-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.dash-list-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.med-rank {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #ecfdf5;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.med-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.med-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.med-units {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  text-align: right;
+  flex-shrink: 0;
+  margin-left: 16px;
+}
+
+.progress-track {
+  height: 6px;
+  background-color: #f1f5f9;
+  border-radius: 99px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #10b981;
+  border-radius: 99px;
+}
+
+/* Other specific card text elements */
+.alert-pill {
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pill-orange {
+  background-color: #fff7ed;
+  color: #f97316;
+}
+
+.pill-red {
+  background-color: #fef2f2;
+  color: #ef4444;
+}
+
+.pill-red-light {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.pill-blue {
+  background-color: #eff6ff;
+  color: #3b82f6;
+}
+
+.pill-green {
+  background-color: #ecfdf5;
+  color: #10b981;
+}
+
+.sub-text {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.dash-btn-small {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-red-outline {
+  color: #ef4444;
+  background-color: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.btn-red-outline:hover {
+  background-color: #fef2f2;
+}
+
+/* Expiry styling overrides for layout */
+.expiry-item {
+  background-color: #fffbeb;
+  border: 1px solid #fef3c7;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.expiry-item:last-child {
+  margin-bottom: 0;
+}
+
+.expiry-item.critical {
+  background-color: #fef2f2;
+  border-color: #fee2e2;
+}
+
+.badge-orange-light {
+  color: #d97706;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.badge-red-light {
+  color: #dc2626;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.dashboard-card-custom-red {
+  background-color: #fffcfc;
+  border-color: #fee2e2;
+}
+
+.dashboard-card-custom-orange {
+  background-color: #fffbf7;
+  border-color: #ffedd5;
+}

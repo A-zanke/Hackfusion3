@@ -1474,3 +1474,253 @@
   background-color: #eff6ff;
   color: #2563eb;
 }
+
+/* Trace Logs Page Layout */
+.trace-page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.trace-title-area {
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.trace-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.025em;
+}
+
+.trace-subtitle {
+  font-size: 14px;
+  margin-top: 4px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.trace-panel {
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.trace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-shrink: 0;
+}
+
+.trace-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trace-header-icon {
+  color: #10b981;
+}
+
+.trace-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+}
+
+.trace-count-badge {
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  background-color: #ecfdf5;
+  color: #059669;
+  margin-left: 8px;
+}
+
+.trace-filters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.trace-filter-btn {
+  padding: 6px 16px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: #f8fafc;
+  color: #64748b;
+  border: 1px solid transparent;
+}
+
+.trace-filter-btn:hover {
+  background-color: #f1f5f9;
+}
+
+.trace-filter-btn.active {
+  background-color: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.trace-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.trace-empty {
+  padding: 48px 24px;
+  text-align: center;
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.trace-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f8fafc;
+  transition: background-color 0.2s;
+}
+
+.trace-item:hover {
+  background-color: #f8fafc;
+}
+
+.trace-item:last-child {
+  border-bottom: none;
+}
+
+.trace-item-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.trace-item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.trace-icon-blue {
+  background-color: #eff6ff;
+  color: #3b82f6;
+}
+
+.trace-icon-orange {
+  background-color: #fff7ed;
+  color: #f97316;
+}
+
+.trace-icon-red {
+  background-color: #fef2f2;
+  color: #ef4444;
+}
+
+.trace-icon-gray {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.trace-item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.trace-item-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trace-item-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.bot-badge {
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.bot-badge-blue {
+  background-color: #eff6ff;
+  color: #3b82f6;
+}
+
+.bot-badge-orange {
+  background-color: #fff7ed;
+  color: #d97706;
+}
+
+.bot-badge-red {
+  background-color: #fef2f2;
+  color: #ef4444;
+}
+
+.bot-badge-gray {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.trace-item-desc {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.trace-item-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.trace-item-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #94a3b8;
+  font-family: monospace;
+}
+
+.trace-item-chevron {
+  color: #94a3b8;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.trace-item-chevron:hover {
+  color: #1e293b;
+}

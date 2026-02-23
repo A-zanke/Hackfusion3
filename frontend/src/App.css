@@ -1219,3 +1219,258 @@
   background-color: #fffbf7;
   border-color: #ffedd5;
 }
+
+/* Inventory Page Layout */
+.inv-page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.inv-title-area {
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.inv-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.025em;
+}
+
+.inv-subtitle {
+  font-size: 14px;
+  margin-top: 4px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.inv-controls-area {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.inv-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: white;
+  border-radius: 12px;
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  flex: 1;
+  min-width: 250px;
+  height: 44px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s;
+}
+
+.inv-search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  width: 100%;
+  color: #0f172a;
+  height: 100%;
+}
+
+.inv-filters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.inv-filter-btn {
+  padding: 0 16px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.inv-filter-btn.active {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+}
+
+.inv-add-btn {
+  padding: 0 16px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  background-color: #10b981;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2);
+  transition: background-color 0.2s;
+}
+
+.inv-add-btn:hover {
+  background-color: #059669;
+}
+
+.inv-table-card {
+  background-color: white;
+  border-radius: 16px;
+  border: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.inv-table-wrapper {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.inv-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.inv-table th {
+  padding: 14px 24px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  border-bottom: 1px solid #f1f5f9;
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 1;
+}
+
+.inv-table td {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f8fafc;
+  font-size: 14px;
+}
+
+.inv-table tr:hover td {
+  background-color: #f8fafc;
+}
+
+.inv-med-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.inv-med-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background-color: #f0f4f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.inv-med-icon.stat-green {
+  background-color: #ecfdf5;
+  color: #10b981;
+}
+
+.inv-med-info p {
+  margin: 0;
+}
+
+.inv-med-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+
+.inv-med-desc {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.inv-col-center {
+  text-align: center;
+}
+
+.inv-col-number {
+  font-weight: 700;
+  color: #334155;
+}
+
+.inv-col-price {
+  font-weight: 600;
+  color: #64748b;
+}
+
+.inv-col-bold {
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.inv-footer {
+  padding: 12px 24px;
+  font-size: 12px;
+  color: #94a3b8;
+  border-top: 1px solid #f1f5f9;
+  flex-shrink: 0;
+}
+
+/* Base Badge styles for global re-use */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-badge-stable {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.status-badge-low {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.status-badge-warning {
+  background-color: #fff7ed;
+  color: #f97316;
+}
+
+.status-badge-info {
+  background-color: #eff6ff;
+  color: #2563eb;
+}

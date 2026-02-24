@@ -15,10 +15,10 @@ app.use(express.json());
 
 // --- MEDICINE ROUTES ---
 
-// Get all medicines
+// Get all medicines (Active only)
 app.get('/api/medicines', async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM medicines ORDER BY name ASC');
+        const result = await db.query('SELECT * FROM medicines WHERE is_deleted = FALSE ORDER BY name ASC');
         res.json(result.rows);
     } catch (err) {
         console.error(err);
@@ -26,10 +26,57 @@ app.get('/api/medicines', async (req, res) => {
     }
 });
 
-// Get low stock medicines (Threshold set in DB)
+// Get deleted medicines (Bin)
+app.get('/api/medicines/bin', async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM medicines WHERE is_deleted = TRUE ORDER BY name ASC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Soft delete medicine(s)
+app.post('/api/medicines/soft-delete', async (req, res) => {
+    const { ids } = req.body; // Array of IDs
+    try {
+        await db.query('UPDATE medicines SET is_deleted = TRUE WHERE id = ANY($1)', [ids]);
+        res.json({ message: 'Moved to bin' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Restore medicine(s)
+app.post('/api/medicines/restore', async (req, res) => {
+    const { ids } = req.body;
+    try {
+        await db.query('UPDATE medicines SET is_deleted = FALSE WHERE id = ANY($1)', [ids]);
+        res.json({ message: 'Restored from bin' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Permanent delete medicine(s)
+app.post('/api/medicines/permanent-delete', async (req, res) => {
+    const { ids } = req.body;
+    try {
+        await db.query('DELETE FROM medicines WHERE id = ANY($1)', [ids]);
+        res.json({ message: 'Permanently deleted' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Get low stock medicines
 app.get('/api/medicines/low-stock', async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM medicines WHERE total_tablets < low_stock_threshold');
+        const result = await db.query('SELECT * FROM medicines WHERE total_tablets < low_stock_threshold AND is_deleted = FALSE');
         res.json(result.rows);
     } catch (err) {
         console.error(err);

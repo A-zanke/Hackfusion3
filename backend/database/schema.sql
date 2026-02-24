@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS medicines (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     category VARCHAR(100),
+    brand VARCHAR(255),
     stock_packets INTEGER NOT NULL DEFAULT 0,
     tablets_per_packet INTEGER NOT NULL DEFAULT 1,
     total_tablets INTEGER GENERATED ALWAYS AS (stock_packets * tablets_per_packet) STORED,

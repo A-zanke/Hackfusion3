@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Search, Plus, Package, ChevronDown, Filter, Trash2, CheckSquare, Square } from 'lucide-react';
 import StatusBadge from '../ui/StatusBadge';
-import { Search, Plus, Package, ChevronDown } from 'lucide-react';
 import '../App.css';
 
 const API_BASE = 'http://localhost:5000/api';
@@ -11,23 +11,59 @@ const Inventory = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('all');
+    const [showAdvanced, setShowAdvanced] = useState(false);
+    const [selectionMode, setSelectionMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [advFilters, setAdvFilters] = useState({
+        brand: '',
+        category: '',
+        productId: '',
+        expiryStart: '',
+        expiryEnd: ''
+    });
+
+    const fetchMedicines = async () => {
+        try {
+            setLoading(true);
+            const res = await axios.get(`${API_BASE}/medicines`);
+            setMedicines(res.data);
+        } catch (err) {
+            console.error("Error fetching medicines:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchMedicines = async () => {
-            try {
-                const res = await axios.get(`${API_BASE}/medicines`);
-                setMedicines(res.data);
-            } catch (err) {
-                console.error("Error fetching medicines:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchMedicines();
-        const interval = setInterval(fetchMedicines, 30000);
+        const interval = setInterval(fetchMedicines, 60000);
         return () => clearInterval(interval);
     }, []);
+
+    const handleSoftDelete = async (ids) => {
+        if (!window.confirm(`Move ${ids.length} item(s) to bin?`)) return;
+        try {
+            await axios.post(`${API_BASE}/medicines/soft-delete`, { ids });
+            setSelectedIds([]);
+            fetchMedicines();
+        } catch (err) {
+            console.error("Error moving to bin:", err);
+        }
+    };
+
+    const toggleSelect = (id) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIds.length === filtered.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(filtered.map(m => m.id));
+        }
+    };
 
     const getDaysToExpiry = (date) => {
         if (!date) return null;
@@ -35,13 +71,38 @@ const Inventory = () => {
     };
 
     const filtered = medicines.filter(med => {
-        const matchesSearch = med.name.toLowerCase().includes(searchTerm.toLowerCase());
-        if (filter === 'low') return matchesSearch && med.total_tablets < med.low_stock_threshold;
+        // Multi-field search
+        const s = searchTerm.toLowerCase();
+        const matchesSearch =
+            med.name.toLowerCase().includes(s) ||
+            (med.product_id_str && med.product_id_str.toLowerCase().includes(s)) ||
+            (med.category && med.category.toLowerCase().includes(s)) ||
+            (med.brand && med.brand.toLowerCase().includes(s));
+
+        // Advanced filters
+        const matchesBrand = !advFilters.brand || (med.brand && med.brand.toLowerCase().includes(advFilters.brand.toLowerCase()));
+        const matchesCat = !advFilters.category || (med.category && med.category.toLowerCase().includes(advFilters.category.toLowerCase()));
+        const matchesID = !advFilters.productId || (med.product_id_str && med.product_id_str.toLowerCase().includes(advFilters.productId.toLowerCase()));
+
+        // Expiry range filter
+        let matchesExpiry = true;
+        if (advFilters.expiryStart || advFilters.expiryEnd) {
+            if (!med.expiry_date) matchesExpiry = false;
+            else {
+                const medDate = new Date(med.expiry_date);
+                if (advFilters.expiryStart) matchesExpiry = matchesExpiry && medDate >= new Date(advFilters.expiryStart);
+                if (advFilters.expiryEnd) matchesExpiry = matchesExpiry && medDate <= new Date(advFilters.expiryEnd);
+            }
+        }
+
+        const matchesAdvanced = matchesBrand && matchesCat && matchesID && matchesExpiry;
+
+        if (filter === 'low') return matchesSearch && matchesAdvanced && med.total_tablets < med.low_stock_threshold;
         if (filter === 'expiring') {
             const days = getDaysToExpiry(med.expiry_date);
-            return matchesSearch && days !== null && days <= 60;
+            return matchesSearch && matchesAdvanced && days !== null && days <= 60;
         }
-        return matchesSearch;
+        return matchesSearch && matchesAdvanced;
     });
 
     if (loading) {
@@ -64,15 +125,27 @@ const Inventory = () => {
 
             {/* Search & Filters */}
             <div className="inv-controls-area">
-                <div className="inv-search-box">
-                    <Search size={16} style={{ color: '#94a3b8' }} />
-                    <input
-                        type="text"
-                        placeholder="Search medicines..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="inv-search-input"
-                    />
+                <div style={{ display: 'flex', flex: 1, gap: '12px' }}>
+                    <div className="inv-search-box" style={{ flex: 1 }}>
+                        <Search size={16} style={{ color: '#94a3b8' }} />
+                        <input
+                            type="text"
+                            placeholder="Search by name..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="inv-search-input"
+                        />
+                    </div>
+                    <button
+                        className={`inv-filter-btn ${showAdvanced ? 'active' : ''}`}
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        title="Advanced Filters"
+                    >
+                        <Filter size={16} />
+                    </button>
+                    <button className="inv-add-btn">
+                        <Plus size={14} /> Add Stock
+                    </button>
                 </div>
 
                 <div className="inv-filters">
@@ -89,11 +162,88 @@ const Inventory = () => {
                             {f.label}
                         </button>
                     ))}
-                    <button className="inv-add-btn">
-                        <Plus size={14} /> Add Stock
+
+                    <button
+                        className={`inv-filter-btn ${selectionMode ? 'active' : ''}`}
+                        onClick={() => {
+                            setSelectionMode(!selectionMode);
+                            if (selectionMode) setSelectedIds([]);
+                        }}
+                    >
+                        {selectionMode ? <CheckSquare size={16} /> : <Square size={16} />}
+                        {selectionMode ? 'Selection ON' : 'Selection Mode'}
                     </button>
+
+                    {selectedIds.length > 0 && (
+                        <button
+                            className="inv-add-btn"
+                            style={{ backgroundColor: '#ef4444' }}
+                            onClick={() => handleSoftDelete(selectedIds)}
+                        >
+                            <Trash2 size={14} /> Move to Bin ({selectedIds.length})
+                        </button>
+                    )}
                 </div>
             </div>
+
+            {/* Advanced Filters Panel */}
+            {showAdvanced && (
+                <div className="adv-filter-panel animate-fade-in">
+                    <div className="adv-filter-grid">
+                        <div className="adv-input-group">
+                            <label>Product ID</label>
+                            <input
+                                type="text"
+                                placeholder="P-123..."
+                                value={advFilters.productId}
+                                onChange={e => setAdvFilters({ ...advFilters, productId: e.target.value })}
+                            />
+                        </div>
+                        <div className="adv-input-group">
+                            <label>Brand</label>
+                            <input
+                                type="text"
+                                placeholder="Filter by brand..."
+                                value={advFilters.brand}
+                                onChange={e => setAdvFilters({ ...advFilters, brand: e.target.value })}
+                            />
+                        </div>
+                        <div className="adv-input-group">
+                            <label>Category</label>
+                            <input
+                                type="text"
+                                placeholder="Filter by category..."
+                                value={advFilters.category}
+                                onChange={e => setAdvFilters({ ...advFilters, category: e.target.value })}
+                            />
+                        </div>
+                        <div className="adv-input-group">
+                            <label>Expiry From</label>
+                            <input
+                                type="date"
+                                value={advFilters.expiryStart}
+                                onChange={e => setAdvFilters({ ...advFilters, expiryStart: e.target.value })}
+                            />
+                        </div>
+                        <div className="adv-input-group">
+                            <label>Expiry To</label>
+                            <input
+                                type="date"
+                                value={advFilters.expiryEnd}
+                                onChange={e => setAdvFilters({ ...advFilters, expiryEnd: e.target.value })}
+                            />
+                        </div>
+                        <div className="adv-input-group" style={{ justifyContent: 'flex-end', paddingTop: '20px' }}>
+                            <button
+                                className="text-btn"
+                                onClick={() => setAdvFilters({ brand: '', category: '', productId: '', expiryStart: '', expiryEnd: '' })}
+                            >
+                                Reset Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Table */}
             <div className="inv-table-card animate-fade-in">
@@ -101,7 +251,15 @@ const Inventory = () => {
                     <table className="inv-table">
                         <thead>
                             <tr>
-                                {['MEDICINE', 'PACKETS', 'TAB/PKT', 'TOTAL TABLETS', 'UNIT PRICE', 'STATUS', 'DEMAND', 'EXPIRY'].map((h, i) => (
+                                <th style={{ width: '40px' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedIds.length === filtered.length && filtered.length > 0}
+                                        onChange={toggleSelectAll}
+                                        className="header-checkbox"
+                                    />
+                                </th>
+                                {['MEDICINE', 'PACKETS', 'TAB/PKT', 'TOTAL TABLETS', 'UNIT PRICE', 'STATUS', 'BRAND', 'EXPIRY'].map((h, i) => (
                                     <th key={i} className={i >= 4 ? 'inv-col-center' : ''}>
                                         {h}
                                     </th>
@@ -116,7 +274,19 @@ const Inventory = () => {
                                 const isNearExpiry = daysToExpiry !== null && daysToExpiry <= 60;
 
                                 return (
-                                    <tr key={med.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.03}s` }}>
+                                    <tr
+                                        key={med.id}
+                                        className={`animate-fade-in ${selectedIds.includes(med.id) ? 'row-selected' : ''}`}
+                                        style={{ animationDelay: `${index * 0.03}s` }}
+                                        onClick={() => toggleSelect(med.id)}
+                                    >
+                                        <td onClick={(e) => e.stopPropagation()}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedIds.includes(med.id)}
+                                                onChange={() => toggleSelect(med.id)}
+                                            />
+                                        </td>
                                         <td>
                                             <div className="inv-med-cell">
                                                 <div className="inv-med-icon stat-green">
@@ -124,7 +294,7 @@ const Inventory = () => {
                                                 </div>
                                                 <div className="inv-med-info">
                                                     <p className="inv-med-name">{med.name}</p>
-                                                    <p className="inv-med-desc">{med.category} · {med.manufacturer || 'Generic'}</p>
+                                                    <p className="inv-med-desc">{med.product_id_str || 'No ID'} · {med.category}</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -136,12 +306,16 @@ const Inventory = () => {
                                             <StatusBadge variant={isLowStock ? 'low' : 'stable'} />
                                         </td>
                                         <td className="inv-col-center">
-                                            <StatusBadge variant={isLowStock ? 'insufficient' : 'ok'} />
+                                            <span className="brand-badge">{med.brand || 'Generic'}</span>
                                         </td>
                                         <td className="inv-col-center">
-                                            {isNearExpiry ? (
-                                                <span className={`status-badge ${daysToExpiry <= 10 ? 'status-badge-low' : 'status-badge-warning'}`}>
-                                                    Expires in {daysToExpiry} days
+                                            {daysToExpiry !== null ? (
+                                                <span className={`status-badge ${daysToExpiry <= 15 ? 'status-badge-urgent' :
+                                                    daysToExpiry <= 30 ? 'status-badge-low' :
+                                                        daysToExpiry <= 60 ? 'status-badge-warning' :
+                                                            'status-badge-valid'
+                                                    }`}>
+                                                    {daysToExpiry <= 0 ? 'Expired' : `Expires in ${daysToExpiry} days`}
                                                 </span>
                                             ) : (
                                                 <StatusBadge variant="valid" text="Valid" />

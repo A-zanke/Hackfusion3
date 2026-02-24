@@ -7,6 +7,8 @@ import Inventory from './pages/Inventory';
 import Orders from './pages/Orders';
 import TraceLogs from './pages/TraceLogs';
 import AIChat from './pages/AIChat';
+import AdminSummary from './pages/AdminSummary';
+import Bin from './pages/Bin';
 import './App.css';
 
 function App() {
@@ -16,8 +18,10 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route element={<MainLayout />}>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/admin" element={<AdminSummary />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/orders" element={<Orders />} />
+          <Route path="/bin" element={<Bin />} />
           <Route path="/trace-logs" element={<TraceLogs />} />
           <Route path="/ai-chat" element={<AIChat />} />
         </Route>

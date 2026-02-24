@@ -22,6 +22,7 @@ const MedicineTable = ({ medicines }) => {
                             <th className="px-6 py-3 font-medium text-center">Total Tablets</th>
                             <th className="px-6 py-3 font-medium text-right">Price/Tab</th>
                             <th className="px-6 py-3 font-medium text-right">Expiry</th>
+                            <th className="px-6 py-3 font-medium text-center">Brand</th>
                             <th className="px-6 py-3 font-medium text-center">Status</th>
                         </tr>
                     </thead>
@@ -32,7 +33,7 @@ const MedicineTable = ({ medicines }) => {
                                 <tr key={med.id} className="hover:bg-gray-50/80 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="font-medium text-gray-900">{med.name}</div>
-                                        <div className="text-xs text-gray-500">{med.category}</div>
+                                        <div className="text-xs text-gray-500">{med.category} · {med.brand || 'Generic'}</div>
                                     </td>
                                     <td className="px-6 py-4 text-center text-gray-600 text-sm font-medium">
                                         {med.stock_packets}
@@ -50,9 +51,14 @@ const MedicineTable = ({ medicines }) => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-center">
+                                        <span className="text-xs font-semibold px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                                            {med.brand || 'Generic'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
                                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${isLowStock
-                                                ? 'bg-red-50 text-red-600 border border-red-100'
-                                                : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                            ? 'bg-red-50 text-red-600 border border-red-100'
+                                            : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                                             }`}>
                                             {isLowStock ? 'Low Stock' : 'Stable'}
                                         </span>

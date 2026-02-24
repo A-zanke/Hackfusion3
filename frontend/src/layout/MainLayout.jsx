@@ -20,9 +20,6 @@ const MainLayout = () => {
             <div className="main-content-wrapper">
                 <header className="top-header">
                     <div>
-                        <p className="header-greeting">
-                            Welcome, Dr. Rajesh Gupta
-                        </p>
                         <p className="header-date">{dateStr}</p>
                     </div>
 

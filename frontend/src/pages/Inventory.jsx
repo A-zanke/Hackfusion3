@@ -1,47 +1,78 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { Search, Plus, Package, ChevronDown, Filter, Trash2, CheckSquare, Square } from 'lucide-react';
 import StatusBadge from '../ui/StatusBadge';
 import AddStockModal from '../components/AddStockModal';
+import EditMedicineModal from '../components/EditMedicineModal';
 import '../App.css';
 
 const API_BASE = 'http://localhost:5000/api';
 
 const Inventory = () => {
     const [medicines, setMedicines] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);      // true only on FIRST load
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('all');
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [selectionMode, setSelectionMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
     const [showAddStockModal, setShowAddStockModal] = useState(false);
+    const [toast, setToast] = useState(null);          // { text, type }
+    const toastTimerRef = useRef(null);
+    const isFirstLoad = useRef(true);
+    const [activeDropdown, setActiveDropdown] = useState(null); // Track which dropdown is open
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingMedicine, setEditingMedicine] = useState(null);
     const [advFilters, setAdvFilters] = useState({
         brand: '',
         category: '',
         productId: '',
         expiryStart: '',
         expiryEnd: '',
-        prescriptionRequired: ''
+        prescriptionRequired: '',
+        lowStockRange: ''
     });
 
-    const fetchMedicines = async () => {
+    const showToast = useCallback((text, type = 'success') => {
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        setToast({ text, type });
+        toastTimerRef.current = setTimeout(() => setToast(null), 4000);
+    }, []);
+
+    // Silent background refresh — does NOT trigger full-page loader
+    const fetchMedicines = useCallback(async (silent = false) => {
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const res = await axios.get(`${API_BASE}/medicines`);
             setMedicines(res.data);
         } catch (err) {
             console.error("Error fetching medicines:", err);
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
+            isFirstLoad.current = false;
         }
-    };
+    }, []);
 
     useEffect(() => {
-        fetchMedicines();
-        const interval = setInterval(fetchMedicines, 60000);
-        return () => clearInterval(interval);
-    }, []);
+        fetchMedicines(false);  // initial load — show spinner
+        const interval = setInterval(() => fetchMedicines(true), 60000); // background silent refresh
+        return () => {
+            clearInterval(interval);
+            if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        };
+    }, [fetchMedicines]);
+
+    // Called by AddStockModal after successful add
+    const handleStockAdded = useCallback(() => {
+        fetchMedicines(true);   // silent refresh, no spinner
+        showToast('✅ Stock added successfully!', 'success');
+    }, [fetchMedicines, showToast]);
+
+    // Called by EditMedicineModal after successful update
+    const handleMedicineUpdated = useCallback(() => {
+        fetchMedicines(true);   // silent refresh, no spinner
+        showToast('✅ Medicine updated successfully!', 'success');
+    }, [fetchMedicines, showToast]);
 
     const handleSoftDelete = async (ids) => {
         if (!window.confirm(`Move ${ids.length} item(s) to bin?`)) return;
@@ -52,6 +83,32 @@ const Inventory = () => {
         } catch (err) {
             console.error("Error moving to bin:", err);
         }
+    };
+
+    // Handle individual medicine edit
+    const handleEditMedicine = (medicine) => {
+        setEditingMedicine(medicine);
+        setShowEditModal(true);
+        setActiveDropdown(null);
+    };
+
+    // Handle individual medicine delete
+    const handleDeleteMedicine = async (medicine) => {
+        if (!window.confirm(`Are you sure you want to delete "${medicine.name}"?`)) return;
+        try {
+            await axios.post(`${API_BASE}/medicines/soft-delete`, { ids: [medicine.id] });
+            fetchMedicines(true);
+            showToast('🗑️ Medicine deleted successfully!', 'success');
+            setActiveDropdown(null);
+        } catch (err) {
+            console.error("Error deleting medicine:", err);
+            showToast('❌ Failed to delete medicine', 'error');
+        }
+    };
+
+    // Toggle dropdown menu
+    const toggleDropdown = (medicineId) => {
+        setActiveDropdown(activeDropdown === medicineId ? null : medicineId);
     };
 
     const toggleSelect = (id) => {
@@ -76,31 +133,31 @@ const Inventory = () => {
     const formatExpiryDisplay = (days) => {
         if (days === null) return null;
         if (days <= 0) return 'Expired';
-        
+
         if (days <= 15) {
             return `${days} days`;
         }
-        
+
         if (days <= 30) {
             return '30 days';
         }
-        
+
         if (days <= 60) {
             return '2 months';
         }
-        
+
         if (days <= 90) {
             return '3 months';
         }
-        
+
         if (days <= 180) {
             return '6 months';
         }
-        
+
         if (days <= 365) {
             return '1 year';
         }
-        
+
         const years = Math.floor(days / 365);
         return `${years} year${years > 1 ? 's' : ''}`;
     };
@@ -119,9 +176,19 @@ const Inventory = () => {
         const matchesBrand = !advFilters.brand || (med.brand && med.brand.toLowerCase().includes(advFilters.brand.toLowerCase()));
         const matchesCat = !advFilters.category || (med.category && med.category.toLowerCase().includes(advFilters.category.toLowerCase()));
         const matchesID = !advFilters.productId || (med.product_id_str && med.product_id_str.toLowerCase().includes(advFilters.productId.toLowerCase()));
-        const matchesPrescription = !advFilters.prescriptionRequired || 
+        const matchesPrescription = !advFilters.prescriptionRequired ||
             (advFilters.prescriptionRequired === 'required' && med.prescription_required) ||
-            (advFilters.prescriptionRequired === 'not-required' && !med.prescription_required);
+            (advFilters.prescriptionRequired === 'not-required' && !med.prescription_required) ||
+            (advFilters.prescriptionRequired === 'below-30' && med.total_tablets < 30);
+
+        // Low stock range filter
+        let matchesLowStockRange = true;
+        if (advFilters.lowStockRange) {
+            const threshold = parseInt(advFilters.lowStockRange);
+            if (!isNaN(threshold)) {
+                matchesLowStockRange = med.total_tablets < threshold;
+            }
+        }
 
         // Expiry range filter
         let matchesExpiry = true;
@@ -134,9 +201,9 @@ const Inventory = () => {
             }
         }
 
-        const matchesAdvanced = matchesBrand && matchesCat && matchesID && matchesExpiry && matchesPrescription;
+        const matchesAdvanced = matchesBrand && matchesCat && matchesID && matchesExpiry && matchesPrescription && matchesLowStockRange;
 
-        if (filter === 'low') return matchesSearch && matchesAdvanced && med.total_tablets < med.low_stock_threshold;
+        if (filter === 'low') return matchesSearch && matchesAdvanced && med.total_tablets < 200;
         if (filter === 'expiring') {
             const days = getDaysToExpiry(med.expiry_date);
             return matchesSearch && matchesAdvanced && days !== null && days <= 30;
@@ -144,7 +211,7 @@ const Inventory = () => {
         return matchesSearch && matchesAdvanced;
     });
 
-    if (loading) {
+    if (loading && isFirstLoad.current) {
         return (
             <div style={{ height: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 'bold', color: '#10b981' }}>
@@ -155,7 +222,45 @@ const Inventory = () => {
     }
 
     return (
-        <div className="inv-page-container">
+        <div className="inv-page-container" onClick={() => setActiveDropdown(null)}>
+            {/* Global Toast Notification */}
+            {toast && (
+                <div style={{
+                    position: 'fixed',
+                    top: '24px',
+                    right: '24px',
+                    zIndex: 99999,
+                    background: toast.type === 'success' ? '#16a34a' : '#dc2626',
+                    color: '#fff',
+                    padding: '14px 22px',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    minWidth: '280px',
+                    animation: 'slideInRight 0.35s cubic-bezier(0.16,1,0.3,1)'
+                }}>
+                    <span style={{ fontSize: '20px' }}>{toast.type === 'success' ? '✅' : '❌'}</span>
+                    {toast.text}
+                    <button
+                        onClick={() => setToast(null)}
+                        style={{
+                            marginLeft: 'auto',
+                            background: 'rgba(255,255,255,0.2)',
+                            border: 'none',
+                            color: '#fff',
+                            borderRadius: '6px',
+                            padding: '2px 8px',
+                            cursor: 'pointer',
+                            fontSize: '16px',
+                            lineHeight: 1
+                        }}
+                    >×</button>
+                </div>
+            )}
             {/* Search & Filters */}
             <div className="inv-controls-area">
                 <div style={{ display: 'flex', flex: 1, gap: '12px' }}>
@@ -270,16 +375,59 @@ const Inventory = () => {
                             <select
                                 value={advFilters.prescriptionRequired}
                                 onChange={e => setAdvFilters({ ...advFilters, prescriptionRequired: e.target.value })}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px 12px',
+                                    border: '1.5px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    color: '#1e293b',
+                                    background: '#fff',
+                                    cursor: 'pointer',
+                                    outline: 'none',
+                                    appearance: 'auto'
+                                }}
                             >
                                 <option value="">All</option>
-                                <option value="required">Yes</option>
-                                <option value="not-required">No</option>
+                                <option value="required">Required</option>
+                                <option value="not-required">Not Required</option>
+                                <option value="below-30">Below 30 Tablets</option>
                             </select>
                         </div>
+                        {filter === 'low' && (
+                            <div className="adv-input-group">
+                                <label>Low Stock Below</label>
+                                <input
+                                    type="number"
+                                    placeholder="e.g., 10, 20, 50..."
+                                    value={advFilters.lowStockRange}
+                                    onChange={e => setAdvFilters({ ...advFilters, lowStockRange: e.target.value })}
+                                    min="1"
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        border: '1.5px solid #10b981',
+                                        borderRadius: '8px',
+                                        fontSize: '13px',
+                                        outline: 'none',
+                                        transition: 'border-color 0.2s',
+                                        backgroundColor: '#f0fdf4'
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.style.borderColor = '#10b981';
+                                        e.target.style.backgroundColor = '#f0fdf4';
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.borderColor = '#10b981';
+                                        e.target.style.backgroundColor = '#f0fdf4';
+                                    }}
+                                />
+                            </div>
+                        )}
                         <div className="adv-input-group" style={{ justifyContent: 'flex-end', paddingTop: '20px' }}>
                             <button
                                 className="text-btn"
-                                onClick={() => setAdvFilters({ brand: '', category: '', productId: '', expiryStart: '', expiryEnd: '', prescriptionRequired: '' })}
+                                onClick={() => setAdvFilters({ brand: '', category: '', productId: '', expiryStart: '', expiryEnd: '', prescriptionRequired: '', lowStockRange: '' })}
                             >
                                 Reset Filters
                             </button>
@@ -380,7 +528,142 @@ const Inventory = () => {
                                             </td>
                                         )}
                                         <td>
-                                            {!selectionMode && <ChevronDown size={14} style={{ color: '#94a3b8' }} />}
+                                            {!selectionMode && (
+                                                <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+                                                    <button
+                                                        onClick={() => toggleDropdown(med.id)}
+                                                        style={{
+                                                            background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
+                                                            border: '1px solid #cbd5e1',
+                                                            cursor: 'pointer',
+                                                            padding: '8px 12px',
+                                                            borderRadius: '10px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2)',
+                                                            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                                                            position: 'relative',
+                                                            overflow: 'hidden'
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.target.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                                                            e.target.style.borderColor = '#10b981';
+                                                            e.target.style.transform = 'scale(1.05)';
+                                                            e.target.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.25)';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.target.style.background = 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
+                                                            e.target.style.borderColor = '#cbd5e1';
+                                                            e.target.style.transform = 'scale(1)';
+                                                            e.target.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                                                        }}
+                                                    >
+                                                        <ChevronDown size={16} style={{ 
+                                                            color: activeDropdown === med.id ? '#10b981' : '#64748b', 
+                                                            transition: 'all 0.3s ease',
+                                                            transform: activeDropdown === med.id ? 'rotate(180deg)' : 'rotate(0deg)'
+                                                        }} />
+                                                    </button>
+                                                    
+                                                    {activeDropdown === med.id && (
+                                                        <div style={{
+                                                            position: 'absolute',
+                                                            right: '0',
+                                                            top: '100%',
+                                                            marginTop: '4px',
+                                                            background: 'linear-gradient(145deg, #ffffff 0%, #fafbfc 100%)',
+                                                            border: '1px solid #e2e8f0',
+                                                            borderRadius: '16px',
+                                                            boxShadow: '0 25px 50px rgba(0,0,0,0.12), 0 10px 25px rgba(0,0,0,0.08)',
+                                                            zIndex: 99999,
+                                                            minWidth: '180px',
+                                                            overflow: 'hidden',
+                                                            animation: 'dropdownSlide 0.3s cubic-bezier(0.4, 0, 0.2)',
+                                                            backdropFilter: 'blur(10px)'
+                                                        }} onClick={(e) => e.stopPropagation()}>
+                                                            <button
+                                                                onClick={() => handleEditMedicine(med)}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '14px 18px',
+                                                                    border: 'none',
+                                                                    background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                                                                    textAlign: 'left',
+                                                                    cursor: 'pointer',
+                                                                    fontSize: '15px',
+                                                                    fontWeight: '600',
+                                                                    color: '#1e293b',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '12px',
+                                                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2)',
+                                                                    position: 'relative',
+                                                                    overflow: 'hidden'
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.target.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                                                                    e.target.style.color = 'white';
+                                                                    e.target.style.transform = 'translateX(8px) scale(1.02)';
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.target.style.background = 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)';
+                                                                    e.target.style.color = '#1e293b';
+                                                                    e.target.style.transform = 'translateX(0) scale(1)';
+                                                                }}
+                                                            >
+                                                                <span style={{ 
+                                                                    fontSize: '18px', 
+                                                                    display: 'inline-block',
+                                                                    transition: 'transform 0.3s ease'
+                                                                }}>✏️</span>
+                                                                <span style={{ fontWeight: '700' }}>Edit Medicine</span>
+                                                            </button>
+                                                            <div style={{
+                                                                height: '1px',
+                                                                background: 'linear-gradient(90deg, transparent 0%, #e5e7eb 50%, transparent 100%)',
+                                                                margin: '0 16px'
+                                                            }} />
+                                                            <button
+                                                                onClick={() => handleDeleteMedicine(med)}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '14px 18px',
+                                                                    border: 'none',
+                                                                    background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+                                                                    textAlign: 'left',
+                                                                    cursor: 'pointer',
+                                                                    fontSize: '15px',
+                                                                    fontWeight: '600',
+                                                                    color: '#991b1b',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '12px',
+                                                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2)',
+                                                                    position: 'relative',
+                                                                    overflow: 'hidden'
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.target.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+                                                                    e.target.style.color = 'white';
+                                                                    e.target.style.transform = 'translateX(8px) scale(1.02)';
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.target.style.background = 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)';
+                                                                    e.target.style.color = '#991b1b';
+                                                                    e.target.style.transform = 'translateX(0) scale(1)';
+                                                                }}
+                                                            >
+                                                                <span style={{ 
+                                                                    fontSize: '18px', 
+                                                                    display: 'inline-block',
+                                                                    transition: 'transform 0.3s ease'
+                                                                }}>🗑️</span>
+                                                                <span style={{ fontWeight: '700' }}>Delete Medicine</span>
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 );
@@ -392,11 +675,18 @@ const Inventory = () => {
                     Showing {filtered.length} of {medicines.length} medicines
                 </div>
             </div>
-            
-            <AddStockModal 
+
+            <AddStockModal
                 isOpen={showAddStockModal}
                 onClose={() => setShowAddStockModal(false)}
-                onStockAdded={fetchMedicines}
+                onStockAdded={handleStockAdded}
+            />
+            
+            <EditMedicineModal
+                isOpen={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                medicine={editingMedicine}
+                onMedicineUpdated={handleMedicineUpdated}
             />
         </div>
     );

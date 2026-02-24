@@ -31,7 +31,7 @@ const MainLayout = () => {
             case '/ai-chat':
                 return 'AI Chat';
             case '/admin':
-                return 'Admin Summary';
+                return 'Admin Hub';
             default:
                 return 'Dashboard';
         }

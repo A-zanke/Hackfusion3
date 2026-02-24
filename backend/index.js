@@ -29,27 +29,155 @@ app.get('/api/medicines', async (req, res) => {
 // Create new medicine
 app.post('/api/medicines', async (req, res) => {
     try {
+        const body = req.body;
+
+        // Support both manual form field "name" and Excel field "medicine_name"
+        const name = body.name || body.medicine_name;
+        const description = body.description || null;
+        const category = body.category || null;
+        const brand = body.brand || null;
+        const total_packets = parseFloat(body.total_packets) || 0;
+        const tablets_per_packet = parseFloat(body.tablets_per_packet) || 1;
+        const packet_price_inr = parseFloat(body.packet_price_inr) || 0;
+        const expiry_date = body.expiry_date;
+        const prescription_required = body.prescription_required;
+        
+        // Calculate price per tablet
+        const price_per_tablet = tablets_per_packet > 0 ? (packet_price_inr / tablets_per_packet) : 0;
+
+        console.log('Creating medicine:', name);
+
+        if (!name || String(name).trim() === '') {
+            return res.status(400).json({ error: 'Medicine name is required' });
+        }
+
+        const parseDate = (raw) => {
+            if (raw === null || raw === undefined || raw === '') return null;
+            if (typeof raw === 'number') {
+                const excelEpoch = new Date(1899, 11, 30);
+                const msPerDay = 24 * 60 * 60 * 1000;
+                const date = new Date(excelEpoch.getTime() + raw * msPerDay);
+                if (isNaN(date)) return null;
+                return date.toISOString().split('T')[0];
+            }
+            const dateStr = String(raw).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+            const mmddyyyy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (mmddyyyy) return `${mmddyyyy[3]}-${mmddyyyy[1].padStart(2, '0')}-${mmddyyyy[2].padStart(2, '0')}`;
+            const ddmmyyyy = dateStr.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+            if (ddmmyyyy) return `${ddmmyyyy[3]}-${ddmmyyyy[2].padStart(2, '0')}-${ddmmyyyy[1].padStart(2, '0')}`;
+            const p = new Date(dateStr);
+            return isNaN(p) ? null : p.toISOString().split('T')[0];
+        };
+
+        const normalisePrescription = (val) => {
+            if (typeof val === 'boolean') return val;
+            const s = String(val || '').toLowerCase().trim();
+            return s === 'yes' || s === 'true' || s === '1';
+        };
+
+        const product_id_str = 'MED' + Date.now().toString().slice(-6);
+        const parsedExpiryDate = parseDate(expiry_date);
+        const prescriptionBool = normalisePrescription(prescription_required);
+
+        const query = `
+            INSERT INTO medicines (
+                name, description, category, brand, product_id_str,
+                stock_packets, tablets_per_packet, price_per_packet,
+                expiry_date, prescription_required, is_deleted
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, FALSE)
+            RETURNING *
+        `;
+
+        const values = [
+            String(name).trim(),
+            description,
+            category,
+            brand,
+            product_id_str,
+            total_packets,
+            tablets_per_packet,
+            packet_price_inr,
+            parsedExpiryDate,
+            prescriptionBool
+        ];
+
+        const result = await db.query(query, values);
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error creating medicine:', err.message);
+        res.status(500).json({ error: 'Database error', message: err.message });
+    }
+});
+
+// Update medicine
+app.put('/api/medicines/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
         const {
             name,
             description,
             category,
             brand,
-            total_packets,
+            stock_packets,
             tablets_per_packet,
             packet_price_inr,
-            expiry_date
+            expiry_date,
+            prescription_required
         } = req.body;
 
-        console.log('Creating medicine with data:', req.body);
+        console.log('Updating medicine with data:', req.body);
 
-        // Generate unique product ID
-        const product_id_str = 'MED' + Date.now().toString().slice(-6);
+        // Function to parse various date formats
+        const parseDate = (dateStr) => {
+            if (!dateStr) return null;
+            
+            // Handle MM/DD/YYYY format
+            const mmddyyyy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (mmddyyyy) {
+                const [_, month, day, year] = mmddyyyy;
+                return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            }
+            
+            // Handle DD/MM/YYYY format
+            const ddmmyyyy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (ddmmyyyy) {
+                const [_, day, month, year] = ddmmyyyy;
+                return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            }
+            
+            // Handle YYYY-MM-DD format (already correct)
+            if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                return dateStr;
+            }
+            
+            return null;
+        };
+
+        // Normalise prescription_required to boolean
+        const normalizePrescription = (val) => {
+            if (val === null || val === undefined) return false;
+            if (typeof val === 'boolean') return val;
+            const s = String(val).toLowerCase().trim();
+            return s === 'yes' || s === 'true' || s === '1';
+        };
+
+        // Parse the expiry date
+        const parsedExpiryDate = parseDate(expiry_date);
 
         const query = `
-            INSERT INTO medicines (
-                name, description, category, brand, product_id_str,
-                stock_packets, tablets_per_packet, price_per_packet, expiry_date, is_deleted
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE)
+            UPDATE medicines SET 
+                name = $1, 
+                description = $2, 
+                category = $3, 
+                brand = $4, 
+                stock_packets = $5, 
+                tablets_per_packet = $6, 
+                price_per_packet = $7, 
+                expiry_date = $8, 
+                prescription_required = $9,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $10
             RETURNING *
         `;
 
@@ -58,18 +186,24 @@ app.post('/api/medicines', async (req, res) => {
             description || null,
             category || null,
             brand || null,
-            product_id_str,
-            parseInt(total_packets) || 0,
+            parseInt(stock_packets) || 0,
             parseInt(tablets_per_packet) || 0,
             parseFloat(packet_price_inr) || 0,
-            expiry_date || null
+            parsedExpiryDate || null,
+            normalizePrescription(prescription_required),
+            parseInt(id)
         ];
 
         const result = await db.query(query, values);
-        console.log('Medicine created successfully:', result.rows[0]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Medicine not found' });
+        }
+
+        console.log('Medicine updated successfully:', result.rows[0]);
         res.json(result.rows[0]);
     } catch (err) {
-        console.error('Error creating medicine:', err);
+        console.error('Error updating medicine:', err);
         res.status(500).json({ error: 'Database error', details: err.message });
     }
 });

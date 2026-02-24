@@ -6,13 +6,15 @@ import '../App.css';
 
 const API_BASE = 'http://localhost:5000/api';
 
-const AdminSummary = () => {
+const AdminHub = () => {
     const [stats, setStats] = useState({
         totalMedicines: 0,
         lowStockCount: 0,
         deletedCount: 0,
         totalSales: 0,
-        recentOrders: []
+        recentOrders: [],
+        medicines: [], // Store medicines data for calculations
+        expiringCount: 0
     });
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
@@ -25,14 +27,20 @@ const AdminSummary = () => {
                 const orders = await axios.get(`${API_BASE}/orders/recent`);
 
                 const totalSales = orders.data.reduce((acc, o) => acc + Number(o.total_price), 0);
-                const lowStock = meds.data.filter(m => m.total_tablets < m.low_stock_threshold).length;
+                const lowStock = meds.data.filter(m => m.total_tablets < 200).length;
+                const expiringCount = meds.data.filter(m => {
+                    const days = Math.ceil((new Date(m.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
+                    return days !== null && days <= 30;
+                }).length;
 
                 setStats({
                     totalMedicines: meds.data.length,
                     lowStockCount: lowStock,
                     deletedCount: bin.data.length,
                     totalSales: totalSales,
-                    recentOrders: orders.data
+                    recentOrders: orders.data,
+                    medicines: meds.data,
+                    expiringCount: expiringCount
                 });
             } catch (err) {
                 console.error("Error fetching admin stats:", err);
@@ -53,6 +61,23 @@ const AdminSummary = () => {
             </div>
 
             <div className="admin-stats-grid">
+                {/* Alert Cards */}
+                <div className="stat-card alert-card" onClick={() => navigate('/inventory?filter=expiring')} style={{ cursor: 'pointer' }}>
+                    <div className="stat-icon icon-orange"><TrendingUp size={20} /></div>
+                    <div className="stat-info">
+                        <p className="stat-label">⚠️ Expiring Items</p>
+                        <h2 className="stat-value">{stats.expiringCount}</h2>
+                    </div>
+                </div>
+                <div className="stat-card alert-card" onClick={() => navigate('/inventory?filter=below-30')} style={{ cursor: 'pointer' }}>
+                    <div className="stat-icon icon-red"><LayoutDashboard size={20} /></div>
+                    <div className="stat-info">
+                        <p className="stat-label">🚨 Low Stock Items</p>
+                        <h2 className="stat-value">{stats.lowStockCount}</h2>
+                    </div>
+                </div>
+                
+                {/* Original Stats */}
                 <div className="stat-card">
                     <div className="stat-icon icon-blue"><Package size={20} /></div>
                     <div className="stat-info">
@@ -60,45 +85,48 @@ const AdminSummary = () => {
                         <h2 className="stat-value">{stats.totalMedicines}</h2>
                     </div>
                 </div>
-                <div className="stat-card">
-                    <div className="stat-icon icon-orange"><TrendingUp size={20} /></div>
-                    <div className="stat-info">
-                        <p className="stat-label">Total Sales (Recent)</p>
-                        <h2 className="stat-value">₹{stats.totalSales.toFixed(2)}</h2>
-                    </div>
-                </div>
-                <div className="stat-card" onClick={() => navigate('/inventory')} style={{ cursor: 'pointer' }}>
-                    <div className="stat-icon icon-red"><LayoutDashboard size={20} /></div>
-                    <div className="stat-info">
-                        <p className="stat-label">Low Stock items</p>
-                        <h2 className="stat-value">{stats.lowStockCount}</h2>
-                    </div>
-                </div>
-                <div className="stat-card" onClick={() => navigate('/bin')} style={{ cursor: 'pointer' }}>
-                    <div className="stat-icon icon-gray"><Trash2 size={20} /></div>
-                    <div className="stat-info">
-                        <p className="stat-label">Items in Bin</p>
-                        <h2 className="stat-value">{stats.deletedCount}</h2>
-                    </div>
-                </div>
             </div>
 
             <div className="admin-content-grid">
                 <div className="admin-card">
                     <div className="card-header">
-                        <h3 className="card-title">Recent Order Summary</h3>
-                        <button className="text-btn" onClick={() => navigate('/orders')}>View All <ArrowRight size={14} /></button>
+                        <h3 className="card-title">🔔 System Alerts</h3>
                     </div>
-                    <div className="orders-list-mini">
-                        {stats.recentOrders.map(order => (
-                            <div key={order.id} className="mini-order-item">
-                                <div>
-                                    <p className="mini-order-customer">{order.customer_name || 'Walk-in'}</p>
-                                    <p className="mini-order-date">{new Date(order.created_at).toLocaleDateString()}</p>
-                                </div>
-                                <p className="mini-order-price">₹{Number(order.total_price).toFixed(2)}</p>
-                            </div>
-                        ))}
+                    <div className="alerts-list">
+                        <div className="alert-item" onClick={() => navigate('/inventory?filter=expiring')}>
+                            <span className="alert-icon">⚠️</span>
+                            <span className="alert-text">{stats.expiringCount} items expiring in next 30 days</span>
+                            <span className="alert-arrow">→</span>
+                        </div>
+                        <div className="alert-item" onClick={() => navigate('/inventory?filter=below-200')}>
+                            <span className="alert-icon">🚨</span>
+                            <span className="alert-text">{stats.lowStockCount} items with low stock (below 200 tablets)</span>
+                            <span className="alert-arrow">→</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="admin-card">
+                    <div className="card-header">
+                        <h3 className="card-title">📋 Recommendations</h3>
+                    </div>
+                    <div className="recommendations-list">
+                        <div className="recommendation-item">
+                            <span className="rec-icon">💊</span>
+                            <span className="rec-text">Review expiring medicines and plan restock</span>
+                        </div>
+                        <div className="recommendation-item">
+                            <span className="rec-icon">📈</span>
+                            <span className="rec-text">Monitor low stock items frequently</span>
+                        </div>
+                        <div className="recommendation-item">
+                            <span className="rec-icon">🔄</span>
+                            <span className="rec-text">Consider automated reordering system</span>
+                        </div>
+                        <div className="recommendation-item">
+                            <span className="rec-icon">📊</span>
+                            <span className="rec-text">Analyze sales trends for better forecasting</span>
+                        </div>
                     </div>
                 </div>
 
@@ -120,4 +148,4 @@ const AdminSummary = () => {
     );
 };
 
-export default AdminSummary;
+export default AdminHub;

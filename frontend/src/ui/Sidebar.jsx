@@ -64,8 +64,8 @@ const Sidebar = () => {
                 <div className="sidebar-profile-card">
                     <div className="profile-avatar">AD</div>
                     <div>
-                        <p className="profile-name">Administrator</p>
-                        <p className="profile-role">Authenticated</p>
+                        <p className="profile-name">Rajesh Gupta</p>
+                        <p className="profile-role">Admin · Authenticated</p>
                     </div>
                 </div>
                 <button onClick={handleSignOut} className="signout-btn">

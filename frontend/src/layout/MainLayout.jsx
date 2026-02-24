@@ -1,5 +1,10 @@
+<<<<<<< ujjwal
 import React, { useState, useRef, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
+=======
+import React, { useState, useEffect } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
+>>>>>>> main
 import Sidebar from '../ui/Sidebar';
 import { Bell, Package, AlertTriangle, ShieldCheck, TrendingUp, Clock, CheckCircle, Info } from 'lucide-react';
 import '../App.css';
@@ -15,9 +20,15 @@ const sampleNotifications = [
 ];
 
 const MainLayout = () => {
+<<<<<<< ujjwal
     const [showNotifications, setShowNotifications] = useState(false);
     const notifRef = useRef(null);
 
+=======
+    const location = useLocation();
+    const [currentTime, setCurrentTime] = useState(new Date());
+    
+>>>>>>> main
     const today = new Date();
     const dateStr = today.toLocaleDateString('en-GB', {
         weekday: 'long',
@@ -26,6 +37,7 @@ const MainLayout = () => {
         year: 'numeric',
     });
 
+<<<<<<< ujjwal
     // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -38,6 +50,35 @@ const MainLayout = () => {
         }
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [showNotifications]);
+=======
+    // Get page title based on current route
+    const getPageTitle = () => {
+        const path = location.pathname;
+        switch(path) {
+            case '/inventory':
+                return 'Inventory Management';
+            case '/orders':
+                return 'Orders';
+            case '/bin':
+                return 'Bin';
+            case '/trace-logs':
+                return 'Trace Logs';
+            case '/ai-chat':
+                return 'AI Chat';
+            case '/admin':
+                return 'Admin Hub';
+            default:
+                return 'Dashboard';
+        }
+    };
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 1000);
+        return () => clearInterval(timer);
+    }, []);
+>>>>>>> main
 
     return (
         <div className="app-container">
@@ -45,11 +86,22 @@ const MainLayout = () => {
 
             <div className="main-content-wrapper">
                 <header className="top-header">
+<<<<<<< ujjwal
                     <div>
                         <p className="header-greeting">
                             Welcome, Rajesh Gupta
                         </p>
                         <p className="header-date">{dateStr}</p>
+=======
+                    <div className="header-left">
+                        <h1 className="header-page-title">{getPageTitle()}</h1>
+                        <p className="header-date">{dateStr} • {currentTime.toLocaleTimeString('en-US', { 
+                            hour: '2-digit', 
+                            minute: '2-digit', 
+                            second: '2-digit',
+                            hour12: true 
+                        })}</p>
+>>>>>>> main
                     </div>
 
                     <div className="header-actions">

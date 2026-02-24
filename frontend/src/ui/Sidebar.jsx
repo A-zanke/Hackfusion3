@@ -7,6 +7,8 @@ import {
     MessageSquare,
     FileText,
     LogOut,
+    Trash2,
+    ShieldCheck
 } from 'lucide-react';
 import '../App.css';
 
@@ -14,8 +16,10 @@ const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/inventory', icon: Package, label: 'Inventory' },
     { to: '/orders', icon: ShoppingCart, label: 'Orders' },
+    { to: '/bin', icon: Trash2, label: 'Bin' },
     { to: '/ai-chat', icon: MessageSquare, label: 'AI Chat' },
     { to: '/trace-logs', icon: FileText, label: 'Trace Logs' },
+    { to: '/admin', icon: ShieldCheck, label: 'Admin Hub' },
 ];
 
 const Sidebar = () => {
@@ -58,7 +62,7 @@ const Sidebar = () => {
 
             <div className="sidebar-profile-area">
                 <div className="sidebar-profile-card">
-                    <div className="profile-avatar">RG</div>
+                    <div className="profile-avatar">AD</div>
                     <div>
                         <p className="profile-name">Rajesh Gupta</p>
                         <p className="profile-role">Admin · Authenticated</p>

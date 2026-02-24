@@ -15,10 +15,10 @@ app.use(express.json());
 
 // --- MEDICINE ROUTES ---
 
-// Get all medicines
+// Get all medicines (Active only)
 app.get('/api/medicines', async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM medicines ORDER BY name ASC');
+        const result = await db.query('SELECT * FROM medicines WHERE is_deleted = FALSE ORDER BY name ASC');
         res.json(result.rows);
     } catch (err) {
         console.error(err);
@@ -26,10 +26,254 @@ app.get('/api/medicines', async (req, res) => {
     }
 });
 
-// Get low stock medicines (Threshold set in DB)
+// Create new medicine
+app.post('/api/medicines', async (req, res) => {
+    try {
+        const body = req.body;
+        const cleanNumber = (val) => {
+            const s = String(val ?? '').replace(/[^0-9.\-]/g, '').trim();
+            if (s === '' || s === '.' || s === '-' || s === '-.' ) return 0;
+            const n = parseFloat(s);
+            return Number.isFinite(n) ? n : 0;
+        };
+        const cleanInt = (val) => {
+            const s = String(val ?? '').replace(/[^0-9\-]/g, '').trim();
+            const n = parseInt(s, 10);
+            return Number.isFinite(n) ? n : 0;
+        };
+
+        // Support both manual form field "name" and Excel field "medicine_name"
+        const name = body.name || body.medicine_name;
+        const description = body.description || null;
+        const category = body.category || null;
+        const brand = body.brand || null;
+        const total_packets = cleanInt(body.total_packets);
+        const tablets_per_packet = Math.max(0, cleanInt(body.tablets_per_packet) || 1);
+        const packet_price_inr = cleanNumber(body.packet_price_inr);
+        const expiry_date = body.expiry_date;
+        const prescription_required = body.prescription_required;
+        
+        // Calculate price per tablet
+        const price_per_tablet = tablets_per_packet > 0 ? (packet_price_inr / tablets_per_packet) : 0;
+
+        console.log('Creating medicine:', name);
+
+        if (!name || String(name).trim() === '') {
+            return res.status(400).json({ error: 'Medicine name is required' });
+        }
+
+        const parseDate = (raw) => {
+            if (raw === null || raw === undefined || raw === '') return null;
+            if (typeof raw === 'number') {
+                const excelEpoch = new Date(1899, 11, 30);
+                const msPerDay = 24 * 60 * 60 * 1000;
+                const date = new Date(excelEpoch.getTime() + raw * msPerDay);
+                if (isNaN(date)) return null;
+                return date.toISOString().split('T')[0];
+            }
+            const dateStr = String(raw).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+            const mmddyyyy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (mmddyyyy) return `${mmddyyyy[3]}-${mmddyyyy[1].padStart(2, '0')}-${mmddyyyy[2].padStart(2, '0')}`;
+            const ddmmyyyy = dateStr.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+            if (ddmmyyyy) return `${ddmmyyyy[3]}-${ddmmyyyy[2].padStart(2, '0')}-${ddmmyyyy[1].padStart(2, '0')}`;
+            const p = new Date(dateStr);
+            return isNaN(p) ? null : p.toISOString().split('T')[0];
+        };
+
+        const normalisePrescription = (val) => {
+            if (typeof val === 'boolean') return val;
+            const s = String(val || '').toLowerCase().trim();
+            return s === 'yes' || s === 'true' || s === '1';
+        };
+
+        const product_id_str = 'MED' + Date.now().toString().slice(-6);
+        const parsedExpiryDate = parseDate(expiry_date);
+        const prescriptionBool = normalisePrescription(prescription_required);
+
+        const query = `
+            INSERT INTO medicines (
+                name, description, category, brand, product_id_str,
+                stock_packets, tablets_per_packet, price_per_packet,
+                expiry_date, prescription_required, is_deleted
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, FALSE)
+            RETURNING *
+        `;
+
+        const values = [
+            String(name).trim(),
+            description,
+            category,
+            brand,
+            product_id_str,
+            total_packets,
+            tablets_per_packet,
+            packet_price_inr,
+            parsedExpiryDate,
+            prescriptionBool
+        ];
+
+        const result = await db.query(query, values);
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error creating medicine:', err.message);
+        res.status(500).json({ error: 'Database error', message: err.message });
+    }
+});
+
+// Update medicine
+app.put('/api/medicines/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            name,
+            description,
+            category,
+            brand,
+            stock_packets,
+            tablets_per_packet,
+            packet_price_inr,
+            expiry_date,
+            prescription_required
+        } = req.body;
+        const cleanNumber = (val) => {
+            const s = String(val ?? '').replace(/[^0-9.\-]/g, '').trim();
+            if (s === '' || s === '.' || s === '-' || s === '-.' ) return 0;
+            const n = parseFloat(s);
+            return Number.isFinite(n) ? n : 0;
+        };
+        const cleanInt = (val) => {
+            const s = String(val ?? '').replace(/[^0-9\-]/g, '').trim();
+            const n = parseInt(s, 10);
+            return Number.isFinite(n) ? n : 0;
+        };
+
+        console.log('Updating medicine with data:', req.body);
+
+        // Function to parse various date formats (aligned with create route)
+        const parseDate = (raw) => {
+            if (raw === null || raw === undefined || raw === '') return null;
+            if (typeof raw === 'number') {
+                const excelEpoch = new Date(1899, 11, 30);
+                const msPerDay = 24 * 60 * 60 * 1000;
+                const date = new Date(excelEpoch.getTime() + raw * msPerDay);
+                if (isNaN(date)) return null;
+                return date.toISOString().split('T')[0];
+            }
+            const dateStr = String(raw).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+            const mmddyyyy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (mmddyyyy) return `${mmddyyyy[3]}-${mmddyyyy[1].padStart(2, '0')}-${mmddyyyy[2].padStart(2, '0')}`;
+            const ddmmyyyy_dash = dateStr.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+            if (ddmmyyyy_dash) return `${ddmmyyyy_dash[3]}-${ddmmyyyy_dash[2].padStart(2, '0')}-${ddmmyyyy_dash[1].padStart(2, '0')}`;
+            const p = new Date(dateStr);
+            return isNaN(p) ? null : p.toISOString().split('T')[0];
+        };
+
+        // Normalise prescription_required to boolean
+        const normalizePrescription = (val) => {
+            if (val === null || val === undefined) return false;
+            if (typeof val === 'boolean') return val;
+            const s = String(val).toLowerCase().trim();
+            return s === 'yes' || s === 'true' || s === '1';
+        };
+
+        // Parse the expiry date
+        const parsedExpiryDate = parseDate(expiry_date);
+
+        const query = `
+            UPDATE medicines SET 
+                name = $1, 
+                description = $2, 
+                category = $3, 
+                brand = $4, 
+                stock_packets = $5, 
+                tablets_per_packet = $6, 
+                price_per_packet = $7, 
+                expiry_date = $8, 
+                prescription_required = $9
+            WHERE id = $10
+            RETURNING *
+        `;
+
+        const values = [
+            name,
+            description || null,
+            category || null,
+            brand || null,
+            cleanInt(stock_packets),
+            cleanInt(tablets_per_packet),
+            cleanNumber(packet_price_inr),
+            parsedExpiryDate || null,
+            normalizePrescription(prescription_required),
+            parseInt(id)
+        ];
+
+        const result = await db.query(query, values);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Medicine not found' });
+        }
+
+        console.log('Medicine updated successfully:', result.rows[0]);
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error updating medicine:', err);
+        res.status(500).json({ error: 'Database error', details: err.message });
+    }
+});
+
+// Get deleted medicines (Bin)
+app.get('/api/medicines/bin', async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM medicines WHERE is_deleted = TRUE ORDER BY name ASC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Soft delete medicine(s)
+app.post('/api/medicines/soft-delete', async (req, res) => {
+    const { ids } = req.body; // Array of IDs
+    try {
+        await db.query('UPDATE medicines SET is_deleted = TRUE WHERE id = ANY($1)', [ids]);
+        res.json({ message: 'Moved to bin' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Restore medicine(s)
+app.post('/api/medicines/restore', async (req, res) => {
+    const { ids } = req.body;
+    try {
+        await db.query('UPDATE medicines SET is_deleted = FALSE WHERE id = ANY($1)', [ids]);
+        res.json({ message: 'Restored from bin' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Permanent delete medicine(s)
+app.post('/api/medicines/permanent-delete', async (req, res) => {
+    const { ids } = req.body;
+    try {
+        await db.query('DELETE FROM medicines WHERE id = ANY($1)', [ids]);
+        res.json({ message: 'Permanently deleted' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Get low stock medicines
 app.get('/api/medicines/low-stock', async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM medicines WHERE total_tablets < low_stock_threshold');
+        const result = await db.query('SELECT * FROM medicines WHERE total_tablets < low_stock_threshold AND is_deleted = FALSE');
         res.json(result.rows);
     } catch (err) {
         console.error(err);
@@ -55,6 +299,74 @@ app.get('/api/orders/recent', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM orders ORDER BY created_at DESC LIMIT 5');
         res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// --- CATEGORY AND BRAND ROUTES ---
+
+// Get all unique categories
+app.get('/api/categories', async (req, res) => {
+    try {
+        // Disable caching for search functionality
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+        
+        const { search } = req.query;
+        if (search) {
+            console.log('Categories API called with search:', search);
+        } else {
+            console.log('Categories API called - loading all categories');
+        }
+        
+        let query = 'SELECT DISTINCT category FROM medicines WHERE category IS NOT NULL AND category != \'\'';
+        let params = [];
+        
+        if (search) {
+            query += ' AND category ILIKE $1';
+            params.push(`%${search}%`);
+        }
+        
+        query += ' ORDER BY category ASC';
+        const result = await db.query(query, params);
+        console.log('Categories result count:', result.rows.length);
+        res.json(result.rows.map(row => row.category));
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Get all unique brands
+app.get('/api/brands', async (req, res) => {
+    try {
+        // Disable caching for search functionality
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+        
+        const { search } = req.query;
+        if (search) {
+            console.log('Brands API called with search:', search);
+        } else {
+            console.log('Brands API called - loading all brands');
+        }
+        
+        let query = 'SELECT DISTINCT brand FROM medicines WHERE brand IS NOT NULL AND brand != \'\'';
+        let params = [];
+        
+        if (search) {
+            query += ' AND brand ILIKE $1';
+            params.push(`%${search}%`);
+        }
+        
+        query += ' ORDER BY brand ASC';
+        const result = await db.query(query, params);
+        console.log('Brands result count:', result.rows.length);
+        res.json(result.rows.map(row => row.brand));
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Database error' });

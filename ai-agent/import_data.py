@@ -5,7 +5,10 @@ import os
 import numpy as np
 from dotenv import load_dotenv
 
-load_dotenv(dotenv_path="../backend/.env")
+# Get the directory of the current script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+# Load .env from the backend directory
+load_dotenv(dotenv_path=os.path.join(script_dir, "../Backend/.env"))
 conn = psycopg2.connect(os.getenv('DATABASE_URL'))
 cursor = conn.cursor()
 
@@ -19,14 +22,18 @@ def init_db():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS medicines (
             id SERIAL PRIMARY KEY,
+            product_id_str VARCHAR(50),
             name VARCHAR(255) UNIQUE NOT NULL,
             category VARCHAR(100),
+            brand VARCHAR(255),
+            description TEXT,
             stock_packets INTEGER NOT NULL DEFAULT 0,
             tablets_per_packet INTEGER NOT NULL DEFAULT 1,
             total_tablets INTEGER GENERATED ALWAYS AS (stock_packets * tablets_per_packet) STORED,
             price_per_tablet DECIMAL(10, 2) NOT NULL DEFAULT 0,
             expiry_date DATE,
             low_stock_threshold INTEGER DEFAULT 30,
+            is_deleted BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     ''')
@@ -66,22 +73,27 @@ def init_db():
         );
     ''')
     
-    # NEW: Ensure UNIQUE constraint exists even if table was created without it previously
-    try:
-        cursor.execute('ALTER TABLE medicines ADD CONSTRAINT medicines_name_key UNIQUE (name);')
-    except psycopg2.errors.DuplicateTable: # Actually DuplicateObject or similar
-        pass
-    except Exception as e:
-        # Ignore if constraint already exists
-        if "already exists" in str(e):
-            pass
-        else:
+    # Truncate tables to ensure a clean slate
+    print("Clearing existing data...")
+    cursor.execute('TRUNCATE TABLE alerts, order_items, orders, medicines CASCADE;')
+    conn.commit()
+
+    # Ensure UNIQUE constraint
+    cursor.execute("""
+        SELECT 1 FROM pg_constraint WHERE conname = 'medicines_name_key'
+    """)
+    if not cursor.fetchone():
+        try:
+            print("Adding UNIQUE constraint to medicines(name)...")
+            cursor.execute('ALTER TABLE medicines ADD CONSTRAINT medicines_name_key UNIQUE (name);')
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
             print(f"Note on constraint: {e}")
     
-    conn.commit()
     cursor.close()
     conn.close()
-    print("Database tables initialized.")
+    print("Database tables initialized and cleared.")
 
 def get_db_connection():
     db_url = os.getenv("DATABASE_URL")
@@ -95,6 +107,8 @@ def get_db_connection():
 def clean_val(val, default=None):
     if pd.isna(val) or val is pd.NaT or (isinstance(val, str) and val.strip().lower() == 'nan'):
         return default
+    if isinstance(val, str):
+        return val.strip()
     return val
 
 def import_products(file_path):
@@ -105,6 +119,8 @@ def import_products(file_path):
 
     try:
         df = pd.read_excel(file_path)
+        # Robustly clean column names: strip spaces and remove quotes
+        df.columns = [c.strip().replace('"', '').replace("'", "") for c in df.columns]
     except Exception as e:
         print(f"Error reading {file_path}: {e}")
         return
@@ -119,22 +135,37 @@ def import_products(file_path):
             name = clean_val(row.get('Product Name'))
             if not name: continue
             
+            tabs_per_packet = int(clean_val(row.get('Tablets Per Packet'), 1))
+            price_per_tablet = float(clean_val(row.get('Price Per Tablet'), 0.0))
+            
+            # If price_per_tablet is still 0, try calculating from Price Per Packet
+            if price_per_tablet == 0:
+                price_per_packet = float(clean_val(row.get('Price Per Packet'), 0.0))
+                if tabs_per_packet > 0:
+                    price_per_tablet = price_per_packet / tabs_per_packet
+
             data_list.append((
+                clean_val(row.get('Product ID')),
                 name,
                 clean_val(row.get('Category')),
+                clean_val(row.get('Brand'), 'Generic'),
+                clean_val(row.get('Description')),
                 int(clean_val(row.get('Total Packets'), 0)),
-                int(clean_val(row.get('Tablets Per Packet'), 1)),
-                float(clean_val(row.get('Price Per Tablet'), 0.0)),
+                tabs_per_packet,
+                price_per_tablet,
                 clean_val(row.get('Expiray Date'))
             ))
         except Exception as e:
             print(f"Skipping product row due to error: {e}")
 
     query = """
-        INSERT INTO medicines (name, category, stock_packets, tablets_per_packet, price_per_tablet, expiry_date)
+        INSERT INTO medicines (product_id_str, name, category, brand, description, stock_packets, tablets_per_packet, price_per_tablet, expiry_date)
         VALUES %s
         ON CONFLICT (name) DO UPDATE SET
+            product_id_str = EXCLUDED.product_id_str,
             category = EXCLUDED.category,
+            brand = EXCLUDED.brand,
+            description = EXCLUDED.description,
             stock_packets = EXCLUDED.stock_packets,
             tablets_per_packet = EXCLUDED.tablets_per_packet,
             price_per_tablet = EXCLUDED.price_per_tablet,
@@ -236,6 +267,6 @@ def import_orders(file_path):
 
 if __name__ == "__main__":
     init_db()
-    import_products("Product_Export.xlsx")
-    import_orders("Consumer Order History 1  .xlsx")
+    import_products(os.path.join(script_dir, "Product_Export.xlsx"))
+    import_orders(os.path.join(script_dir, "Consumer Order History 1  .xlsx"))
 

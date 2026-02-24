@@ -1,0 +1,298 @@
+{
+  "schema": [
+    {
+      "column_name": "id",
+      "is_generated": "NEVER",
+      "generation_expression": null,
+      "column_default": "nextval('medicines_id_seq'::regclass)",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "name",
+      "is_generated": "NEVER",
+      "generation_expression": null,
+      "column_default": null,
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "category",
+      "is_generated": "NEVER",
+      "generation_expression": null,
+      "column_default": null,
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "stock_packets",
+      "is_generated": "NEVER",
+      "generation_expression": null,
+      "column_default": "0",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "tablets_per_packet",
+      "is_generated": "NEVER",
+      "generation_expression": null,
+      "column_default": "1",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "total_tablets",
+      "is_generated": "ALWAYS",
+      "generation_expression": "(stock_packets * tablets_per_packet)",
+      "column_default": null,
+      "data_type": "integer"
+    },
+    {
+      "column_name": "expiry_date",
+      "is_generated": "NEVER",
+      "generation_expression": null,
+      "column_default": null,
+      "data_type": "date"
+    },
+    {
+      "column_name": "low_stock_threshold",
+      "is_generated": "NEVER",
+      "generation_expression": null,
+      "column_default": "30",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "created_at",
+      "is_generated": "NEVER",
+      "generation_expression": null,
+      "column_default": "CURRENT_TIMESTAMP",
+      "data_type": "timestamp without time zone"
+    },
+    {
+      "column_name": "is_deleted",
+      "is_generated": "NEVER",
+      "generation_expression": null,
+      "column_default": "false",
+      "data_type": "boolean"
+    },
+    {
+      "column_name": "brand",
+      "is_generated": "NEVER",
+      "generation_expression": null,
+      "column_default": null,
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "product_id_str",
+      "is_generated": "NEVER",
+      "generation_expression": null,
+      "column_default": null,
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "description",
+      "is_generated": "NEVER",
+      "generation_expression": null,
+      "column_default": null,
+      "data_type": "text"
+    },
+    {
+      "column_name": "pzn",
+      "is_generated": "NEVER",
+      "generation_expression": null,
+      "column_default": null,
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "price_per_packet",
+      "is_generated": "NEVER",
+      "generation_expression": null,
+      "column_default": null,
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "price_per_tablet",
+      "is_generated": "ALWAYS",
+      "generation_expression": "\nCASE\n    WHEN (tablets_per_packet > 0) THEN (price_per_packet / (tablets_per_packet)::numeric)\n    ELSE (0)::numeric\nEND",
+      "column_default": null,
+      "data_type": "numeric"
+    }
+  ],
+  "sampleData": [
+    {
+      "id": 2129,
+      "name": "Panthenol Spray, 46,3 mg/g Schaum zur Anwendung auf der Haut",
+      "category": "Topical / Skin",
+      "stock_packets": 112,
+      "tablets_per_packet": 28,
+      "total_tablets": 3136,
+      "expiry_date": "2025-06-17T18:30:00.000Z",
+      "low_stock_threshold": 30,
+      "created_at": "2026-02-23T18:21:23.790Z",
+      "is_deleted": false,
+      "brand": "ZenHealth",
+      "product_id_str": "PAT-PROD-001",
+      "description": "Used to treat skin irritations, minor burns, or dryness. Helps soothe and heal the skin surface.",
+      "pzn": null,
+      "price_per_packet": "600.00",
+      "price_per_tablet": "21.43"
+    },
+    {
+      "id": 2130,
+      "name": "NORSAN Omega-3 Total",
+      "category": "Supplements",
+      "stock_packets": 81,
+      "tablets_per_packet": 30,
+      "total_tablets": 2430,
+      "expiry_date": "2024-11-16T18:30:00.000Z",
+      "low_stock_threshold": 30,
+      "created_at": "2026-02-23T18:21:23.790Z",
+      "is_deleted": false,
+      "brand": "PureCure",
+      "product_id_str": "PAT-PROD-002",
+      "description": "Daily vitamins and minerals to boost energy, support immunity, and keep the body healthy.",
+      "pzn": null,
+      "price_per_packet": "1500.00",
+      "price_per_tablet": "50.00"
+    },
+    {
+      "id": 2131,
+      "name": "Vividrin® iso EDO® antiallergische Augentropfen",
+      "category": "General Medicine",
+      "stock_packets": 84,
+      "tablets_per_packet": 20,
+      "total_tablets": 1680,
+      "expiry_date": "2026-02-23T18:30:00.000Z",
+      "low_stock_threshold": 30,
+      "created_at": "2026-02-23T18:21:23.790Z",
+      "is_deleted": false,
+      "brand": "PharmaCorp",
+      "product_id_str": "PAT-PROD-003",
+      "description": "Everyday medicine used to treat common health issues and help you feel better quickly.",
+      "pzn": null,
+      "price_per_packet": "1000.00",
+      "price_per_tablet": "50.00"
+    },
+    {
+      "id": 2132,
+      "name": "Paracetamol apodiscounter 500 mg Tabletten",
+      "category": "Pain Relief",
+      "stock_packets": 113,
+      "tablets_per_packet": 20,
+      "total_tablets": 2260,
+      "expiry_date": "2029-09-29T18:30:00.000Z",
+      "low_stock_threshold": 30,
+      "created_at": "2026-02-23T18:21:23.790Z",
+      "is_deleted": false,
+      "brand": "HealthLine",
+      "product_id_str": "PAT-PROD-004",
+      "description": "Effective for relieving headaches, body aches, and lowering fever. Good for daily pain management.",
+      "pzn": null,
+      "price_per_packet": "2000.00",
+      "price_per_tablet": "100.00"
+    },
+    {
+      "id": 2133,
+      "name": "Iberogast® Classic, Flüssigkeit zum Einnehmen",
+      "category": "General Medicine",
+      "stock_packets": 97,
+      "tablets_per_packet": 28,
+      "total_tablets": 2716,
+      "expiry_date": "2028-06-22T18:30:00.000Z",
+      "low_stock_threshold": 30,
+      "created_at": "2026-02-23T18:21:23.790Z",
+      "is_deleted": false,
+      "brand": "VitaSwift",
+      "product_id_str": "PAT-PROD-005",
+      "description": "Everyday medicine used to treat common health issues and help you feel better quickly.",
+      "pzn": null,
+      "price_per_packet": "3000.00",
+      "price_per_tablet": "107.14"
+    },
+    {
+      "id": 2134,
+      "name": "Paracetamol apodiscounter 650 mg Tabletten",
+      "category": "Pain Relief",
+      "stock_packets": 30,
+      "tablets_per_packet": 10,
+      "total_tablets": 300,
+      "expiry_date": "2029-02-20T18:30:00.000Z",
+      "low_stock_threshold": 30,
+      "created_at": "2026-02-23T18:21:23.790Z",
+      "is_deleted": false,
+      "brand": "ApexMed",
+      "product_id_str": "PAT-PROD-006",
+      "description": "Effective for relieving headaches, body aches, and lowering fever. Good for daily pain management.",
+      "pzn": null,
+      "price_per_packet": "4000.00",
+      "price_per_tablet": "400.00"
+    },
+    {
+      "id": 2135,
+      "name": "Centrum Vital+ Mentale Leistung",
+      "category": "General Medicine",
+      "stock_packets": 98,
+      "tablets_per_packet": 10,
+      "total_tablets": 980,
+      "expiry_date": "2027-06-06T18:30:00.000Z",
+      "low_stock_threshold": 30,
+      "created_at": "2026-02-23T18:21:23.790Z",
+      "is_deleted": false,
+      "brand": "HealthLine",
+      "product_id_str": "PAT-PROD-007",
+      "description": "Everyday medicine used to treat common health issues and help you feel better quickly.",
+      "pzn": null,
+      "price_per_packet": "5000.00",
+      "price_per_tablet": "500.00"
+    },
+    {
+      "id": 2136,
+      "name": "Ibuprofen 400 mg Tabletten",
+      "category": "Pain Relief",
+      "stock_packets": 24,
+      "tablets_per_packet": 50,
+      "total_tablets": 1200,
+      "expiry_date": "2028-08-12T18:30:00.000Z",
+      "low_stock_threshold": 30,
+      "created_at": "2026-02-23T18:21:23.790Z",
+      "is_deleted": false,
+      "brand": "PharmaCorp",
+      "product_id_str": "PAT-PROD-008",
+      "description": "Effective for relieving headaches, body aches, and lowering fever. Good for daily pain management.",
+      "pzn": null,
+      "price_per_packet": "6000.00",
+      "price_per_tablet": "120.00"
+    },
+    {
+      "id": 2137,
+      "name": "Cetirizin HEXAL® Tropfen bei Allergien, 10 mg/ml Tropfen zum Einnehmen, Lösung",
+      "category": "General Medicine",
+      "stock_packets": 117,
+      "tablets_per_packet": 100,
+      "total_tablets": 11700,
+      "expiry_date": "2026-09-30T18:30:00.000Z",
+      "low_stock_threshold": 30,
+      "created_at": "2026-02-23T18:21:23.790Z",
+      "is_deleted": false,
+      "brand": "PharmaCorp",
+      "product_id_str": "PAT-PROD-009",
+      "description": "Everyday medicine used to treat common health issues and help you feel better quickly.",
+      "pzn": null,
+      "price_per_packet": "7000.00",
+      "price_per_tablet": "70.00"
+    },
+    {
+      "id": 2138,
+      "name": "Prostata Men Kapseln",
+      "category": "General Medicine",
+      "stock_packets": 60,
+      "tablets_per_packet": 100,
+      "total_tablets": 6000,
+      "expiry_date": "2029-04-02T18:30:00.000Z",
+      "low_stock_threshold": 30,
+      "created_at": "2026-02-23T18:21:23.790Z",
+      "is_deleted": false,
+      "brand": "HealthLine",
+      "product_id_str": "PAT-PROD-010",
+      "description": "Everyday medicine used to treat common health issues and help you feel better quickly.",
+      "pzn": null,
+      "price_per_packet": "8000.00",
+      "price_per_tablet": "80.00"
+    }
+  ]
+}

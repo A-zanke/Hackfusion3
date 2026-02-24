@@ -27,13 +27,11 @@ html {
 }
 
 body {
-  margin: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
     "Oxygen", "Ubuntu", "Cantarell", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #0f172a, #1e293b, #0b1220);
-  min-height: 100vh;
+  background: var(--content-bg);
   color: var(--text-primary);
 }
 
@@ -58,4 +56,253 @@ code {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Toolbar and search alignment improvements */
+.orders-input-row,
+.inventory-toolbar,
+.search-actions-row,
+.inv-controls-area { /* inventory toolbar container */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap; /* wraps nicely on smaller screens */
+}
+
+/* Left block inside inventory toolbar: search + buttons in a single row */
+.inv-controls-area > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap; /* keep on one line when possible */
+}
+
+/* Search input sizing: reduced max width so action buttons fit */
+.orders-input,
+.inventory-search-input,
+.searchbar-input,
+.inv-search-input {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: #fff;
+  flex: 1 1 auto;
+  min-width: 220px;
+  max-width: 560px;
+}
+
+/* Inventory search box wrapper (icon + input) */
+.inv-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0 12px;
+  height: 44px;
+}
+.inv-search-box .inv-search-input {
+  border: none;
+  outline: none;
+  height: 40px;
+  background: transparent;
+}
+
+/* Icon/Filter button next to search */
+.filter-btn,
+.icon-btn,
+.inv-filter-btn {
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.inv-filter-btn.active {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+/* Primary actions in toolbar */
+.orders-btn,
+.inventory-action-btn,
+.btn-blue,
+.btn-green,
+.btn-red,
+.btn-orange,
+.inv-add-btn {
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+/* Subtle pill buttons (All / Low Stock / Expiring / Select) */
+.pill-btn {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+/* Search dropdown overlay: solid background with proper stacking */
+.search-dropdown-below-input {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+  z-index: 40;
+  overflow: hidden;
+}
+.search-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.search-dropdown-list {
+  max-height: 320px;
+  overflow-y: auto;
+  background: #fff;
+}
+
+/* Safety: ensure app containers remain visible and not clipped */
+html, body, #root {
+  height: 100%;
+}
+.app-container {
+  min-height: 100%;
+  display: flex;
+  background: var(--content-bg);
+}
+.main-content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--content-bg);
+}
+.page-viewport {
+  flex: 1;
+  display: block;
+  position: relative;
+  z-index: 1;
+  padding: 16px;
+  min-height: 0;
+}
+
+/* === Toolbar: single horizontal row, equal height, responsive === */
+/* Generic toolbar row for Orders/Inventory headers */
+.toolbar-row,
+.inv-controls-area,
+.orders-input-row,
+.inventory-toolbar,
+.search-actions-row {
+  display: flex;
+  align-items: center;       /* vertical centering */
+  gap: 12px;                 /* consistent spacing */
+  flex-wrap: nowrap;         /* keep on one line */
+  overflow-x: auto;          /* allow horizontal scroll on very small screens */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure button cluster is also a single line */
+.inv-filters,
+.orders-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+/* Left block inside inventory toolbar: search + quick actions */
+.inv-controls-area > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 auto;            /* consume remaining space */
+  min-width: 260px;          /* avoid collapsing too small */
+}
+
+/* Search box flex sizing so buttons never overlap */
+.inv-search-box {            /* wrapper around input + icon */
+  flex: 1 1 420px;           /* preferred width, can shrink/grow */
+  max-width: 640px;
+  min-width: 200px;
+}
+
+/* Inputs shrink; buttons don't */
+.inv-search-input,
+.orders-input,
+.inventory-search-input,
+.searchbar-input {
+  flex: 1 1 auto;
+}
+
+/* Make action buttons non-growing and equal height */
+.inv-add-btn,
+.inv-filter-btn,
+.orders-btn,
+.btn-blue,
+.btn-green,
+.btn-red,
+.btn-orange,
+.pill-btn,
+.filter-btn,
+.icon-btn {
+  flex: 0 0 auto;            /* do not grow/shrink */
+  height: 44px;              /* equal height */
+  padding: 0 16px;           /* consistent horizontal padding */
+  display: inline-flex;      /* vertical centering */
+  align-items: center;
+  justify-content: center;
+  gap: 8px;                  /* icon + text spacing */
+  border-radius: 12px;
+  white-space: nowrap;       /* keep labels in one line */
+}
+
+/* Make pill-like filters visually consistent */
+.pill-btn,
+.inv-filter-btn:not(.active) {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+}
+.inv-filter-btn.active {
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+}
+
+/* On very narrow screens: reduce search max width a bit so row still fits */
+@media (max-width: 1024px) {
+  .inv-search-box { max-width: 520px; }
+}
+@media (max-width: 768px) {
+  .inv-search-box { max-width: 420px; }
 }

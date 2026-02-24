@@ -55,10 +55,7 @@ const AdminHub = () => {
 
     return (
         <div className="admin-page-container">
-            <div className="admin-title-area">
-                <h1 className="admin-title">Admin Hub</h1>
-                <p className="admin-subtitle">System overview and executive summary</p>
-            </div>
+            
 
             <div className="admin-stats-grid">
                 {/* Alert Cards */}

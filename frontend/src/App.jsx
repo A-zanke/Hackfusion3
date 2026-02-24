@@ -8,6 +8,7 @@ import Orders from './pages/Orders';
 import TraceLogs from './pages/TraceLogs';
 import AIChat from './pages/AIChat';
 import AdminSummary from './pages/AdminSummary';
+import AdminHub from './pages/AdminHub';
 import Bin from './pages/Bin';
 import './App.css';
 
@@ -19,6 +20,7 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/admin" element={<AdminSummary />} />
+          <Route path="/admin-hub" element={<AdminHub />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/bin" element={<Bin />} />

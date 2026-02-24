@@ -26,6 +26,54 @@ app.get('/api/medicines', async (req, res) => {
     }
 });
 
+// Create new medicine
+app.post('/api/medicines', async (req, res) => {
+    try {
+        const {
+            name,
+            description,
+            category,
+            brand,
+            total_packets,
+            tablets_per_packet,
+            packet_price_inr,
+            expiry_date
+        } = req.body;
+
+        console.log('Creating medicine with data:', req.body);
+
+        // Generate unique product ID
+        const product_id_str = 'MED' + Date.now().toString().slice(-6);
+
+        const query = `
+            INSERT INTO medicines (
+                name, description, category, brand, product_id_str,
+                stock_packets, tablets_per_packet, price_per_packet, expiry_date, is_deleted
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE)
+            RETURNING *
+        `;
+
+        const values = [
+            name,
+            description || null,
+            category || null,
+            brand || null,
+            product_id_str,
+            parseInt(total_packets) || 0,
+            parseInt(tablets_per_packet) || 0,
+            parseFloat(packet_price_inr) || 0,
+            expiry_date || null
+        ];
+
+        const result = await db.query(query, values);
+        console.log('Medicine created successfully:', result.rows[0]);
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error creating medicine:', err);
+        res.status(500).json({ error: 'Database error', details: err.message });
+    }
+});
+
 // Get deleted medicines (Bin)
 app.get('/api/medicines/bin', async (req, res) => {
     try {
@@ -102,6 +150,74 @@ app.get('/api/orders/recent', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM orders ORDER BY created_at DESC LIMIT 5');
         res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// --- CATEGORY AND BRAND ROUTES ---
+
+// Get all unique categories
+app.get('/api/categories', async (req, res) => {
+    try {
+        // Disable caching for search functionality
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+        
+        const { search } = req.query;
+        if (search) {
+            console.log('Categories API called with search:', search);
+        } else {
+            console.log('Categories API called - loading all categories');
+        }
+        
+        let query = 'SELECT DISTINCT category FROM medicines WHERE category IS NOT NULL AND category != \'\'';
+        let params = [];
+        
+        if (search) {
+            query += ' AND category ILIKE $1';
+            params.push(`%${search}%`);
+        }
+        
+        query += ' ORDER BY category ASC';
+        const result = await db.query(query, params);
+        console.log('Categories result count:', result.rows.length);
+        res.json(result.rows.map(row => row.category));
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Get all unique brands
+app.get('/api/brands', async (req, res) => {
+    try {
+        // Disable caching for search functionality
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+        
+        const { search } = req.query;
+        if (search) {
+            console.log('Brands API called with search:', search);
+        } else {
+            console.log('Brands API called - loading all brands');
+        }
+        
+        let query = 'SELECT DISTINCT brand FROM medicines WHERE brand IS NOT NULL AND brand != \'\'';
+        let params = [];
+        
+        if (search) {
+            query += ' AND brand ILIKE $1';
+            params.push(`%${search}%`);
+        }
+        
+        query += ' ORDER BY brand ASC';
+        const result = await db.query(query, params);
+        console.log('Brands result count:', result.rows.length);
+        res.json(result.rows.map(row => row.brand));
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Database error' });

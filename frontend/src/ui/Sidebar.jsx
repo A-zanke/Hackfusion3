@@ -60,7 +60,7 @@ const Sidebar = () => {
                 <div className="sidebar-profile-card">
                     <div className="profile-avatar">RG</div>
                     <div>
-                        <p className="profile-name">Dr. Rajesh Gupta</p>
+                        <p className="profile-name">Rajesh Gupta</p>
                         <p className="profile-role">Admin · Authenticated</p>
                     </div>
                 </div>

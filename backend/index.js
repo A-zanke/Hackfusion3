@@ -30,15 +30,26 @@ app.get('/api/medicines', async (req, res) => {
 app.post('/api/medicines', async (req, res) => {
     try {
         const body = req.body;
+        const cleanNumber = (val) => {
+            const s = String(val ?? '').replace(/[^0-9.\-]/g, '').trim();
+            if (s === '' || s === '.' || s === '-' || s === '-.' ) return 0;
+            const n = parseFloat(s);
+            return Number.isFinite(n) ? n : 0;
+        };
+        const cleanInt = (val) => {
+            const s = String(val ?? '').replace(/[^0-9\-]/g, '').trim();
+            const n = parseInt(s, 10);
+            return Number.isFinite(n) ? n : 0;
+        };
 
         // Support both manual form field "name" and Excel field "medicine_name"
         const name = body.name || body.medicine_name;
         const description = body.description || null;
         const category = body.category || null;
         const brand = body.brand || null;
-        const total_packets = parseFloat(body.total_packets) || 0;
-        const tablets_per_packet = parseFloat(body.tablets_per_packet) || 1;
-        const packet_price_inr = parseFloat(body.packet_price_inr) || 0;
+        const total_packets = cleanInt(body.total_packets);
+        const tablets_per_packet = Math.max(0, cleanInt(body.tablets_per_packet) || 1);
+        const packet_price_inr = cleanNumber(body.packet_price_inr);
         const expiry_date = body.expiry_date;
         const prescription_required = body.prescription_required;
         
@@ -125,33 +136,38 @@ app.put('/api/medicines/:id', async (req, res) => {
             expiry_date,
             prescription_required
         } = req.body;
+        const cleanNumber = (val) => {
+            const s = String(val ?? '').replace(/[^0-9.\-]/g, '').trim();
+            if (s === '' || s === '.' || s === '-' || s === '-.' ) return 0;
+            const n = parseFloat(s);
+            return Number.isFinite(n) ? n : 0;
+        };
+        const cleanInt = (val) => {
+            const s = String(val ?? '').replace(/[^0-9\-]/g, '').trim();
+            const n = parseInt(s, 10);
+            return Number.isFinite(n) ? n : 0;
+        };
 
         console.log('Updating medicine with data:', req.body);
 
-        // Function to parse various date formats
-        const parseDate = (dateStr) => {
-            if (!dateStr) return null;
-            
-            // Handle MM/DD/YYYY format
+        // Function to parse various date formats (aligned with create route)
+        const parseDate = (raw) => {
+            if (raw === null || raw === undefined || raw === '') return null;
+            if (typeof raw === 'number') {
+                const excelEpoch = new Date(1899, 11, 30);
+                const msPerDay = 24 * 60 * 60 * 1000;
+                const date = new Date(excelEpoch.getTime() + raw * msPerDay);
+                if (isNaN(date)) return null;
+                return date.toISOString().split('T')[0];
+            }
+            const dateStr = String(raw).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
             const mmddyyyy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-            if (mmddyyyy) {
-                const [_, month, day, year] = mmddyyyy;
-                return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-            }
-            
-            // Handle DD/MM/YYYY format
-            const ddmmyyyy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-            if (ddmmyyyy) {
-                const [_, day, month, year] = ddmmyyyy;
-                return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-            }
-            
-            // Handle YYYY-MM-DD format (already correct)
-            if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                return dateStr;
-            }
-            
-            return null;
+            if (mmddyyyy) return `${mmddyyyy[3]}-${mmddyyyy[1].padStart(2, '0')}-${mmddyyyy[2].padStart(2, '0')}`;
+            const ddmmyyyy_dash = dateStr.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+            if (ddmmyyyy_dash) return `${ddmmyyyy_dash[3]}-${ddmmyyyy_dash[2].padStart(2, '0')}-${ddmmyyyy_dash[1].padStart(2, '0')}`;
+            const p = new Date(dateStr);
+            return isNaN(p) ? null : p.toISOString().split('T')[0];
         };
 
         // Normalise prescription_required to boolean
@@ -175,8 +191,7 @@ app.put('/api/medicines/:id', async (req, res) => {
                 tablets_per_packet = $6, 
                 price_per_packet = $7, 
                 expiry_date = $8, 
-                prescription_required = $9,
-                updated_at = CURRENT_TIMESTAMP
+                prescription_required = $9
             WHERE id = $10
             RETURNING *
         `;
@@ -186,9 +201,9 @@ app.put('/api/medicines/:id', async (req, res) => {
             description || null,
             category || null,
             brand || null,
-            parseInt(stock_packets) || 0,
-            parseInt(tablets_per_packet) || 0,
-            parseFloat(packet_price_inr) || 0,
+            cleanInt(stock_packets),
+            cleanInt(tablets_per_packet),
+            cleanNumber(packet_price_inr),
             parsedExpiryDate || null,
             normalizePrescription(prescription_required),
             parseInt(id)

@@ -21,6 +21,7 @@ const Inventory = () => {
     const toastTimerRef = useRef(null);
     const isFirstLoad = useRef(true);
     const [activeDropdown, setActiveDropdown] = useState(null); // Track which dropdown is open
+    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingMedicine, setEditingMedicine] = useState(null);
     const [advFilters, setAdvFilters] = useState({
@@ -65,7 +66,7 @@ const Inventory = () => {
     // Called by AddStockModal after successful add
     const handleStockAdded = useCallback(() => {
         fetchMedicines(true);   // silent refresh, no spinner
-        showToast('✅ Stock added successfully!', 'success');
+        showToast('Stock added successfully!', 'success');
     }, [fetchMedicines, showToast]);
 
     // Called by EditMedicineModal after successful update
@@ -107,8 +108,18 @@ const Inventory = () => {
     };
 
     // Toggle dropdown menu
-    const toggleDropdown = (medicineId) => {
-        setActiveDropdown(activeDropdown === medicineId ? null : medicineId);
+    const toggleDropdown = (medicineId, event) => {
+        if (activeDropdown === medicineId) {
+            setActiveDropdown(null);
+        } else {
+            setActiveDropdown(medicineId);
+            // Store button position for dropdown placement
+            const rect = event.currentTarget.getBoundingClientRect();
+            setDropdownPosition({
+                top: rect.bottom + window.scrollY + 4,
+                right: window.innerWidth - rect.right
+            });
+        }
     };
 
     const toggleSelect = (id) => {
@@ -531,7 +542,7 @@ const Inventory = () => {
                                             {!selectionMode && (
                                                 <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
                                                     <button
-                                                        onClick={() => toggleDropdown(med.id)}
+                                                        onClick={(e) => toggleDropdown(med.id, e)}
                                                         style={{
                                                             background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
                                                             border: '1px solid #cbd5e1',
@@ -566,99 +577,38 @@ const Inventory = () => {
                                                     </button>
                                                     
                                                     {activeDropdown === med.id && (
-                                                        <div style={{
-                                                            position: 'absolute',
-                                                            right: '0',
-                                                            top: '100%',
-                                                            marginTop: '4px',
-                                                            background: 'linear-gradient(145deg, #ffffff 0%, #fafbfc 100%)',
-                                                            border: '1px solid #e2e8f0',
-                                                            borderRadius: '16px',
-                                                            boxShadow: '0 25px 50px rgba(0,0,0,0.12), 0 10px 25px rgba(0,0,0,0.08)',
-                                                            zIndex: 99999,
-                                                            minWidth: '180px',
-                                                            overflow: 'hidden',
-                                                            animation: 'dropdownSlide 0.3s cubic-bezier(0.4, 0, 0.2)',
-                                                            backdropFilter: 'blur(10px)'
+                                                        <div className="dropdown-menu" style={{
+                                                            top: dropdownPosition.top + 'px',
+                                                            right: dropdownPosition.right + 'px'
                                                         }} onClick={(e) => e.stopPropagation()}>
                                                             <button
                                                                 onClick={() => handleEditMedicine(med)}
                                                                 style={{
                                                                     width: '100%',
-                                                                    padding: '14px 18px',
+                                                                    padding: '12px 16px',
                                                                     border: 'none',
-                                                                    background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                                                                    background: 'transparent',
                                                                     textAlign: 'left',
                                                                     cursor: 'pointer',
-                                                                    fontSize: '15px',
+                                                                    fontSize: '14px',
                                                                     fontWeight: '600',
                                                                     color: '#1e293b',
                                                                     display: 'flex',
                                                                     alignItems: 'center',
-                                                                    gap: '12px',
-                                                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2)',
-                                                                    position: 'relative',
-                                                                    overflow: 'hidden'
+                                                                    gap: '10px',
+                                                                    transition: 'background-color 0.2s ease'
                                                                 }}
                                                                 onMouseEnter={(e) => {
-                                                                    e.target.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-                                                                    e.target.style.color = 'white';
-                                                                    e.target.style.transform = 'translateX(8px) scale(1.02)';
+                                                                    e.target.style.backgroundColor = '#f8fafc';
                                                                 }}
                                                                 onMouseLeave={(e) => {
-                                                                    e.target.style.background = 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)';
-                                                                    e.target.style.color = '#1e293b';
-                                                                    e.target.style.transform = 'translateX(0) scale(1)';
+                                                                    e.target.style.backgroundColor = 'transparent';
                                                                 }}
                                                             >
                                                                 <span style={{ 
-                                                                    fontSize: '18px', 
-                                                                    display: 'inline-block',
-                                                                    transition: 'transform 0.3s ease'
+                                                                    fontSize: '16px'
                                                                 }}>✏️</span>
-                                                                <span style={{ fontWeight: '700' }}>Edit Medicine</span>
-                                                            </button>
-                                                            <div style={{
-                                                                height: '1px',
-                                                                background: 'linear-gradient(90deg, transparent 0%, #e5e7eb 50%, transparent 100%)',
-                                                                margin: '0 16px'
-                                                            }} />
-                                                            <button
-                                                                onClick={() => handleDeleteMedicine(med)}
-                                                                style={{
-                                                                    width: '100%',
-                                                                    padding: '14px 18px',
-                                                                    border: 'none',
-                                                                    background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
-                                                                    textAlign: 'left',
-                                                                    cursor: 'pointer',
-                                                                    fontSize: '15px',
-                                                                    fontWeight: '600',
-                                                                    color: '#991b1b',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    gap: '12px',
-                                                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2)',
-                                                                    position: 'relative',
-                                                                    overflow: 'hidden'
-                                                                }}
-                                                                onMouseEnter={(e) => {
-                                                                    e.target.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
-                                                                    e.target.style.color = 'white';
-                                                                    e.target.style.transform = 'translateX(8px) scale(1.02)';
-                                                                }}
-                                                                onMouseLeave={(e) => {
-                                                                    e.target.style.background = 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)';
-                                                                    e.target.style.color = '#991b1b';
-                                                                    e.target.style.transform = 'translateX(0) scale(1)';
-                                                                }}
-                                                            >
-                                                                <span style={{ 
-                                                                    fontSize: '18px', 
-                                                                    display: 'inline-block',
-                                                                    transition: 'transform 0.3s ease'
-                                                                }}>🗑️</span>
-                                                                <span style={{ fontWeight: '700' }}>Delete Medicine</span>
+                                                                <span>Edit Medicine</span>
                                                             </button>
                                                         </div>
                                                     )}

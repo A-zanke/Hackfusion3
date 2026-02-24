@@ -3,9 +3,36 @@ import axios from 'axios';
 import { 
     FileText, Plus, Minus, Search, Download, Save, 
     TrendingUp, Package, Calculator, Sparkles, X, Check,
-    AlertTriangle, DollarSign, Building, Phone, MapPin, User
+    AlertTriangle, DollarSign, Building, Phone, MapPin, User, Edit
 } from 'lucide-react';
 import '../App.css';
+
+// Overlay styles for search dropdown to avoid transparency/overlap issues
+const styles = {
+    searchDropdown: {
+        position: 'absolute',
+        top: '100%',
+        left: 0,
+        right: 0,
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '10px',
+        boxShadow: '0 10px 25px rgba(0,0,0,0.12)',
+        zIndex: 9999,
+        overflow: 'hidden'
+    },
+    searchList: {
+        maxHeight: '320px',
+        overflowY: 'auto',
+        background: '#ffffff'
+    },
+    searchBackdrop: {
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0)',
+        zIndex: 9998
+    }
+};
 
 const API_BASE = 'http://localhost:5000/api';
 
@@ -33,6 +60,7 @@ const Orders = () => {
     
     // Loading states
     const [loading, setLoading] = useState(true);
+    const [savedList, setSavedList] = useState([]);
 
     // Fetch medicines on mount
     useEffect(() => {
@@ -47,6 +75,16 @@ const Orders = () => {
             }
         };
         fetchMedicines();
+    }, []);
+
+    // Load saved quotations on mount
+    useEffect(() => {
+        try {
+            const saved = JSON.parse(localStorage.getItem('quotations') || '[]');
+            setSavedList(Array.isArray(saved) ? saved : []);
+        } catch (e) {
+            setSavedList([]);
+        }
     }, []);
 
     // Search medicines
@@ -77,14 +115,19 @@ const Orders = () => {
                     : item
             ));
         } else {
+            const basePacketPrice = Number(
+                medicine.price_per_packet ?? (
+                    Number(medicine.price_per_tablet || 0) * Number(medicine.tablets_per_packet || 0)
+                )
+            ) || 0;
             setQuotationItems(prev => [...prev, {
                 id: medicine.id,
                 name: medicine.name,
                 brand: medicine.brand || 'Generic',
                 batchNumber: medicine.batch_number || 'BATCH001',
                 totalPackets: 1,
-                packetPrice: medicine.price_per_packet || (medicine.price_per_tablet * medicine.tablets_per_packet) || 0,
-                totalPrice: (medicine.price_per_packet || (medicine.price_per_tablet * medicine.tablets_per_packet) || 0) * 1
+                packetPrice: basePacketPrice,
+                totalPrice: basePacketPrice * 1
             }]);
         }
         
@@ -190,14 +233,14 @@ const Orders = () => {
     // Calculate totals
     const calculateTotals = () => {
         const subtotal = quotationItems.reduce((sum, item) => sum + item.totalPrice, 0);
-        const gst1 = subtotal * 0.09;
-        const gst2 = subtotal * 0.09;
-        const grandTotal = subtotal + gst1 + gst2;
-        return { subtotal, gst1, gst2, grandTotal };
+        const cgst = subtotal * 0.09;
+        const sgst = subtotal * 0.09;
+        const grandTotal = subtotal + cgst + sgst;
+        return { subtotal, cgst, sgst, grandTotal };
     };
 
     // Compute totals for render
-    const { subtotal, gst1, gst2, grandTotal } = calculateTotals();
+    const { subtotal, cgst, sgst, grandTotal } = calculateTotals();
 
     // Save quotation
     const saveQuotation = async () => {
@@ -216,6 +259,7 @@ const Orders = () => {
             const savedQuotations = JSON.parse(localStorage.getItem('quotations') || '[]');
             savedQuotations.push(quotationData);
             localStorage.setItem('quotations', JSON.stringify(savedQuotations));
+            setSavedList(savedQuotations);
             
             console.log('Saving quotation:', quotationData);
             alert('Quotation saved successfully! You can create a new quotation now.');
@@ -237,26 +281,94 @@ const Orders = () => {
                 <head>
                     <title>Quotation - ${pharmacyName}</title>
                     <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; }
-                        .header { text-align: center; margin-bottom: 30px; }
-                        .pharmacy-info { margin-bottom: 20px; }
-                        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                        .items-table th, .items-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                        .items-table th { background-color: #f2f2f2; }
-                        .totals { text-align: right; margin-top: 20px; }
-                        .signature { margin-top: 40px; border-top: 1px dashed #ccc; padding-top: 20px; }
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            margin: 20px; 
+                            line-height: 1.6;
+                        }
+                        .header { 
+                            text-align: center; 
+                            margin-bottom: 30px; 
+                            border-bottom: 2px solid #333;
+                            padding-bottom: 20px;
+                        }
+                        .quotation-title {
+                            font-size: 28px;
+                            font-weight: bold;
+                            text-transform: uppercase;
+                            margin: 20px 0;
+                            letter-spacing: 2px;
+                        }
+                        .company-info {
+                            margin-bottom: 15px;
+                        }
+                        .company-name {
+                            font-size: 18px;
+                            font-weight: bold;
+                            margin-bottom: 5px;
+                        }
+                        .company-address {
+                            font-size: 14px;
+                            color: #666;
+                        }
+                        .date-right {
+                            text-align: right;
+                            font-size: 14px;
+                            margin-bottom: 20px;
+                        }
+                        .items-table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin-bottom: 20px; 
+                        }
+                        .items-table th, .items-table td { 
+                            border: 1px solid #ddd; 
+                            padding: 12px 8px; 
+                            text-align: left; 
+                        }
+                        .items-table th { 
+                            background-color: #f2f2f2; 
+                            font-weight: bold;
+                        }
+                        .items-table td:nth-child(5), .items-table td:nth-child(6) {
+                            text-align: right;
+                        }
+                        .totals { 
+                            text-align: right; 
+                            margin-top: 20px; 
+                        }
+                        .signature-section {
+                            margin-top: 50px;
+                            display: flex;
+                            justify-content: flex-end;
+                            page-break-inside: avoid;
+                        }
+                        .signature-block {
+                            width: 300px;
+                            text-align: center;
+                        }
+                        .signature-line {
+                            border-top: 1px solid #333;
+                            margin-top: 40px;
+                            padding-top: 5px;
+                            font-size: 12px;
+                            color: #666;
+                        }
                     </style>
                 </head>
                 <body>
-                    <div class="header">
-                        <h1>QUOTATION</h1>
-                        <p>Date: ${quotationDate}</p>
+                    <div class="date-right">
+                        Date: ${quotationDate}
                     </div>
                     
-                    <div class="pharmacy-info">
-                        <h2>${pharmacyName}</h2>
-                        <p>${address}</p>
-                        <p>Contact: ${contactNumber}</p>
+                    <div class="company-info">
+                        <div class="company-name">${pharmacyName}</div>
+                        <div class="company-address">${address}</div>
+                        <div>Contact: ${contactNumber}</div>
+                    </div>
+                    
+                    <div class="header">
+                        <div class="quotation-title">Quotation</div>
                     </div>
                     
                     <table class="items-table">
@@ -286,16 +398,17 @@ const Orders = () => {
                         </tbody>
                     </table>
                     
-                    <div class="totals">
+                    <div class="totals" style="page-break-inside: avoid;">
                         <p><strong>Subtotal:</strong> ₹${totals.subtotal.toFixed(2)}</p>
-                        <p><strong>GST 9%:</strong> ₹${totals.gst1.toFixed(2)}</p>
-                        <p><strong>GST 9%:</strong> ₹${totals.gst2.toFixed(2)}</p>
+                        <p><strong>CGST 9%:</strong> ₹${totals.cgst.toFixed(2)}</p>
+                        <p><strong>SGST 9%:</strong> ₹${totals.sgst.toFixed(2)}</p>
                         <p><strong>Grand Total:</strong> ₹${totals.grandTotal.toFixed(2)}</p>
                     </div>
                     
-                    <div class="signature">
-                        <p>Signature:</p>
-                        <div style="height: 60px; border: 1px solid #ccc; margin-top: 10px;"></div>
+                    <div class="signature-section">
+                        <div class="signature-block">
+                            <div class="signature-line">Signature</div>
+                        </div>
                     </div>
                 </body>
             </html>
@@ -398,13 +511,13 @@ const Orders = () => {
                                 </div>
                                 
                                 <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', fontSize: '16px' }}>
-                                    <span style={{ color: '#64748b', fontWeight: '500' }}>GST 9%:</span>
-                                    <span style={{ fontWeight: '700', color: '#1e293b' }}>₹{gst1.toFixed(2)}</span>
+                                    <span style={{ color: '#64748b', fontWeight: '500' }}>CGST 9%:</span>
+                                    <span style={{ fontWeight: '700', color: '#1e293b' }}>₹{cgst.toFixed(2)}</span>
                                 </div>
                                 
                                 <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', fontSize: '16px' }}>
-                                    <span style={{ color: '#64748b', fontWeight: '500' }}>GST 9%:</span>
-                                    <span style={{ fontWeight: '700', color: '#1e293b' }}>₹{gst2.toFixed(2)}</span>
+                                    <span style={{ color: '#64748b', fontWeight: '500' }}>SGST 9%:</span>
+                                    <span style={{ fontWeight: '700', color: '#1e293b' }}>₹{sgst.toFixed(2)}</span>
                                 </div>
                                 
                                 <div style={{ 
@@ -594,28 +707,111 @@ const Orders = () => {
                             </button>
 
                             {showSearch && searchResults.length > 0 && (
-                                <div className="search-dropdown-below-input">
-                                    <div className="search-dropdown-header">
-                                        <Search size={16} className="search-icon" />
-                                        <span>Search Results</span>
-                                    </div>
-                                    <div className="search-dropdown-list">
+                                <div className="search-results-container" style={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    left: '0',
+                                    right: '0',
+                                    marginTop: '4px',
+                                    zIndex: 100,
+                                    background: 'white',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                    width: '100%'
+                                }}>
+                                    <div className="search-dropdown-list" style={{ 
+                                        maxHeight: '250px', 
+                                        overflowY: 'auto',
+                                        padding: '4px'
+                                    }}>
                                         {searchResults.map(med => (
                                             <div
                                                 key={med.id}
-                                                onClick={() => addMedicineToQuotation(med)}
+                                                onClick={() => {
+                                                    addMedicineToQuotation(med);
+                                                    setShowSearch(false);
+                                                }}
                                                 className="search-dropdown-item-enhanced"
+                                                style={{
+                                                    padding: '8px 12px',
+                                                    cursor: 'pointer',
+                                                    borderBottom: '1px solid #f1f5f9',
+                                                    transition: 'all 0.2s ease',
+                                                    gap: '8px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    background: 'white'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.backgroundColor = '#f8fafc';
+                                                    e.currentTarget.style.borderColor = '#10b981';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.backgroundColor = 'white';
+                                                    e.currentTarget.style.borderColor = '#f1f5f9';
+                                                }}
                                             >
-                                                <div className="search-item-main">
-                                                    <div className="search-item-name-enhanced">{med.name}</div>
-                                                    <div className="search-item-brand">{med.brand}</div>
+                                                <div className="search-item-main" style={{ flex: 1, minWidth: 0 }}>
+                                                    <div className="search-item-name-enhanced" style={{ 
+                                                        fontWeight: '600', 
+                                                        color: '#1e293b', 
+                                                        fontSize: '13px', 
+                                                        marginBottom: '2px',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis'
+                                                    }}>
+                                                        {med.name}
+                                                    </div>
+                                                    <div className="search-item-brand" style={{ 
+                                                        fontSize: '11px', 
+                                                        color: '#64748b',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis'
+                                                    }}>
+                                                        {med.brand}
+                                                    </div>
                                                 </div>
-                                                <div className="search-item-meta">
-                                                    <div className="search-item-category">{med.category}</div>
-                                                    <div className="search-item-price">₹{med.price_per_tablet}/tablet</div>
+                                                <div className="search-item-meta" style={{ 
+                                                    display: 'flex', 
+                                                    flexDirection: 'column', 
+                                                    alignItems: 'flex-end', 
+                                                    gap: '2px', 
+                                                    minWidth: '80px' 
+                                                }}>
+                                                    <div className="search-item-category" style={{ 
+                                                        fontSize: '10px', 
+                                                        color: '#10b981', 
+                                                        background: '#ecfdf5', 
+                                                        padding: '2px 6px', 
+                                                        borderRadius: '4px', 
+                                                        fontWeight: '600' 
+                                                    }}>
+                                                        {med.category}
+                                                    </div>
+                                                    <div className="search-item-price" style={{ 
+                                                        fontSize: '11px', 
+                                                        color: '#f97316', 
+                                                        fontWeight: '600' 
+                                                    }}>
+                                                        ₹{med.price_per_tablet}/tablet
+                                                    </div>
                                                 </div>
-                                                <div className="search-item-add">
-                                                    <Plus size={14} />
+                                                <div className="search-item-add" style={{ 
+                                                    width: '20px', 
+                                                    height: '20px', 
+                                                    borderRadius: '4px', 
+                                                    background: '#10b981', 
+                                                    color: 'white', 
+                                                    display: 'flex', 
+                                                    alignItems: 'center', 
+                                                    justifyContent: 'center', 
+                                                    transition: 'all 0.2s ease', 
+                                                    flexShrink: 0
+                                                }}>
+                                                    <Plus size={10} />
                                                 </div>
                                             </div>
                                         ))}
@@ -623,10 +819,6 @@ const Orders = () => {
                                 </div>
                             )}
                         </div>
-                    </div>
-
-                    {!showSearch && searchResults.length === 0 && (
-                    <div className="orders-recent-card animate-fade-in">
                         <div className="orders-recent-header">
                             <div className="orders-card-title" style={{ gap: '12px' }}>
                                 <div className="orders-card-icon icon-green">
@@ -644,32 +836,67 @@ const Orders = () => {
                                 padding: '40px', 
                                 textAlign: 'center', 
                                 color: '#94a3b8',
-                                fontStyle: 'italic'
+                                fontStyle: 'italic',
+                                flex: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
                             }}>
                                 No items added yet. Search for medicines or add low stock items to get started.
                             </div>
                         ) : (
-                            <div style={{ overflowX: 'auto' }}>
+                            <div style={{ overflowX: 'auto', flex: 1, padding: '16px' }}>
                                 <table className="quotation-table">
                                     <thead>
                                         <tr>
-                                            <th>Sr No.</th>
-                                            <th>Medicine Name</th>
-                                            <th>Batch Number</th>
-                                            <th>Total Packets</th>
-                                            <th>Packet Price</th>
-                                            <th>Total Price</th>
-                                            <th>Actions</th>
+                                            <th style={{ width: '40px' }}>#</th>
+                                            <th>Medicine Details</th>
+                                            <th style={{ width: '120px' }}>Batch No</th>
+                                            <th style={{ width: '100px' }}>Packets</th>
+                                            <th style={{ width: '120px' }}>Packet Price</th>
+                                            <th style={{ width: '120px' }}>Total Price</th>
+                                            <th style={{ width: '80px' }}>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {quotationItems.map((item, index) => (
-                                            <tr key={item.id}>
-                                                <td>{index + 1}</td>
+                                            <tr key={item.id} style={{ 
+                                                backgroundColor: '#ffffff',
+                                                borderBottom: '1px solid #f1f5f9',
+                                                transition: 'background-color 0.2s ease'
+                                            }}>
+                                                <td style={{ textAlign: 'center', fontWeight: '600', color: '#64748b' }}>
+                                                    {index + 1}
+                                                </td>
                                                 <td>
-                                                    <div className="medicine-cell">
-                                                        <div className="medicine-name">{item.name}</div>
-                                                        <div className="medicine-brand">{item.brand}</div>
+                                                    <div className="medicine-cell" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                        <div className="medicine-name" style={{ 
+                                                            fontWeight: '700', 
+                                                            color: '#1e293b', 
+                                                            fontSize: '14px' 
+                                                        }}>
+                                                            {item.name}
+                                                        </div>
+                                                        <div className="medicine-brand" style={{ 
+                                                            fontSize: '12px', 
+                                                            color: '#64748b',
+                                                            padding: '2px 8px',
+                                                            backgroundColor: '#f8fafc',
+                                                            borderRadius: '4px',
+                                                            display: 'inline-block',
+                                                            border: '1px solid #e2e8f0'
+                                                        }}>
+                                                            {item.brand || 'Generic'}
+                                                        </div>
+                                                        {item.tablets_per_packet && (
+                                                            <div className="medicine-desc" style={{ 
+                                                                fontSize: '11px', 
+                                                                color: '#94a3b8',
+                                                                marginTop: '2px'
+                                                            }}>
+                                                                {item.tablets_per_packet} tablets per packet
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td>
@@ -679,45 +906,124 @@ const Orders = () => {
                                                         onChange={(e) => updateBatchNumber(item.id, e.target.value)}
                                                         className="table-input"
                                                         placeholder="Batch No"
+                                                        style={{ 
+                                                            fontSize: '12px', 
+                                                            padding: '6px 8px',
+                                                            textAlign: 'center'
+                                                        }}
                                                     />
                                                 </td>
                                                 <td>
-                                                    <div className="quantity-controls">
+                                                    <div className="quantity-controls" style={{ 
+                                                        display: 'flex', 
+                                                        alignItems: 'center', 
+                                                        justifyContent: 'center', 
+                                                        gap: '6px' 
+                                                    }}>
                                                         <button
                                                             onClick={() => updateQuantity(item.id, -1)}
                                                             className="quantity-btn"
+                                                            style={{ 
+                                                                width: '24px', 
+                                                                height: '24px', 
+                                                                borderRadius: '4px',
+                                                                fontSize: '12px'
+                                                            }}
                                                         >
-                                                            <Minus size={14} />
+                                                            <Minus size={12} />
                                                         </button>
-                                                        <span className="quantity-value">{item.totalPackets}</span>
+                                                        <span className="quantity-value" style={{ 
+                                                            fontWeight: '700', 
+                                                            color: '#1e293b', 
+                                                            minWidth: '30px', 
+                                                            textAlign: 'center', 
+                                                            fontSize: '13px' 
+                                                        }}>
+                                                            {item.totalPackets}
+                                                        </span>
                                                         <button
                                                             onClick={() => updateQuantity(item.id, 1)}
                                                             className="quantity-btn"
+                                                            style={{ 
+                                                                width: '24px', 
+                                                                height: '24px', 
+                                                                borderRadius: '4px',
+                                                                fontSize: '12px'
+                                                            }}
                                                         >
-                                                            <Plus size={14} />
+                                                            <Plus size={12} />
                                                         </button>
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <input
-                                                        type="number"
-                                                        value={item.packetPrice}
-                                                        onChange={(e) => updatePacketPrice(item.id, e.target.value)}
-                                                        className="table-input price-input"
-                                                        step="0.01"
-                                                        min="0"
-                                                    />
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <span style={{ color: '#64748b', fontSize: '12px' }}>₹</span>
+                                                        <input
+                                                            type="number"
+                                                            value={item.packetPrice}
+                                                            onChange={(e) => updatePacketPrice(item.id, e.target.value)}
+                                                            className="table-input price-input"
+                                                            step="0.01"
+                                                            min="0"
+                                                            style={{ 
+                                                                fontWeight: '600', 
+                                                                color: '#1e293b',
+                                                                fontSize: '13px',
+                                                                padding: '6px 8px',
+                                                                textAlign: 'right'
+                                                            }}
+                                                        />
+                                                    </div>
                                                 </td>
-                                                <td className="total-price-cell">
-                                                    ₹{item.totalPrice.toFixed(2)}
+                                                <td className="total-price-cell" style={{ 
+                                                    fontWeight: '800', 
+                                                    color: '#10b981', 
+                                                    fontSize: '14px',
+                                                    textAlign: 'right'
+                                                }}>
+                                                    ₹{Number(item.totalPrice || 0).toFixed(2)}
                                                 </td>
-                                                <td>
-                                                    <button
-                                                        onClick={() => removeItem(item.id)}
-                                                        className="remove-btn"
-                                                    >
-                                                        <X size={16} />
-                                                    </button>
+                                                <td style={{ textAlign: 'center' }}>
+                                                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                                                        <button
+                                                            onClick={() => {
+                                                                // Edit functionality - could open a modal or inline edit
+                                                                const newName = prompt('Edit medicine name:', item.name);
+                                                                if (newName && newName !== item.name) {
+                                                                    setQuotationItems(prev => prev.map(i => 
+                                                                        i.id === item.id ? { ...i, name: newName } : i
+                                                                    ));
+                                                                }
+                                                            }}
+                                                            className="action-icon-btn"
+                                                            style={{ 
+                                                                width: '28px', 
+                                                                height: '28px', 
+                                                                borderRadius: '4px',
+                                                                backgroundColor: '#eff6ff',
+                                                                color: '#3b82f6',
+                                                                border: '1px solid #dbeafe'
+                                                            }}
+                                                            title="Edit item"
+                                                        >
+                                                            <Edit size={12} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => removeItem(item.id)}
+                                                            className="remove-btn"
+                                                            style={{ 
+                                                                width: '28px', 
+                                                                height: '28px', 
+                                                                borderRadius: '4px',
+                                                                backgroundColor: '#fef2f2',
+                                                                color: '#ef4444',
+                                                                border: '1px solid #fee2e2'
+                                                            }}
+                                                            title="Remove item"
+                                                        >
+                                                            <X size={12} />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -726,10 +1032,72 @@ const Orders = () => {
                             </div>
                         )}
                     </div>
-                    )}
                 </div>
 
                 <div className="orders-side-col">
+                    <div className="orders-card animate-fade-in">
+                        <div className="orders-card-header">
+                            <div className="orders-card-icon icon-blue">
+                                <FileText size={20} />
+                            </div>
+                            <h3 className="orders-card-title">Saved Quotations</h3>
+                        </div>
+                        {savedList.length === 0 ? (
+                            <div style={{ padding: '16px', color: '#94a3b8', fontStyle: 'italic' }}>
+                                No quotations saved yet.
+                            </div>
+                        ) : (
+                            <div style={{ padding: '12px', maxHeight: '300px', overflowY: 'auto' }}>
+                                {savedList.map((q, i) => {
+                                    const totals = q.totals || { grandTotal: 0 };
+                                    return (
+                                        <div key={i} style={{
+                                            padding: '12px',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '8px',
+                                            marginBottom: '8px',
+                                            backgroundColor: '#f8fafc'
+                                        }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                                <div style={{ fontWeight: '600', color: '#1e293b', fontSize: '14px' }}>
+                                                    {q.pharmacyName}
+                                                </div>
+                                                <div style={{ fontWeight: '700', color: '#10b981', fontSize: '14px' }}>
+                                                    ₹{Number(totals.grandTotal || 0).toFixed(2)}
+                                                </div>
+                                            </div>
+                                            <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '8px' }}>
+                                                {new Date(q.createdAt || q.quotationDate || Date.now()).toLocaleDateString()} • {(q.items || []).length} items
+                                            </div>
+                                            <button
+                                                className="orders-btn btn-blue"
+                                                onClick={() => {
+                                                    setPharmacyName(q.pharmacyName || '');
+                                                    setAddress(q.address || '');
+                                                    setContactNumber(q.contactNumber || '');
+                                                    setQuotationDate((q.quotationDate || '').slice(0,10) || new Date().toISOString().split('T')[0]);
+                                                    setQuotationItems((q.items || []).map((it, idx) => ({
+                                                        id: it.id ?? idx + 1,
+                                                        name: it.name,
+                                                        brand: it.brand,
+                                                        batchNumber: it.batchNumber || 'BATCH001',
+                                                        totalPackets: Number(it.totalPackets || 1),
+                                                        packetPrice: Number(it.packetPrice || 0),
+                                                        totalPrice: Number(it.totalPrice || 0)
+                                                    })));
+                                                    setShowReview(true);
+                                                }}
+                                                style={{ padding: '4px 8px', fontSize: '12px', width: '100%' }}
+                                            >
+                                                Open Quotation
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
                     <div className="orders-card animate-fade-in">
                         <div className="orders-card-header">
                             <div className="orders-card-icon icon-orange">
@@ -835,7 +1203,12 @@ const Orders = () => {
                 borderTop: '1px solid #f1f5f9',
                 marginTop: '24px'
             }}>
-                Page {currentPage}
+                <div style={{ marginBottom: '8px' }}>
+                    <strong>Quotation Generated:</strong> {new Date().toLocaleDateString()}
+                </div>
+                <div>
+                    <strong>Page:</strong> Generator | Total Items: {quotationItems.length}
+                </div>
             </div>
         </div>
     );

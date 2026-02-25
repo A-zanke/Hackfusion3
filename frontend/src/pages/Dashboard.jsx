@@ -63,10 +63,6 @@ const Dashboard = () => {
     return (
         <div className="dashboard-container">
             {/* Page title */}
-            <div className="dashboard-title-area">
-                <h1 className="dashboard-title">Dashboard</h1>
-                <p className="dashboard-subtitle">Real-time pharmacy intelligence at a glance</p>
-            </div>
 
             {/* Stat Cards */}
             <div className="top-stats-grid">

@@ -17,7 +17,7 @@ const navItems = [
     { to: '/inventory', icon: Package, label: 'Inventory' },
     { to: '/orders', icon: ShoppingCart, label: 'Orders' },
     { to: '/bin', icon: Trash2, label: 'Bin' },
-    { to: '/ai-chat', icon: MessageSquare, label: 'AI Chat' },
+    { to: '/chat', icon: MessageSquare, label: 'AI Chat' },
     { to: '/trace-logs', icon: FileText, label: 'Trace Logs' },
     { to: '/admin', icon: ShieldCheck, label: 'Admin Hub' },
 ];

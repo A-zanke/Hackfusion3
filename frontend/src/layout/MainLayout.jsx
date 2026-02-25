@@ -40,7 +40,7 @@ const MainLayout = () => {
             case '/trace-logs':
                 return 'Trace Logs';
             case '/ai-chat':
-                return 'AI Chat';
+                return 'AI Pharmacy Assistant';
             case '/admin':
                 return 'Admin Hub';
             case '/admin-hub':

@@ -32,19 +32,20 @@ const TraceLogs = () => {
     const [activeFilter, setActiveFilter] = useState('All');
 
     useEffect(() => {
-        const fetchAlerts = async () => {
+        const fetchTraces = async () => {
             try {
-                const res = await axios.get(`${API_BASE}/alerts`);
+                // Fetch from AI Agent Trace Endpoint
+                const res = await axios.get('http://localhost:8000/traces');
                 setAlerts(res.data);
             } catch (err) {
-                console.error("Error fetching alerts:", err);
+                console.error("Error fetching traces:", err);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchAlerts();
-        const interval = setInterval(fetchAlerts, 30000);
+        fetchTraces();
+        const interval = setInterval(fetchTraces, 10000);
         return () => clearInterval(interval);
     }, []);
 
@@ -123,6 +124,11 @@ const TraceLogs = () => {
                                                 <span className={`bot-badge ${badge.badgeColor}`}>{badge.label}</span>
                                             </div>
                                             <p className="trace-item-desc">{alert.message || 'System log execution complete.'}</p>
+                                            {alert.thinking && (
+                                                <div className="trace-thinking-box">
+                                                    <strong>AI Thinking:</strong> {alert.thinking}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 

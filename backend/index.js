@@ -627,8 +627,8 @@ app.get('/api/customers/orders', async (req, res) => {
             }));
 
             const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-            const cgst = subtotal * 0.09;
-            const sgst = subtotal * 0.09;
+            const cgst = 0; // Removed as per user request for straightforward math
+            const sgst = 0;
 
             return {
                 orderId: `ORD-${order.order_id}`,
@@ -640,7 +640,7 @@ app.get('/api/customers/orders', async (req, res) => {
                 subtotal: subtotal,
                 cgst: cgst,
                 sgst: sgst,
-                grandTotal: subtotal + cgst + sgst,
+                grandTotal: subtotal,
                 status: order.status || 'completed',
                 paymentMethod: 'COD'
             };

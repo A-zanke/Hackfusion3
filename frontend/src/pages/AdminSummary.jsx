@@ -275,7 +275,7 @@ const AdminHub = () => {
             <div className="admin-content-grid">
 
                 {/* User Search Block - Replaced System Alerts */}
-                <div className="admin-card">
+                <div className="admin-card" style={{ zIndex: showSearchResults && searchResults.length > 0 ? 2000 : 1, position: 'relative' }}>
                     <div className="card-header">
                         <h3 className="card-title">🔍 User & Order Search</h3>
                     </div>
@@ -392,21 +392,20 @@ const AdminHub = () => {
                             {/* Transparent Search Results Dropdown */}
                             {showSearchResults && searchResults.length > 0 && (
                                 <div style={{
-                                    position: 'fixed',
-                                    top: '50%',
-                                    left: '50%',
-                                    transform: 'translate(-50%, -50%)',
-                                    width: '90%',
-                                    maxWidth: '600px',
-                                    maxHeight: '70vh',
-                                    background: 'rgba(255, 255, 255, 0.95)',
+                                    position: 'absolute',
+                                    top: '100%',
+                                    left: '0',
+                                    width: '100%',
+                                    marginTop: '8px',
+                                    maxHeight: '60vh',
+                                    background: 'rgba(255, 255, 255, 0.98)',
                                     backdropFilter: 'blur(10px)',
-                                    border: '1px solid rgba(226, 232, 240, 0.8)',
+                                    border: '1px solid #e2e8f0',
                                     borderRadius: '16px',
-                                    boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
+                                    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.12)',
                                     zIndex: '10000',
                                     overflow: 'hidden',
-                                    animation: 'fadeIn 0.3s ease-out'
+                                    animation: 'fadeIn 0.2s ease-out'
                                 }}>
                                     <div style={{
                                         padding: '20px',
@@ -439,7 +438,7 @@ const AdminHub = () => {
                                         </button>
                                     </div>
                                     <div style={{
-                                        maxHeight: 'calc(70vh - 80px)',
+                                        maxHeight: 'calc(60vh - 80px)',
                                         overflowY: 'auto'
                                     }}>
                                         {loadingSearch ? (
@@ -595,16 +594,39 @@ const AdminHub = () => {
                                                     👤 {selectedUser.name}
                                                 </h4>
                                                 <p style={{ margin: '0', fontSize: '14px', opacity: 0.9 }}>
-                                                    📧 {selectedUser.email} • 📱 {selectedUser.phone}
+                                                    📧 {selectedUser.email || 'No email'} • 📱 {selectedUser.mobile || selectedUser.phone}
                                                 </p>
                                             </div>
-                                            <div style={{ textAlign: 'right' }}>
-                                                <div style={{ fontSize: '24px', fontWeight: '800' }}>
-                                                    {userOrders.length}
+                                            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                                                <div style={{ textAlign: 'right' }}>
+                                                    <div style={{ fontSize: '24px', fontWeight: '800', lineHeight: '1' }}>
+                                                        {userOrders.length}
+                                                    </div>
+                                                    <div style={{ fontSize: '12px', opacity: 0.8, fontWeight: '600' }}>
+                                                        TOTAL ORDERS
+                                                    </div>
                                                 </div>
-                                                <div style={{ fontSize: '12px', opacity: 0.8 }}>
-                                                    Total Orders
-                                                </div>
+                                                <button
+                                                    onClick={() => navigate(`/ai-chat?user=${encodeURIComponent(selectedUser.name)}`)}
+                                                    style={{
+                                                        padding: '10px 16px',
+                                                        background: 'rgba(255, 255, 255, 0.2)',
+                                                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                                                        borderRadius: '8px',
+                                                        color: 'white',
+                                                        fontSize: '14px',
+                                                        fontWeight: '600',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px',
+                                                        transition: 'all 0.2s ease'
+                                                    }}
+                                                    onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.3)'}
+                                                    onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
+                                                >
+                                                    🛍️ Order Again
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -659,7 +681,7 @@ const AdminHub = () => {
                                                     fontWeight: '800',
                                                     color: '#10b981'
                                                 }}>
-                                                    ₹{order.total || order.totalAmount}
+                                                    ₹{order.grandTotal?.toFixed(0) || '0'}
                                                 </div>
                                             </div>
 
@@ -716,7 +738,7 @@ const AdminHub = () => {
                                                                 textAlign: 'right',
                                                                 minWidth: '80px'
                                                             }}>
-                                                                ₹{item.price || item.unitPrice}
+                                                                ₹{item.price?.toFixed(0) || '0'}
                                                             </div>
                                                         </div>
                                                     ))}
@@ -740,7 +762,7 @@ const AdminHub = () => {
                                                     fontWeight: '700',
                                                     color: '#1e293b'
                                                 }}>
-                                                    Total: ₹{order.total || order.totalAmount}
+                                                    Total: ₹{order.grandTotal?.toFixed(2) || '0.00'}
                                                 </div>
                                             </div>
                                         </div>

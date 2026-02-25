@@ -1259,6 +1259,38 @@ body {
   color: white;
 }
 
+/* Error message styling */
+.message-bubble.error {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.message-bubble.error .message-text {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.error-message {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-5px);
+  }
+
+  75% {
+    transform: translateX(5px);
+  }
+}
+
 .message-time {
   font-size: 11px;
   margin-top: 8px;

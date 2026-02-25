@@ -20,7 +20,12 @@ How can I assist you today?`,
     const [selectedMedicine, setSelectedMedicine] = useState(null);
     const [showTabletSelector, setShowTabletSelector] = useState(false);
     const [tabletCount, setTabletCount] = useState(1);
-    const [decisionMetadata, setDecisionMetadata] = useState(null);
+    const [decisionMetadata, setDecisionMetadata] = useState({
+        intent_verified: false,
+        safety_checked: false,
+        stock_checked: false,
+        thinking: ''
+    });
     const [sessionState, setSessionState] = useState(null);
     const [allMedicines, setAllMedicines] = useState([]);
     const [selectedTablets, setSelectedTablets] = useState({});
@@ -39,10 +44,11 @@ How can I assist you today?`,
         };
         fetchMeds();
 
-        // Check for re-order parameters
+        // Check for re-order or user parameters
         const params = new URLSearchParams(window.location.search);
         const reorderMed = params.get('reorder');
         const reorderQty = params.get('qty');
+        const userName = params.get('user');
 
         if (reorderMed && reorderQty) {
             const message = `I want to re-order ${reorderQty} tablets of ${reorderMed}`;
@@ -50,6 +56,15 @@ How can I assist you today?`,
             setTimeout(() => {
                 handleSend(message);
             }, 800);
+        } else if (userName) {
+            // Greet the user by name
+            const greeting = {
+                role: 'assistant',
+                content: `👋 Hello **${userName}**! Welcome back. I've loaded your profile.
+How can I assist you today? Would you like to re-order something from your previous list?`,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            setMessages(prev => [...prev, greeting]);
         }
     }, []);
 
@@ -131,7 +146,7 @@ How can I assist you today?`,
             if (chatMessagesRef.current) {
                 chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
             }
-            
+
             // Also scroll after a short delay to ensure content is rendered
             setTimeout(() => {
                 if (chatMessagesRef.current) {
@@ -140,6 +155,26 @@ How can I assist you today?`,
             }, 100);
         } catch (error) {
             console.error("AI Chat Error:", error);
+
+            // Show error message in chat
+            const errorMsg = {
+                role: 'assistant',
+                content: '❌ Sorry, I encountered an error while processing your request. Please try again or contact support if the problem persists.',
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                isError: true
+            };
+            setMessages(prev => [...prev, errorMsg]);
+
+            // Also try to show more specific error if available
+            if (error.response && error.response.data && error.response.data.reply) {
+                const specificErrorMsg = {
+                    role: 'assistant',
+                    content: error.response.data.reply,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    isError: true
+                };
+                setMessages(prev => [...prev, specificErrorMsg]);
+            }
         } finally {
             setIsTyping(false);
         }
@@ -219,8 +254,8 @@ How can I assist you today?`,
 
                     <div className="chat-messages-area" ref={chatMessagesRef}>
                         {messages.map((msg, i) => (
-                            <div key={i} className={`animate-fade-in message-wrapper ${msg.role}`}>
-                                <div className={`message-bubble ${msg.role}`}>
+                            <div key={i} className={`animate-fade-in message-wrapper ${msg.role} ${msg.isError ? 'error-message' : ''}`}>
+                                <div className={`message-bubble ${msg.role} ${msg.isError ? 'error' : ''}`}>
                                     {renderMessageContent(msg.content)}
                                 </div>
                                 {msg.time && (
@@ -248,7 +283,7 @@ How can I assist you today?`,
                             <div className="suggestions-bar-header">
                                 <Pill size={16} className="suggestions-bar-icon" />
                                 <span>Medicine Suggestions</span>
-                                <button 
+                                <button
                                     onClick={() => setSuggestions([])}
                                     className="suggestions-bar-close"
                                 >
@@ -257,8 +292,8 @@ How can I assist you today?`,
                             </div>
                             <div className="suggestions-bar-content">
                                 {suggestions.map((med, i) => (
-                                    <div 
-                                        key={i} 
+                                    <div
+                                        key={i}
                                         className="suggestion-bar-item"
                                         onClick={() => {
                                             setInput(med.name);

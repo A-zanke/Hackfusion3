@@ -28,7 +28,8 @@ const Login = () => {
             if (response.ok) {
                 // Store user info in localStorage
                 localStorage.setItem('user', JSON.stringify(data.user));
-                navigate('/admin-hub');
+                // Redirect to AI chat page after successful login
+                navigate('/chat');
             } else {
                 setError(data.error || 'Login failed');
             }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from '../ui/Sidebar';
-import { Bell, Package, AlertTriangle, ShieldCheck, TrendingUp, Clock, CheckCircle, Info } from 'lucide-react';
+import { Bell, Package, AlertTriangle, ShieldCheck, TrendingUp, Clock, CheckCircle, Info, Bot } from 'lucide-react';
 import '../App.css';
 
 const sampleNotifications = [

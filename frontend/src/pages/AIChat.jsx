@@ -284,7 +284,7 @@ How can I assist you today? Would you like to re-order something from your previ
                         <span className="live-date">{dateStr}</span>
                         <span className="live-time">{timeStr}</span>
                     </div>
-                    <Link to="/login" style={{ textDecoration: "none" }}>
+                    <Link to="/dashboard" style={{ textDecoration: "none" }}>
                         <button className="premium-admin-btn">
                             <Settings size={18} />
                             <span>Admin</span>

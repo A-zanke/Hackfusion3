@@ -13,6 +13,40 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
+// Initialize database tables on startup
+async function initializeDatabase() {
+    try {
+        // Create users table if it doesn't exist
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(255) UNIQUE NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('✅ Users table initialized');
+        
+        // Add customer_age column to orders table if it doesn't exist
+        try {
+            await db.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_age INTEGER');
+            await db.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE');
+            await db.query('ALTER TABLE medicines ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE');
+            console.log('✅ Database columns updated');
+        } catch (alterError) {
+            console.log('Columns may already exist:', alterError.message);
+        }
+        
+    } catch (error) {
+        console.error('Database initialization error:', error);
+    }
+}
+
+// Initialize database on startup
+initializeDatabase();
+
 // Authentication endpoints
 app.post('/api/auth/signup', async (req, res) => {
     try {
@@ -853,16 +887,20 @@ app.post('/chat', async (req, res) => {
         let orderSession = {
             medicines: [],
             userConfirmed: false,
-            stage: 'gathering'
+            stage: 'gathering',
+            pendingMedicine: null
         };
         
         // Try to extract session from history
         if (history && history.length > 0) {
             const lastMessage = history[history.length - 1];
             if (lastMessage.sessionState) {
-                orderSession = lastMessage.sessionState;
+                orderSession = { ...orderSession, ...lastMessage.sessionState };
+                console.log('Restored session state:', orderSession);
             }
         }
+        
+        console.log('Processing message:', message, 'Current stage:', orderSession.stage, 'Pending medicine:', orderSession.pendingMedicine);
         
         // Handle greetings
         if (lang.greeting.test(message)) {

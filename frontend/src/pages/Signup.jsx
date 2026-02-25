@@ -37,7 +37,8 @@ const Signup = () => {
             if (response.ok) {
                 // Store user info in localStorage
                 localStorage.setItem('user', JSON.stringify(data.user));
-                navigate('/admin-hub');
+                // Redirect to login page after successful signup
+                navigate('/login');
             } else {
                 setError(data.error || 'Signup failed');
             }

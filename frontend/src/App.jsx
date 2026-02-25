@@ -37,7 +37,7 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Public Route Component (redirects to chat if authenticated)
+// Public Route Component (no forced redirect to chat)
 const PublicRoute = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -54,8 +54,9 @@ const PublicRoute = ({ children }) => {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>;
   }
 
+  // If user is logged in, redirect away from public pages to the admin landing
   if (user) {
-    return <Navigate to="/chat" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
@@ -69,8 +70,8 @@ function App() {
         <Route path="/admin/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
 
-        {/* AI Chat is now public */}
-        <Route path="/chat" element={<AIChat />} />
+        {/* AI Chat is protected */}
+        <Route path="/chat" element={<ProtectedRoute><AIChat /></ProtectedRoute>} />
 
         {/* Admin routes with sidebar layout */}
         <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
@@ -83,9 +84,9 @@ function App() {
           <Route path="/trace-logs" element={<TraceLogs />} />
         </Route>
 
-        {/* Default redirect to chat (home) */}
-        <Route path="/" element={<Navigate to="/chat" replace />} />
-        <Route path="*" element={<Navigate to="/chat" replace />} />
+        {/* Default redirect to dashboard; unauthenticated users will be bounced to /login by ProtectedRoute */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   );

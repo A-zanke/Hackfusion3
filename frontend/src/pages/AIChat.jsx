@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Mic, Send, Bot, Cpu, Pill } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Bot, Send, Mic, Pill, Cpu, Settings, ChevronRight, Sparkles } from 'lucide-react';
 import '../App.css';
-
+import { Link } from "react-router-dom";
 const AIChat = () => {
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState([
@@ -29,10 +30,17 @@ How can I assist you today?`,
     const [sessionState, setSessionState] = useState(null);
     const [allMedicines, setAllMedicines] = useState([]);
     const [selectedTablets, setSelectedTablets] = useState({});
-    const [tabletSuggestions, setTabletSuggestions] = useState([1, 2, 3, 5, 10, 15, 20, 30]);
+    const [isVoiceInput, setIsVoiceInput] = useState(false);
     const chatMessagesRef = useRef(null);
 
+    const [currentTime, setCurrentTime] = useState(new Date());
+    const navigate = useNavigate();
+
     useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 1000);
+
         const fetchMeds = async () => {
             try {
                 const res = await fetch('http://localhost:5000/api/medicines');
@@ -44,6 +52,17 @@ How can I assist you today?`,
         };
         fetchMeds();
 
+        // Check login session
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                // Optionally greet the user if they're logged in
+            } catch (e) {
+                console.error("Session parse error", e);
+            }
+        }
+
         // Check for re-order or user parameters
         const params = new URLSearchParams(window.location.search);
         const reorderMed = params.get('reorder');
@@ -52,12 +71,10 @@ How can I assist you today?`,
 
         if (reorderMed && reorderQty) {
             const message = `I want to re-order ${reorderQty} tablets of ${reorderMed}`;
-            // Small delay to ensure initialization
             setTimeout(() => {
                 handleSend(message);
             }, 800);
         } else if (userName) {
-            // Greet the user by name
             const greeting = {
                 role: 'assistant',
                 content: `👋 Hello **${userName}**! Welcome back. I've loaded your profile.
@@ -66,30 +83,51 @@ How can I assist you today? Would you like to re-order something from your previ
             };
             setMessages(prev => [...prev, greeting]);
         }
+
+        return () => clearInterval(timer);
     }, []);
 
-    const handleInputChange = (e) => {
+    const dateStr = currentTime.toLocaleDateString('en-GB', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+
+    const timeStr = currentTime.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+
+
+
+    // const handleAdminClick = () => {
+    // navigate("/admin/login");
+    // };
+
+    const handleInputChange = async (e) => {
         const value = e.target.value;
         setInput(value);
 
-        // Show tablet suggestions when typing medicine name
+        // Search medicines when typing
         if (value.length > 2) {
-            const filtered = allMedicines
-                .filter(m => m.name.toLowerCase().includes(value.toLowerCase()))
-                .slice(0, 5);
-            setSuggestions(filtered);
-
-            // Show tablet selector for common medicines
-            const med = allMedicines.find(m => m.name.toLowerCase() === value.toLowerCase());
-            if (med && (med.category === 'tablet' || med.form)) {
-                setTabletSuggestions([1, 2, 3, 5, 10, 15, 20, 30]);
-                setShowTabletSelector(true);
-            } else {
-                setShowTabletSelector(false);
+            console.log('Searching for medicines with query:', value);
+            try {
+                const response = await fetch(`http://localhost:5000/api/medicines/search?q=${encodeURIComponent(value)}`);
+                if (response.ok) {
+                    const medicines = await response.json();
+                    console.log('Medicines found:', medicines);
+                    setSuggestions(medicines);
+                } else {
+                    console.error('Search failed with status:', response.status);
+                }
+            } catch (error) {
+                console.error('Medicine search error:', error);
             }
         } else {
             setSuggestions([]);
-            setShowTabletSelector(false);
         }
     };
 
@@ -100,7 +138,7 @@ How can I assist you today? Would you like to re-order something from your previ
         setSuggestions([]);
     };
 
-    const handleSend = async (overrideInput = null) => {
+    const handleSend = async (overrideInput = null, voiceTrigger = false) => {
         const textToSearch = overrideInput || input;
         if (!textToSearch.trim()) return;
 
@@ -110,6 +148,8 @@ How can I assist you today? Would you like to re-order something from your previ
         setSuggestions([]);
         setShowTabletSelector(false);
         setIsTyping(true);
+
+        const currentIsVoice = voiceTrigger || isVoiceInput;
 
         try {
             // Use local backend API instead of OpenAI
@@ -140,7 +180,11 @@ How can I assist you today? Would you like to re-order something from your previ
                 stock_checked: data.stock_checked,
                 thinking: data.thinking || "Decision pipeline executed successfully."
             });
-            speakResponse(data.reply);
+            // Only speak if voice input was used
+            if (currentIsVoice) {
+                speakResponse(data.reply);
+                setIsVoiceInput(false);
+            }
 
             // Scroll to bottom immediately
             if (chatMessagesRef.current) {
@@ -187,11 +231,12 @@ How can I assist you today? Would you like to re-order something from your previ
             return;
         }
         const recognition = new SpeechRecognition();
-        recognition.lang = 'en-US'; // Default, AI will detect Hindi/Marathi
+        recognition.lang = 'en-US';
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
             setInput(transcript);
-            handleSend(transcript);
+            setIsVoiceInput(true);
+            handleSend(transcript, true); // Pass true explicitly
         };
         recognition.start();
     };
@@ -221,14 +266,37 @@ How can I assist you today? Would you like to re-order something from your previ
     };
 
     return (
-        <div className="ai-chat-container">
+        <div className="ai-chat-page">
+            {/* Premium Header */}
+            <header className="premium-chat-header">
+                <div className="header-brand">
+                    <div className="brand-logo">
+                        <Bot size={28} />
+                    </div>
+                    <div>
+                        <h1 className="brand-title">PharmaAI Assistant</h1>
+                        <p className="brand-tagline">Intelligent Autonomous Healthcare</p>
+                    </div>
+                </div>
 
-            {/* Grid Layout Container */}
-            <div className="ai-chat-grid">
+                <div className="header-info">
+                    <div className="live-clock">
+                        <span className="live-date">{dateStr}</span>
+                        <span className="live-time">{timeStr}</span>
+                    </div>
+                    <Link to="/login" style={{ textDecoration: "none" }}>
+                        <button className="premium-admin-btn">
+                            <Settings size={18} />
+                            <span>Admin</span>
+                        </button>
+                    </Link>
+                </div>
+            </header>
+
+            <div className="ai-chat-main-container">
 
                 {/* Chat Panel - Left */}
                 <div className="chat-panel">
-
                     <div className="chat-header">
                         <div className="chat-header-left">
                             <div className="chat-bot-icon">
@@ -277,108 +345,98 @@ How can I assist you today? Would you like to re-order something from your previ
                         )}
                     </div>
 
-                    {/* Medicine Suggestions Bar */}
-                    {suggestions.length > 0 && (
-                        <div className="medicine-suggestions-bar">
-                            <div className="suggestions-bar-header">
-                                <Pill size={16} className="suggestions-bar-icon" />
-                                <span>Medicine Suggestions</span>
-                                <button
-                                    onClick={() => setSuggestions([])}
-                                    className="suggestions-bar-close"
-                                >
-                                    ×
-                                </button>
+                    <div className="chat-input-area">
+                        {/* Debug Info - Remove in production */}
+                        {process.env.NODE_ENV === 'development' && (
+                            <div style={{ fontSize: '10px', color: 'gray', marginBottom: '5px' }}>
+                                Debug: Suggestions count: {suggestions.length}, Input: "{input}"
                             </div>
-                            <div className="suggestions-bar-content">
-                                {suggestions.map((med, i) => (
-                                    <div
-                                        key={i}
-                                        className="suggestion-bar-item"
-                                        onClick={() => {
-                                            setInput(med.name);
-                                            setSuggestions([]);
-                                            // Don't auto-send, just fill the input
-                                        }}
+                        )}
+
+                        {/* Medicine Suggestions Bar - Moved inside input area */}
+                        {suggestions.length > 0 && (
+                            <div className="medicine-suggestions-bar">
+                                <div className="suggestions-bar-header">
+                                    <Pill size={16} className="suggestions-bar-icon" />
+                                    <span>Did you mean?</span>
+                                    <button
+                                        onClick={() => setSuggestions([])}
+                                        className="suggestions-bar-close"
                                     >
-                                        <div className="suggestion-bar-info">
-                                            <div className="suggestion-bar-name">{med.name}</div>
-                                            <div className="suggestion-bar-meta">
-                                                {med.brand && <span className="suggestion-bar-brand">{med.brand}</span>}
-                                                {med.price && <span className="suggestion-bar-price">₹{med.price}</span>}
+                                        ×
+                                    </button>
+                                </div>
+                                <div className="suggestions-bar-content">
+                                    {suggestions.map((med, i) => (
+                                        <div
+                                            key={i}
+                                            className="suggestion-bar-item"
+                                            onClick={() => {
+                                                // Populate input and focus for quantity entering
+                                                setInput(med.name + ' ');
+                                                setSuggestions([]);
+                                                // Optional: automatically focus the input
+                                                document.querySelector('.chat-input-field')?.focus();
+                                            }}
+                                        >
+                                            <div className="suggestion-bar-info">
+                                                <div className="suggestion-bar-name">{med.name}</div>
+                                                <div className="suggestion-bar-meta">
+                                                    {med.brand && <span className="suggestion-bar-brand">{med.brand}</span>}
+                                                    {med.price && <span className="suggestion-bar-price">₹{med.price}</span>}
+                                                </div>
+                                            </div>
+                                            <div className="suggestion-bar-action">
+                                                <Send size={14} />
                                             </div>
                                         </div>
-                                        <div className="suggestion-bar-action">
-                                            <Send size={14} />
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    )}
-
-                    <div className="chat-input-area">
+                        )}
                         <div className="chat-input-row">
                             <button className="input-mic-btn" onClick={() => startVoiceInput()}>
                                 <Mic size={20} />
                             </button>
                             <div className="chat-input-box">
-                                {suggestions.length > 0 && (
-                                    <div className="autocomplete-dropdown">
-                                        {suggestions.map((med, i) => (
-                                            <div key={i} className="suggestion-item" onClick={() => {
-                                                setInput(med.name);
-                                                setSuggestions([]);
-                                                // Don't auto-send, just fill the input
-                                            }}>
-                                                <div className="suggestion-content">
-                                                    <Pill size={16} className="suggestion-icon" />
-                                                    <div>
-                                                        <div className="suggestion-name">{med.name}</div>
-                                                        <div className="suggestion-details">
-                                                            {med.brand && <span className="suggestion-brand">{med.brand}</span>}
-                                                            {med.price && <span className="suggestion-price">₹{med.price}</span>}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {/* Tablet Selector */}
-                                {showTabletSelector && (
-                                    <div className="tablet-selector">
-                                        <div className="tablet-selector-header">
-                                            <Pill size={16} />
-                                            <span>Select number of tablets:</span>
-                                        </div>
-                                        <div className="tablet-options">
-                                            {tabletSuggestions.map(count => (
-                                                <button
-                                                    key={count}
-                                                    className={`tablet-option ${selectedTablets[input.split(' ')[0]] === count ? 'selected' : ''}`}
-                                                    onClick={() => handleTabletSelect(input.split(' ')[0], count)}
-                                                >
-                                                    {count}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
                                 <input
                                     type="text"
                                     value={input}
                                     onChange={handleInputChange}
-                                    onKeyDown={handleKeyDown}
-                                    placeholder="Type or speak in Hindi, Marathi, or English..."
+                                    onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                                    placeholder="Type medicine name or quantity..."
                                     className="chat-input-field"
+                                    disabled={isTyping}
                                 />
+                                <button
+                                    className="chat-send-btn"
+                                    onClick={() => handleSend()}
+                                    disabled={isTyping || !input.trim()}
+                                >
+                                    <Send size={18} />
+                                </button>
                             </div>
-                            <button onClick={() => handleSend()} className="chat-send-btn">
-                                <Send size={18} />
-                            </button>
                         </div>
+
+                        {showTabletSelector && (
+                            <div className="tablet-selector">
+                                <div className="tablet-selector-header">
+                                    <Pill size={16} />
+                                    <span>Select number of tablets:</span>
+                                </div>
+                                <div className="tablet-options">
+                                    {tabletSuggestions.map(count => (
+                                        <button
+                                            key={count}
+                                            className={`tablet-option ${selectedTablets[input.split(' ')[0]] === count ? 'selected' : ''}`}
+                                            onClick={() => handleTabletSelect(input.split(' ')[0], count)}
+                                        >
+                                            {count}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

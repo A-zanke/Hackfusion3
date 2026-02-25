@@ -2,25 +2,34 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../App.css';
 
-const Login = () => {
+const Signup = () => {
     const navigate = useNavigate();
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const handleLogin = async (e) => {
+    const handleSignup = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
 
+        // Validate passwords match
+        if (password !== confirmPassword) {
+            setError('Passwords do not match');
+            setIsLoading(false);
+            return;
+        }
+
         try {
-            const response = await fetch('http://localhost:5000/api/auth/login', {
+            const response = await fetch('http://localhost:5000/api/auth/signup', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ username, email, password }),
             });
 
             const data = await response.json();
@@ -30,7 +39,7 @@ const Login = () => {
                 localStorage.setItem('user', JSON.stringify(data.user));
                 navigate('/admin-hub');
             } else {
-                setError(data.error || 'Login failed');
+                setError(data.error || 'Signup failed');
             }
         } catch (error) {
             setError('Network error. Please try again.');
@@ -50,7 +59,7 @@ const Login = () => {
                     </p>
                 </div>
 
-                <h2 className="signin-title">Sign in to your account</h2>
+                <h2 className="signin-title">Create your account</h2>
 
                 {error && (
                     <div className="error-message" style={{
@@ -65,7 +74,19 @@ const Login = () => {
                     </div>
                 )}
 
-                <form className="login-form" onSubmit={handleLogin}>
+                <form className="login-form" onSubmit={handleSignup}>
+                    <div className="input-group">
+                        <label>USERNAME</label>
+                        <input
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            placeholder="Enter your username"
+                            className="login-input"
+                            required
+                        />
+                    </div>
+
                     <div className="input-group">
                         <label>EMAIL</label>
                         <input
@@ -90,23 +111,35 @@ const Login = () => {
                         />
                     </div>
 
+                    <div className="input-group">
+                        <label>CONFIRM PASSWORD</label>
+                        <input
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Confirm your password"
+                            className="login-input"
+                            required
+                        />
+                    </div>
+
                     <button
                         type="submit"
                         className="login-button"
                         disabled={isLoading}
                     >
-                        {isLoading ? 'Signing in...' : 'Sign In →'}
+                        {isLoading ? 'Creating account...' : 'Sign Up →'}
                     </button>
                 </form>
 
                 <div className="signup-link">
                     <p>
-                        Don't have an account?
+                        Already have an account?
                         <button
-                            onClick={() => navigate('/signup')}
+                            onClick={() => navigate('/login')}
                             className="link-button"
                         >
-                            Sign up
+                            Sign in
                         </button>
                     </p>
                 </div>
@@ -119,4 +152,4 @@ const Login = () => {
     );
 };
 
-export default Login;
+export default Signup;

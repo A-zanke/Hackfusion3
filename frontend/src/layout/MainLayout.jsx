@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from '../ui/Sidebar';
 import { Bell, Package, AlertTriangle, ShieldCheck, TrendingUp, Clock, CheckCircle, Info } from 'lucide-react';
 import '../App.css';
@@ -16,9 +16,10 @@ const sampleNotifications = [
 
 const MainLayout = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [currentTime, setCurrentTime] = useState(new Date());
     const [showNotifications, setShowNotifications] = useState(false);
-    
+
     const today = new Date();
     const dateStr = today.toLocaleDateString('en-GB', {
         weekday: 'long',
@@ -30,7 +31,7 @@ const MainLayout = () => {
     // Get page title based on current route
     const getPageTitle = () => {
         const path = location.pathname;
-        switch(path) {
+        switch (path) {
             case '/inventory':
                 return 'Inventory Management';
             case '/orders':
@@ -65,11 +66,11 @@ const MainLayout = () => {
                 <header className="top-header">
                     <div className="header-left">
                         <h1 className="header-page-title">{getPageTitle()}</h1>
-                        <p className="header-date">{dateStr} • {currentTime.toLocaleTimeString('en-US', { 
-                            hour: '2-digit', 
-                            minute: '2-digit', 
+                        <p className="header-date">{dateStr} • {currentTime.toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
                             second: '2-digit',
-                            hour12: true 
+                            hour12: true
                         })}</p>
                     </div>
 
@@ -78,6 +79,14 @@ const MainLayout = () => {
                             <span className="admin-badge-dot"></span>
                             Admin
                         </span>
+
+                        <button
+                            className="nav-chat-toggle"
+                            onClick={() => navigate('/chat')}
+                        >
+                            <Bot size={18} />
+                            <span>AI Chat</span>
+                        </button>
 
                         <div className="notification-wrapper">
                             <button

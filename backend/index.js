@@ -13,6 +13,97 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
+// Authentication endpoints
+app.post('/api/auth/signup', async (req, res) => {
+    try {
+        const { username, email, password } = req.body;
+        
+        // Validate input
+        if (!username || !email || !password) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }
+        
+        // Check if user already exists
+        const existingUser = await db.query(
+            'SELECT id FROM users WHERE email = $1 OR username = $2',
+            [email, username]
+        );
+        
+        if (existingUser.rows.length > 0) {
+            return res.status(400).json({ error: 'User with this email or username already exists' });
+        }
+        
+        // Hash password
+        const bcrypt = require('bcrypt');
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Create user
+        const result = await db.query(
+            'INSERT INTO users (username, email, password_hash, created_at) VALUES ($1, $2, $3, NOW()) RETURNING id, username, email',
+            [username, email, hashedPassword]
+        );
+        
+        const user = result.rows[0];
+        res.json({ 
+            message: 'User created successfully',
+            user: { id: user.id, username: user.username, email: user.email }
+        });
+    } catch (error) {
+        console.error('Signup error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        // Validate input
+        if (!email || !password) {
+            return res.status(400).json({ error: 'Email and password are required' });
+        }
+        
+        // Find user
+        const result = await db.query(
+            'SELECT id, username, email, password_hash FROM users WHERE email = $1',
+            [email]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(401).json({ error: 'Invalid email or password' });
+        }
+        
+        const user = result.rows[0];
+        
+        // Check password
+        const bcrypt = require('bcrypt');
+        const isValidPassword = await bcrypt.compare(password, user.password_hash);
+        
+        if (!isValidPassword) {
+            return res.status(401).json({ error: 'Invalid email or password' });
+        }
+        
+        res.json({ 
+            message: 'Login successful',
+            user: { id: user.id, username: user.username, email: user.email }
+        });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Create users table if not exists
+db.query(`
+    CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(100) UNIQUE NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+    )
+`).catch(console.error);
+
 // --- MEDICINE ROUTES ---
 
 // Get all medicines (Active only)
@@ -277,6 +368,52 @@ app.get('/api/medicines/low-stock', async (req, res) => {
         res.json(result.rows);
     } catch (err) {
         console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Search medicines for AI chat suggestions
+app.get('/api/medicines/search', async (req, res) => {
+    try {
+        const { q } = req.query;
+        
+        if (!q || q.length < 2) {
+            return res.json([]);
+        }
+        
+        const searchQuery = `
+            SELECT id, name, brand, price_per_tablet, total_tablets, tablets_per_packet, description
+            FROM medicines 
+            WHERE is_deleted = FALSE 
+            AND (
+                name ILIKE $1 OR
+                brand ILIKE $1 OR
+                category ILIKE $1 OR
+                description ILIKE $1
+            )
+            ORDER BY 
+                CASE WHEN name ILIKE $1 THEN 1 ELSE 2 END,
+                name ASC
+            LIMIT 10
+        `;
+        
+        const searchTerm = `%${q}%`;
+        const result = await db.query(searchQuery, [searchTerm]);
+        
+        // Format results for frontend
+        const medicines = result.rows.map(med => ({
+            id: med.id,
+            name: med.name,
+            brand: med.brand,
+            price: med.price_per_tablet,
+            stock: med.total_tablets,
+            tablets_per_packet: med.tablets_per_packet,
+            description: med.description
+        }));
+        
+        res.json(medicines);
+    } catch (err) {
+        console.error('Medicine search error:', err);
         res.status(500).json({ error: 'Database error' });
     }
 });
@@ -768,156 +905,46 @@ app.post('/chat', async (req, res) => {
             stage = 'blocked';
         }
         // Main medicine processing logic
+        // Main medicine processing logic
+        // Main medicine processing logic
         else {
-            // Extract quantity and medicine
-            const quantityMatch = message.match(lang.quantity);
-            const medicineMatch = message.match(lang.medicine);
+            // Flexible extraction: Look for (quantity + medicine) or (medicine + quantity)
+            // Regex to match numbers followed by text or text followed by numbers
+            const quantFirst = message.match(/^(\d+)\s+(.+)$/i);
+            const medFirst = message.match(/^(.+?)\s+(\d+)$/i);
             
-            if (quantityMatch && medicineMatch) {
-                const quantity = parseInt(quantityMatch[1]);
-                let medicineName = medicineMatch[1].trim();
-                
-                // Clean medicine name
-                medicineName = medicineName.replace(/\d+/g, '').replace(/(?:tablet|pills?|capsules?|गोलियां|गोली|टैबलेट|गोळ्या|गोळी|टॅबलेट)/gi, '').trim();
-                
-                if (quantity > 0 && medicineName.length > 0) {
-                    // Check database for medicine
-                    const medicineResult = await db.query(
-                        'SELECT * FROM medicines WHERE LOWER(name) LIKE LOWER($1) AND is_deleted = FALSE LIMIT 1',
-                        [`%${medicineName}%`]
-                    );
-                    
-                    if (medicineResult.rows.length > 0) {
-                        const medicine = medicineResult.rows[0];
-                        const price = medicine.price_per_tablet || 10;
-                        const totalPrice = quantity * price;
-                        const stockAvailable = medicine.total_tablets >= quantity;
-                        
-                        intent_verified = true;
-                        safety_checked = true;
-                        stock_checked = stockAvailable;
-                        
-                        if (!stockAvailable) {
-                            const outOfStockMsg = {
-                                en: `⚠️ I found ${medicine.name}, but only ${medicine.total_tablets} tablets are available. Would you like ${medicine.total_tablets} tablets instead?`,
-                                hi: `⚠️ मुझे ${medicine.name} मिली, लेकिन केवल ${medicine.total_tablets} गोलियां उपलब्ध हैं। क्या आप ${medicine.total_tablets} गोलियां लेना चाहेंगे?`,
-                                mr: `⚠️ मला ${medicine.name} सापडली, पण केवळ ${medicine.total_tablets} गोळ्या उपलब्ध आहेत. तुम्हाला ${medicine.total_tablets} गोळ्या हव्यात का?`
-                            };
-                            reply = outOfStockMsg[detectedLang];
-                            stage = 'blocked_stock';
-                        } else {
-                            // Add to session
-                            orderSession.medicines.push({
-                                id: medicine.id,
-                                name: medicine.name,
-                                quantity: quantity,
-                                price_per_tablet: price,
-                                total_price: totalPrice,
-                                brand: medicine.brand || 'Generic'
-                            });
-                            
-                            const confirmationMsg = {
-                                en: `✅ Added to cart!\n\n💊 ${medicine.name} (${quantity} tablets)\n💰 Price: ₹${price} × ${quantity} = ₹${totalPrice.toFixed(2)}\n\nWould you like to:\n• Add more medicines? (e.g., "add 5 aspirin")\n• Finalize order? (e.g., "finalize order")`,
-                                hi: `✅ कार्ट में जोड़ा गया!\n\n💊 ${medicine.name} (${quantity} गोलियां)\n💰 कीमत: ₹${price} × ${quantity} = ₹${totalPrice.toFixed(2)}\n\nआप क्या करना चाहेंगे:\n• और दवाएं जोड़ें? (जैसे, "add 5 aspirin")\n• ऑर्डर अंतिम करें? (जैसे, "finalize order")`,
-                                mr: `✅ कार्टमध्ये जोडले!\n\n💊 ${medicine.name} (${quantity} गोळ्या)\n💰 किंमत: ₹${price} × ${quantity} = ₹${totalPrice.toFixed(2)}\n\nतुम्ही काय करू इच्छिता:\n• आणखी औषधे जोडायचे? (उदा., "add 5 aspirin")\n• ऑर्डर पूर्ण करायचा? (उदा., "finalize order")`
-                            };
-                            reply = confirmationMsg[detectedLang];
-                            stage = 'medicine_added';
-                        }
-                        
-                        // Check for user details in message
-                        const namePatterns = {
-                            en: /(?:my name is|i am)\s+([a-z\s]+)/i,
-                            hi: /(?:मेरा नाम है|मैं हूं)\s+([a-z\s]+)/i,
-                            mr: /(?:माझे नाव आहे|मी आहे)\s+([a-z\s]+)/i
-                        };
-                        
-                        const mobilePattern = /(\d{10})/;
-                        const nameMatch = message.match(namePatterns[detectedLang]);
-                        const mobileMatch = message.match(mobilePattern);
-                        const isConfirmation = lang.confirmation.test(message);
-                        
-                        if ((nameMatch || mobileMatch || isConfirmation) && stockAvailable) {
-                            const customerName = nameMatch ? nameMatch[1].trim() : 'Anonymous';
-                            const mobile = mobileMatch ? mobileMatch[1] : null;
-                            
-                            // Create order in database
-                            await db.query('BEGIN');
-                            try {
-                                const orderResult = await db.query(
-                                    'INSERT INTO orders (customer_name, mobile, total_price, status) VALUES ($1, $2, $3, $4) RETURNING id',
-                                    [customerName, mobile, totalPrice, 'delivered']
-                                );
-                                const orderId = orderResult.rows[0].id;
-                                
-                                await db.query(
-                                    'INSERT INTO order_items (order_id, medicine_id, quantity, price_at_time) VALUES ($1, $2, $3, $4)',
-                                    [orderId, medicine.id, quantity, price]
-                                );
-                                
-                                // Update stock
-                                const tabletsLeft = medicine.total_tablets - quantity;
-                                const newPackets = Math.floor(tabletsLeft / medicine.tablets_per_packet);
-                                
-                                await db.query(
-                                    'UPDATE medicines SET stock_packets = $1 WHERE id = $2',
-                                    [newPackets, medicine.id]
-                                );
-                                
-                                await db.query('COMMIT');
-                                
-                                const successMsg = {
-                                    en: `✅ Order placed successfully!\n\n📦 ${quantity} tablets of ${medicine.name}\n💰 Total: ₹${totalPrice.toFixed(2)}\n👤 Customer: ${customerName}\n📱 Mobile: ${mobile || 'Not provided'}\n\n🚀 Your order will be ready soon!`,
-                                    hi: `✅ ऑर्डर सफलतापूर्वक दिया गया!\n\n📦 ${medicine.name} की ${quantity} गोलियां\n💰 कुल: ₹${totalPrice.toFixed(2)}\n👤 ग्राहक: ${customerName}\n📱 मोबाइल: ${mobile || 'प्रदान नहीं किया गया'}\n\n🚀 आपका ऑर्डर जल्द ही तैयार हो जाएगा!`,
-                                    mr: `✅ ऑर्डर यशस्वीरित्या दिला!\n\n📦 ${medicine.name} च्या ${quantity} गोळ्या\n💰 एकूण: ₹${totalPrice.toFixed(2)}\n👤 ग्राहक: ${customerName}\n📱 मोबाइल: ${mobile || 'पुरवले नाही'}\n\n🚀 तुमचा ऑर्डर लवकरच तयार होईल!`
-                                };
-                                reply = successMsg[detectedLang];
-                                stage = 'placed';
-                            } catch (txErr) {
-                                await db.query('ROLLBACK');
-                                throw txErr;
-                            }
-                        }
-                    } else {
-                        // Use medicineName which is in scope here
-                        const notFoundMsg = {
-                            en: `❌ Sorry, "${medicineName}" is not available in our inventory.\n\n💡 Available medicines include: Paracetamol, Aspirin, Crocin, Dolo, etc.\n\nPlease check the spelling or ask for another medicine.`,
-                            hi: `❌ क्षमा करें, "${medicineName}" हमारे इन्वेंटरी में उपलब्ध नहीं है।\n\n💡 उपलब्ध दवाएं: पैरासिटामोल, एस्पिरिन, क्रोसिन, डोलो, आदि।\n\nकृपया वर्तनी जांचें या कोई दूसरी दवा पूछें।`,
-                            mr: `❌ क्षमस्वर, "${medicineName}" आमच्या इन्व्हेन्टरीमध्ये उपलब्ध नाही.\n\n💡 उपलब्ध औषधे: पॅरासिटामोल, एस्पिरिन, क्रोसिन, डोलो, इत्यादी.\n\nकृपया स्पेलिंग तपासा किंवा दुसरे औषध विचारा.`
-                        };
-                        reply = notFoundMsg[detectedLang];
-                        stage = 'blocked';
-                    }
-                } else {
-                    const quantityMsg = {
-                        en: "🤔 I need more specific information. Please tell me both the medicine name and quantity.\n\nExample: '10 paracetamol' or 'paracetamol 10 tablets'",
-                        hi: "🤔 मुझे अधिक विशिष्ट जानकारी चाहिए। कृपया मुझे दवा का नाम और मात्रा दोनों बताएं।\n\nउदाहरण: '10 पैरासिटामोल' या 'पैरासिटामोल 10 गोलियां'",
-                        mr: "🤔 मला अधिक विशिष्ट माहिती आवश्यक आहे. कृपया मला औषधाचे नाव आणि प्रमाण दोन्ही सांगा.\n\nउदाहरण: '10 पॅरासिटामोल' किंवा 'पॅरासिटामोल 10 गोळ्या'"
-                    };
-                    reply = quantityMsg[detectedLang];
-                }
-            } else if (lang.finalize.test(message) && orderSession.medicines.length > 0) {
-                // Show order summary and ask for user details
-                let summary = "📋 ORDER SUMMARY\n\n";
-                let grandTotal = 0;
-                
-                orderSession.medicines.forEach((med, index) => {
-                    summary += `${index + 1}. 💊 ${med.name} (${med.quantity} tablets)\n`;
-                    summary += `   Price: ₹${med.price_per_tablet} × ${med.quantity} = ₹${med.total_price.toFixed(2)}\n`;
-                    grandTotal += med.total_price;
-                });
-                
-                summary += `\n💰 GRAND TOTAL: ₹${grandTotal.toFixed(2)}\n\n`;
-                summary += "📝 Please provide your details:\n";
-                summary += "• Name\n";
-                summary += "• Age\n";
-                summary += "• Mobile number\n\n";
-                summary += "Example: 'My name is Rahul, age 25, mobile 9876543210'";
-                
-                reply = summary;
-                stage = 'user_details';
-            } else if (lang.userDetails.test(message) && orderSession.medicines.length > 0) {
-                // Extract user details and finalize order
+            let quantity = null;
+            let medicineName = null;
+            
+            if (quantFirst) {
+                quantity = parseInt(quantFirst[1]);
+                medicineName = quantFirst[2].trim();
+            } else if (medFirst) {
+                medicineName = medFirst[1].trim();
+                quantity = parseInt(medFirst[2]);
+            } else {
+                // Try to extract from keywords
+                const medicineOnlyPattern = /(?:need|buy|want|order|give|get|add|for|pill|tab)\s+([a-z\d\s]+)/i;
+                const medOnlyMatch = message.match(medicineOnlyPattern);
+                medicineName = medOnlyMatch ? medOnlyMatch[1].trim() : message.trim();
+            }
+
+            // Simple cleanup
+            if (medicineName) {
+                medicineName = medicineName.replace(/(?:tablet|pills?|capsules?|गोलियां|गोली|टैबलेट|गोळ्या|गोळी|टॅबलेट|tablets|tabs)/gi, '').trim();
+            }
+
+            // Check if input is just a number (for ask_quantity stage)
+            const justNumber = message.match(/^\d+$/);
+            if (justNumber && orderSession.stage === 'ask_quantity' && orderSession.pendingMedicine) {
+                medicineName = orderSession.pendingMedicine;
+                quantity = parseInt(justNumber[0]);
+            }
+
+            // 1. Handle user details if in that stage
+            const userDetailsMatch = (lang.userDetails.test(message) || /\d{10}/.test(message)) && orderSession.medicines.length >= 1;
+            
+            if (userDetailsMatch && orderSession.stage === 'user_details') {
                 const nameMatch = message.match(/(?:name is|i am|my name)\s+([a-z\s]+)/i) || 
                                  message.match(/(?:नाम है|मैं हूं)\s+([a-z\s]+)/i) ||
                                  message.match(/(?:नाव आहे|मी आहे)\s+([a-z\s]+)/i);
@@ -928,78 +955,145 @@ app.post('/chat', async (req, res) => {
                 const age = ageMatch ? parseInt(ageMatch[1]) : null;
                 const mobile = mobileMatch ? mobileMatch[1] : null;
                 
-                // Calculate total
-                let grandTotal = 0;
-                orderSession.medicines.forEach(med => {
-                    grandTotal += med.total_price;
-                });
-                
-                // Create order in database
                 await db.query('BEGIN');
                 try {
+                    let grandTotal = orderSession.medicines.reduce((sum, m) => sum + m.total_price, 0);
                     const orderResult = await db.query(
                         'INSERT INTO orders (customer_name, mobile, total_price, status, customer_age) VALUES ($1, $2, $3, $4, $5) RETURNING id',
                         [customerName, mobile, grandTotal, 'delivered', age]
                     );
                     const orderId = orderResult.rows[0].id;
                     
-                    // Add order items
                     for (const med of orderSession.medicines) {
                         await db.query(
                             'INSERT INTO order_items (order_id, medicine_id, quantity, price_at_time) VALUES ($1, $2, $3, $4)',
                             [orderId, med.id, med.quantity, med.price_per_tablet]
                         );
-                        
-                        // Update stock
-                        const medicineResult = await db.query('SELECT * FROM medicines WHERE id = $1', [med.id]);
-                        const medicine = medicineResult.rows[0];
-                        const tabletsLeft = medicine.total_tablets - med.quantity;
-                        const newPackets = Math.floor(tabletsLeft / medicine.tablets_per_packet);
-                        
-                        await db.query(
-                            'UPDATE medicines SET stock_packets = $1 WHERE id = $2',
-                            [newPackets, med.id]
-                        );
+                        await db.query('UPDATE medicines SET stock_packets = stock_packets - ($1::float / tablets_per_packet) WHERE id = $2', [med.quantity, med.id]);
                     }
-                    
                     await db.query('COMMIT');
                     
-                    // Generate detailed receipt
-                    let receipt = `✅ ORDER PLACED SUCCESSFULLY!\n\n`;
-                    receipt += `📋 ORDER ID: #${orderId}\n`;
-                    receipt += `👤 CUSTOMER: ${customerName}\n`;
-                    receipt += `📱 MOBILE: ${mobile || 'Not provided'}\n`;
-                    receipt += `🎂 AGE: ${age || 'Not provided'}\n`;
-                    receipt += `📅 DATE: ${new Date().toLocaleDateString()}\n\n`;
-                    receipt += `📦 ORDER DETAILS:\n`;
+                    let receipt = `✅ **ORDER PLACED SUCCESSFULLY!**\n\n`;
+                    receipt += `📋 **ORDER ID:** #${orderId}\n`;
+                    receipt += `👤 **CUSTOMER:** ${customerName}\n`;
+                    receipt += `📱 **MOBILE:** ${mobile || 'Not provided'}\n\n`;
+                    receipt += `📦 **ORDER DETAILS:**\n`;
                     
                     orderSession.medicines.forEach((med, index) => {
-                        receipt += `\n${index + 1}. ${med.name}\n`;
-                        receipt += `   Quantity: ${med.quantity} tablets\n`;
-                        receipt += `   Unit Price: ₹${med.price_per_tablet}\n`;
+                        receipt += `\n${index + 1}. **${med.name}**\n`;
+                        receipt += `   📝 ${med.description || 'No description available'}\n`;
+                        receipt += `   Qty: ${med.quantity} tablets | Price: ₹${med.price_per_tablet}\n`;
                         receipt += `   Subtotal: ₹${med.total_price.toFixed(2)}\n`;
                     });
                     
-                    receipt += `\n💰 TOTAL AMOUNT: ₹${grandTotal.toFixed(2)}\n\n`;
-                    receipt += `🚀 Your order will be ready soon!\n`;
-                    receipt += `📞 For any queries, please contact: 9876543210`;
+                    receipt += `\n💰 **TOTAL AMOUNT:** ₹${grandTotal.toFixed(2)}\n\n`;
+                    receipt += `🚀 Your order will be ready soon!`;
                     
                     reply = receipt;
                     stage = 'order_completed';
-                    
-                    // Reset session
                     orderSession.medicines = [];
-                    orderSession.userConfirmed = false;
-                    
+                    return res.json({ reply, stage, sessionState: orderSession });
                 } catch (txErr) {
                     await db.query('ROLLBACK');
                     throw txErr;
                 }
+            }
+
+            // 2. Handle Medicine Selection
+            if (medicineName && medicineName.length > 2) {
+                const medicineResult = await db.query(
+                    'SELECT * FROM medicines WHERE (LOWER(name) LIKE LOWER($1) OR LOWER(brand) LIKE LOWER($1)) AND is_deleted = FALSE LIMIT 1',
+                    [`%${medicineName}%`]
+                );
+                
+                if (medicineResult.rows.length > 0) {
+                    const medicine = medicineResult.rows[0];
+                    intent_verified = true;
+                    safety_checked = true;
+
+                    if (quantity) {
+                        const price = parseFloat(medicine.price_per_tablet) || 10;
+                        const totalPrice = quantity * price;
+                        const total_tablets = medicine.stock_packets * medicine.tablets_per_packet;
+                        
+                        if (total_tablets < quantity) {
+                            reply = `⚠️ I found **${medicine.name}**, but only ${total_tablets} tablets are available. Would you like to take ${total_tablets} instead?`;
+                            stage = 'blocked_stock';
+                        } else {
+                            stock_checked = true;
+                            orderSession.medicines.push({
+                                id: medicine.id,
+                                name: medicine.name,
+                                description: medicine.description,
+                                quantity: quantity,
+                                price_per_tablet: price,
+                                total_price: totalPrice
+                            });
+                            
+                            if (orderSession.medicines.length === 1 && !lang.addMore.test(message)) {
+                                reply = `✅ Added **${medicine.name}** (${quantity} tablets) to your cart.\n\n💰 Price: ₹${price} per tablet\n💰 Total: ₹${totalPrice.toFixed(2)}\n\nWould you like to **add more** medicines or **finalize** this order?`;
+                            } else {
+                                reply = `✅ Added **${medicine.name}** to your cart. Total items: ${orderSession.medicines.length}.\n\nSay **'finalize'** to place the order or keep adding!`;
+                            }
+                            stage = 'medicine_added';
+                            orderSession.stage = 'medicine_added';
+                            orderSession.pendingMedicine = null;
+                        }
+                    } else {
+                        reply = `💊 I found **${medicine.name}** (₹${medicine.price_per_tablet}/tablet).\n\n**How many tablets** do you need?`;
+                        stage = 'ask_quantity';
+                        orderSession.stage = 'ask_quantity';
+                        orderSession.pendingMedicine = medicine.name;
+                    }
+                } else if (!justNumber) {
+                    // Suggest alternatives from stock
+                    const alternatives = await db.query(
+                        'SELECT name, price_per_tablet FROM medicines WHERE stock_packets > 0 AND is_deleted = FALSE ORDER BY RANDOM() LIMIT 3'
+                    );
+                    let suggestionStr = alternatives.rows.map(a => `• ${a.name} (₹${a.price_per_tablet})`).join('\n');
+                    reply = `❌ Sorry, I couldn't find "**${medicineName}**" in our stock.\n\n💡 **Do you mean one of these available medicines?**\n${suggestionStr}\n\nPlease check the spelling or select from above.`;
+                    stage = 'suggesting';
+                }
+            } else if (lang.finalize.test(message) && orderSession.medicines.length > 0) {
+                if (orderSession.medicines.length >= 2) {
+                    let summary = `📋 **ORDER SUMMARY (${orderSession.medicines.length} items)**\n\n`;
+                    let grandTotal = 0;
+                    orderSession.medicines.forEach((med, i) => {
+                        summary += `${i+1}. ${med.name} (${med.quantity} tabs) - ₹${med.total_price.toFixed(2)}\n`;
+                        grandTotal += med.total_price;
+                    });
+                    summary += `\n💰 **TOTAL: ₹${grandTotal.toFixed(2)}**\n\n📝 Please provide your **Name, Age, and Mobile number** to confirm.`;
+                    reply = summary;
+                    stage = 'user_details';
+                    orderSession.stage = 'user_details';
+                } else {
+                    const med = orderSession.medicines[0];
+                    await db.query('BEGIN');
+                    try {
+                        const orderResult = await db.query(
+                            'INSERT INTO orders (customer_name, total_price, status) VALUES ($1, $2, $3) RETURNING id',
+                            ['Guest User', med.total_price, 'delivered']
+                        );
+                        const orderId = orderResult.rows[0].id;
+                        await db.query(
+                            'INSERT INTO order_items (order_id, medicine_id, quantity, price_at_time) VALUES ($1, $2, $3, $4)',
+                            [orderId, med.id, med.quantity, med.price_per_tablet]
+                        );
+                        await db.query('UPDATE medicines SET stock_packets = stock_packets - ($1::float / tablets_per_packet) WHERE id = $2', [med.quantity, med.id]);
+                        await db.query('COMMIT');
+                        reply = `✅ **ORDER PLACED!** ✨\n\n📦 **${med.name}** (${med.quantity} tablets)\n💰 **Total to pay: ₹${med.total_price.toFixed(2)}**\n\n🚀 Order ID: #${orderId}. Thank you for choosing PharmaAI!`;
+                        stage = 'order_completed';
+                        orderSession.medicines = [];
+                    } catch (e) {
+                        await db.query('ROLLBACK');
+                        throw e;
+                    }
+                }
             } else {
                 const defaultMsg = {
-                    en: "👋 Welcome! I'm your PharmaAI assistant.\n\n💊 I can help you order medicines. Just tell me:\n• Medicine name and quantity (e.g., '10 paracetamol')\n• Your name and mobile number\n\nWhat would you like to order today?",
-                    hi: "👋 स्वागत है! मैं आपका फार्मासिस्टी AI सहायक हूं।\n\n💊 मैं आपको दवाएं ऑर्डर करने में मदद कर सकता हूं। बस मुझे बताएं:\n• दवा का नाम और मात्रा (जैसे, '10 पैरासिटामोल')\n• आपका नाम और मोबाइल नंबर\n\nआज आप क्या ऑर्डर करना चाहेंगे?",
-                    mr: "👋 स्वागत! मी तुमचा फार्मासिस्टी AI सहायक आहे.\n\n💊 मी तुम्हाला औषधे ऑर्डर करण्यात मदत करू शकतो. फक्त मला सांगा:\n• औषधाचे नाव आणि प्रमाण (उदा., '10 पॅरासिटामोल')\n• तुमचे नाव आणि मोबाइल क्रमांक\n\nआज तुम्ही काय ऑर्डर करू इच्छिता?"
+                    en: "👋 I'm your PharmaAI assistant. I can help you order medicines.\n\nJust tell me: **Medicine Name and Quantity** (e.g., '10 Paracetamol' or 'Dolo 5')\n\nWhat would you like to order today?",
+                    hi: "👋 मैं आपका फार्मासिस्टी AI सहायक हूं। मैं दवाएं ऑर्डर करने में मदद कर सकता हूं।\n\nबस मुझे बताएं: **दवा का नाम और मात्रा** (जैसे, '10 पैरासिटामोल')\n\nआज आप क्या ऑर्डर करना चाहेंगे?",
+                    mr: "👋 मी तुमचा फार्मासिस्टी AI सहायक आहे. मी औषधे ऑर्डर करण्यास मदत करू शकतो.\n\nफक्त मला सांगा: **औषधाचे नाव आणि प्रमाण** (उदा., '10 पॅरासिटामोल')\n\nआज तुम्ही काय ऑर्डर करू इच्छिता?"
                 };
                 reply = defaultMsg[detectedLang];
             }
@@ -1013,7 +1107,16 @@ app.post('/chat', async (req, res) => {
             safety_checked,
             stock_checked,
             sessionState: orderSession,
-            thinking: `FREE AI: Lang=${detectedLang}, Stage=${stage}, Medicines in cart: ${orderSession.medicines.length}, Processed successfully`
+            thinking: `FREE AI CHAIN OF THOUGHT: 
+1. Language detected: ${detectedLang}
+2. Current stage: ${stage}
+3. Medicines in cart: ${orderSession.medicines.length}
+4. User message: "${message}"
+5. Intent verified: ${intent_verified}
+6. Safety checked: ${safety_checked}
+7. Stock checked: ${stock_checked}
+8. Next action: ${stage === 'order_completed' ? 'Order completed successfully' : stage === 'user_details' ? 'Waiting for user details' : 'Processing order'}
+9. Session active: ${orderSession.medicines.length > 0}`
         });
         
     } catch (error) {

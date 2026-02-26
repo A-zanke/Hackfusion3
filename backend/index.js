@@ -417,13 +417,12 @@ app.get('/api/medicines/search', async (req, res) => {
         }
         
         const searchQuery = `
-            SELECT id, name, brand, price_per_tablet, total_tablets, tablets_per_packet, description
+            SELECT id, name, brand, price_per_tablet, description
             FROM medicines 
             WHERE is_deleted = FALSE 
             AND (
                 name ILIKE $1 OR
                 brand ILIKE $1 OR
-                category ILIKE $1 OR
                 description ILIKE $1
             )
             ORDER BY 
@@ -441,14 +440,39 @@ app.get('/api/medicines/search', async (req, res) => {
             name: med.name,
             brand: med.brand,
             price: med.price_per_tablet,
-            stock: med.total_tablets,
-            tablets_per_packet: med.tablets_per_packet,
             description: med.description
         }));
         
         res.json(medicines);
     } catch (err) {
         console.error('Medicine search error:', err);
+        console.error('Search query:', searchQuery);
+        console.error('Search term:', searchTerm);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Get single medicine with full pricing from DB
+app.get('/api/medicines/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Validate that id is a valid integer
+        const medicineId = parseInt(id, 10);
+        if (isNaN(medicineId)) {
+            return res.status(400).json({ error: 'Invalid medicine ID' });
+        }
+        
+        const result = await db.query(
+            'SELECT * FROM medicines WHERE id = $1 AND is_deleted = FALSE',
+            [medicineId]
+        );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Medicine not found' });
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error fetching medicine by id:', err);
         res.status(500).json({ error: 'Database error' });
     }
 });

@@ -131,36 +131,79 @@ const Orders = () => {
         updateDropdownPos();
     }, [medicines, updateDropdownPos]);
 
-    // Add medicine to quotation
+    // Add medicine to quotation (always fetch latest price from DB)
     const addMedicineToQuotation = (medicine) => {
         const existingItem = quotationItems.find(item => item.id === medicine.id);
         
         if (existingItem) {
             setQuotationItems(prev => prev.map(item => 
                 item.id === medicine.id 
-                    ? { ...item, totalPackets: item.totalPackets + 1 }
+                    ? { ...item, totalPackets: item.totalPackets + 1, totalPrice: item.packetPrice * (item.totalPackets + 1) }
                     : item
             ));
-        } else {
-            const basePacketPrice = Number(
-                medicine.price_per_packet ?? (
-                    Number(medicine.price_per_tablet || 0) * Number(medicine.tablets_per_packet || 0)
-                )
-            ) || 0;
-            setQuotationItems(prev => [...prev, {
-                id: medicine.id,
-                name: medicine.name,
-                brand: medicine.brand || 'Generic',
-                batchNumber: medicine.batch_number || 'BATCH001',
-                totalPackets: 1,
-                packetPrice: basePacketPrice,
-                totalPrice: basePacketPrice * 1
-            }]);
+            return;
         }
-        
-        setSearchTerm('');
-        setSearchResults([]);
-        setShowSearch(false);
+
+        // Always fetch canonical data from backend so we use real packet price from inventory
+        axios.get(`${API_BASE}/medicines/${medicine.id}`)
+            .then(res => {
+                const m = res.data || medicine;
+
+                const perTablet =
+                    Number(
+                        m.price_per_tablet ??
+                        m.price ??
+                        0
+                    ) || 0;
+                const tabletsPerPacket = Number(m.tablets_per_packet || medicine.tablets_per_packet || 0);
+
+                const basePacketPrice = Number(
+                    m.price_per_packet ??
+                    (perTablet && tabletsPerPacket ? perTablet * tabletsPerPacket : 0)
+                ) || 0;
+
+                setQuotationItems(prev => [...prev, {
+                    id: m.id || medicine.id,
+                    name: m.name || medicine.name,
+                    brand: m.brand || medicine.brand || 'Generic',
+                    batchNumber: m.batch_number || medicine.batch_number || 'BATCH001',
+                    totalPackets: 1,
+                    tablets_per_packet: tabletsPerPacket || undefined,
+                    packetPrice: basePacketPrice,
+                    totalPrice: basePacketPrice
+                }]);
+            })
+            .catch(() => {
+                // Fallback to existing in-memory data if API lookup fails
+                const perTablet =
+                    Number(
+                        medicine.price_per_tablet ??
+                        medicine.price ??
+                        0
+                    ) || 0;
+                const tabletsPerPacket = Number(medicine.tablets_per_packet || 0);
+
+                const basePacketPrice = Number(
+                    medicine.price_per_packet ??
+                    (perTablet && tabletsPerPacket ? perTablet * tabletsPerPacket : 0)
+                ) || 0;
+
+                setQuotationItems(prev => [...prev, {
+                    id: medicine.id,
+                    name: medicine.name,
+                    brand: medicine.brand || 'Generic',
+                    batchNumber: medicine.batch_number || 'BATCH001',
+                    totalPackets: 1,
+                    tablets_per_packet: tabletsPerPacket || undefined,
+                    packetPrice: basePacketPrice,
+                    totalPrice: basePacketPrice
+                }]);
+            })
+            .finally(() => {
+                setSearchTerm('');
+                setSearchResults([]);
+                setShowSearch(false);
+            });
     };
 
     // Update quantity
@@ -806,7 +849,7 @@ const Orders = () => {
                                                                 }}>{med.category}</div>
                                                             )}
                                                             <div style={{ fontSize: '12px', color: '#f97316', fontWeight: 700 }}>
-                                                                ₹{med.price_per_tablet}/tablet
+                                                                ₹{(med.price_per_tablet ?? med.price ?? 0)}/tablet
                                                             </div>
                                                         </div>
                                                         <div style={{

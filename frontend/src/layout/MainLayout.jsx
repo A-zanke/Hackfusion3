@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from '../ui/Sidebar';
 import { Bell, Package, AlertTriangle, ShieldCheck, TrendingUp, Clock, CheckCircle, Info, Bot } from 'lucide-react';
@@ -19,6 +19,7 @@ const MainLayout = () => {
     const navigate = useNavigate();
     const [currentTime, setCurrentTime] = useState(new Date());
     const [showNotifications, setShowNotifications] = useState(false);
+    const notifRef = useRef(null);
 
     const today = new Date();
     const dateStr = today.toLocaleDateString('en-GB', {
@@ -58,6 +59,19 @@ const MainLayout = () => {
         return () => clearInterval(timer);
     }, []);
 
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (notifRef.current && !notifRef.current.contains(e.target)) {
+                setShowNotifications(false);
+            }
+        };
+        if (showNotifications) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showNotifications]);
+
     return (
         <div className="app-container">
             <Sidebar />
@@ -82,13 +96,13 @@ const MainLayout = () => {
 
                         <button
                             className="nav-chat-toggle"
-                            onClick={() => navigate('/chat')}
+                            onClick={() => navigate('/ai-chat')}
                         >
                             <Bot size={18} />
                             <span>AI Chat</span>
                         </button>
 
-                        <div className="notification-wrapper">
+                        <div className="notification-wrapper" ref={notifRef}>
                             <button
                                 className="notification-btn"
                                 onClick={() => setShowNotifications((prev) => !prev)}

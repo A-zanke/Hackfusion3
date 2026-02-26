@@ -1,0 +1,11 @@
+﻿[dotenv@17.3.1] injecting env (6) from .env -- tip: ≡ƒ¢í∩╕Å auth for agents: https://vestauth.com
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ≡ƒöÉ prevent building .env in docker: https://dotenvx.com/prebuild
+DEBUG 1: App initialized
+DEBUG 2: Calling initializeDatabase
+DEBUG 3: initializeDatabase called
+DEBUG: Reached the end of index.js
+Server is running on port 5000
+Connected to the PostgreSQL database
+Connected to the PostgreSQL database
+Γ£à Users table initialized
+Γ£à Database columns updated

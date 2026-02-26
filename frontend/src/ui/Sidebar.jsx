@@ -17,7 +17,7 @@ const navItems = [
     { to: '/inventory', icon: Package, label: 'Inventory' },
     { to: '/orders', icon: ShoppingCart, label: 'Orders' },
     { to: '/bin', icon: Trash2, label: 'Bin' },
-    { to: '/chat', icon: MessageSquare, label: 'AI Chat' },
+    { to: '/ai-chat', icon: MessageSquare, label: 'AI Chat' },
     { to: '/trace-logs', icon: FileText, label: 'Trace Logs' },
     { to: '/admin', icon: ShieldCheck, label: 'Admin Hub' },
 ];
@@ -64,16 +64,16 @@ const Sidebar = () => {
                 <div className="sidebar-profile-card">
                     <div className="profile-avatar">AD</div>
                     <div>
-                        <p className="profile-name">Rajesh Gupta</p>
-                        <p className="profile-role">Admin · Authenticated</p>
-                    </div>
-                </div>
+                        <p className="profile-name">Administrator</p>
+                        <p className="profile-role">Authenticated</p>
+                    </div >
+                </div >
                 <button onClick={handleSignOut} className="signout-btn">
                     <LogOut size={16} />
                     <span>Sign Out</span>
                 </button>
-            </div>
-        </aside>
+            </div >
+        </aside >
     );
 };
 

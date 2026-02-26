@@ -12,7 +12,7 @@ if (process.env.DATABASE_URL) {
             password: decodeURIComponent(url.password),
             host: url.hostname,
             port: url.port,
-            database: url.pathname.split('/')[1],
+            database: decodeURIComponent(url.pathname.split('/')[1]),
             ssl: false // Explicitly disable if not needed
         };
     } catch (e) {

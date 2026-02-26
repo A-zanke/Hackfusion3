@@ -1,0 +1,274 @@
+[2026-02-25T19:57:53.306Z] === NEW REQUEST ===
+[2026-02-25T19:57:53.314Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T19:57:53.327Z] Message: "Heparin Injection "
+[2026-02-25T19:57:53.341Z] Persisted session: undefined
+[2026-02-25T19:57:53.353Z] Starting new session
+[2026-02-25T19:57:53.384Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-25T19:57:53.398Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-25T19:57:53.409Z] Stage: initial
+[2026-02-25T19:57:53.416Z] Pending medicine: null
+[2026-02-25T19:57:53.421Z] Message: "Heparin Injection "
+[2026-02-25T19:57:53.424Z] Is digits: false
+[2026-02-25T19:57:53.436Z] Condition match: false
+[2026-02-25T19:57:53.438Z] === NORMAL MESSAGE ===
+[2026-02-25T19:57:53.440Z] Message: "Heparin Injection "
+[2026-02-25T19:57:53.450Z] Stage: initial
+[2026-02-25T19:57:53.453Z] Pending medicine: null
+[2026-02-25T19:57:53.458Z] Parsed items: [{"name":"Heparin Injection","quantity":null}]
+[2026-02-25T19:57:53.461Z] Setting pending medicine to: Heparin Injection
+[2026-02-25T19:57:56.166Z] === NEW REQUEST ===
+[2026-02-25T19:57:56.266Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T19:57:56.293Z] Message: "2"
+[2026-02-25T19:57:56.299Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":"Heparin Injection","pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-25T19:57:56.314Z] Loaded existing session - Stage: ask_quantity, Pending: Heparin Injection
+[2026-02-25T19:57:56.320Z] Top-of-handler state: stage=ask_quantity, pending=Heparin Injection
+[2026-02-25T19:57:56.325Z] Entering EARLY quantity branch with qty='2' for pending='Heparin Injection'
+[2026-02-25T19:57:56.335Z] DB match for pending: Heparin Injection
+[2026-02-25T19:57:56.339Z] EARLY ADD✅ Heparin Injection x2 | Cart: ₹5.34
+[2026-02-25T19:58:03.924Z] === NEW REQUEST ===
+[2026-02-25T19:58:03.946Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T19:58:03.954Z] Message: "Y"
+[2026-02-25T19:58:03.959Z] Persisted session: {"sessionState":{"medicines":[{"id":2631,"name":"Heparin Injection","quantity":2,"price_per_tablet":"2.67","total_price":5.34}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-25T19:58:03.959Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-25T19:58:03.960Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-25T19:58:03.961Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-25T19:58:03.965Z] Stage: initial
+[2026-02-25T19:58:03.966Z] Pending medicine: null
+[2026-02-25T19:58:03.967Z] Message: "Y"
+[2026-02-25T19:58:03.974Z] Is digits: false
+[2026-02-25T19:58:03.988Z] Condition match: false
+[2026-02-25T19:58:03.995Z] === NORMAL MESSAGE ===
+[2026-02-25T19:58:03.998Z] Message: "Y"
+[2026-02-25T19:58:03.999Z] Stage: initial
+[2026-02-25T19:58:04.000Z] Pending medicine: null
+[2026-02-25T19:58:04.001Z] Parsed items: [{"name":"Y","quantity":null}]
+[2026-02-25T19:58:04.002Z] Setting pending medicine to: Y
+[2026-02-25T19:58:28.367Z] === NEW REQUEST ===
+[2026-02-25T19:58:28.368Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T19:58:28.369Z] Message: "Paracetamol apodiscounter 650 mg Tabletten  Qty 3"
+[2026-02-25T19:58:28.370Z] Persisted session: {"sessionState":{"medicines":[{"id":2631,"name":"Heparin Injection","quantity":2,"price_per_tablet":"2.67","total_price":5.34}],"stage":"ask_quantity","pendingMedicine":"Y","pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-25T19:58:28.373Z] Loaded existing session - Stage: ask_quantity, Pending: Y
+[2026-02-25T19:58:28.374Z] Top-of-handler state: stage=ask_quantity, pending=Y
+[2026-02-25T19:58:28.375Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-25T19:58:28.376Z] Stage: ask_quantity
+[2026-02-25T19:58:28.376Z] Pending medicine: Y
+[2026-02-25T19:58:28.377Z] Message: "Paracetamol apodiscounter 650 mg Tabletten  Qty 3"
+[2026-02-25T19:58:28.378Z] Is digits: false
+[2026-02-25T19:58:28.379Z] Condition match: false
+[2026-02-25T19:58:28.380Z] === NORMAL MESSAGE ===
+[2026-02-25T19:58:28.381Z] Message: "Paracetamol apodiscounter 650 mg Tabletten  Qty 3"
+[2026-02-25T19:58:28.382Z] Stage: ask_quantity
+[2026-02-25T19:58:28.383Z] Pending medicine: Y
+[2026-02-25T19:58:28.384Z] Parsed items: [{"name":"Paracetamol apodiscounter 650 ten Qty","quantity":3}]
+[2026-02-25T19:58:36.710Z] === NEW REQUEST ===
+[2026-02-25T19:58:36.711Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T19:58:36.712Z] Message: "Paracetamol apodiscounter 500 mg Tabletten  - 3"
+[2026-02-25T19:58:36.713Z] Persisted session: {"sessionState":{"medicines":[{"id":2631,"name":"Heparin Injection","quantity":2,"price_per_tablet":"2.67","total_price":5.34}],"stage":"ask_quantity","pendingMedicine":"Y","pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-25T19:58:36.714Z] Loaded existing session - Stage: ask_quantity, Pending: Y
+[2026-02-25T19:58:36.719Z] Top-of-handler state: stage=ask_quantity, pending=Y
+[2026-02-25T19:58:36.722Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-25T19:58:36.723Z] Stage: ask_quantity
+[2026-02-25T19:58:36.723Z] Pending medicine: Y
+[2026-02-25T19:58:36.724Z] Message: "Paracetamol apodiscounter 500 mg Tabletten  - 3"
+[2026-02-25T19:58:36.725Z] Is digits: false
+[2026-02-25T19:58:36.726Z] Condition match: false
+[2026-02-25T19:58:36.728Z] === NORMAL MESSAGE ===
+[2026-02-25T19:58:36.730Z] Message: "Paracetamol apodiscounter 500 mg Tabletten  - 3"
+[2026-02-25T19:58:36.734Z] Stage: ask_quantity
+[2026-02-25T19:58:36.735Z] Pending medicine: Y
+[2026-02-25T19:58:36.736Z] Parsed items: [{"name":"Paracetamol apodiscounter 500 ten","quantity":3}]
+[2026-02-25T19:58:43.782Z] === NEW REQUEST ===
+[2026-02-25T19:58:43.783Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T19:58:43.783Z] Message: "Paracetamol apodiscounter 500 mg Tabletten "
+[2026-02-25T19:58:43.784Z] Persisted session: {"sessionState":{"medicines":[{"id":2631,"name":"Heparin Injection","quantity":2,"price_per_tablet":"2.67","total_price":5.34}],"stage":"ask_quantity","pendingMedicine":"Y","pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-25T19:58:43.785Z] Loaded existing session - Stage: ask_quantity, Pending: Y
+[2026-02-25T19:58:43.785Z] Top-of-handler state: stage=ask_quantity, pending=Y
+[2026-02-25T19:58:43.788Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-25T19:58:43.790Z] Stage: ask_quantity
+[2026-02-25T19:58:43.791Z] Pending medicine: Y
+[2026-02-25T19:58:43.792Z] Message: "Paracetamol apodiscounter 500 mg Tabletten "
+[2026-02-25T19:58:43.793Z] Is digits: false
+[2026-02-25T19:58:43.797Z] Condition match: false
+[2026-02-25T19:58:43.798Z] === NORMAL MESSAGE ===
+[2026-02-25T19:58:43.799Z] Message: "Paracetamol apodiscounter 500 mg Tabletten "
+[2026-02-25T19:58:43.799Z] Stage: ask_quantity
+[2026-02-25T19:58:43.800Z] Pending medicine: Y
+[2026-02-25T19:58:43.802Z] Parsed items: [{"name":"Paracetamol apodiscounter 500 ten","quantity":null}]
+[2026-02-25T19:58:43.802Z] Setting pending medicine to: Paracetamol apodiscounter 500 ten
+[2026-02-25T19:58:47.437Z] === NEW REQUEST ===
+[2026-02-25T19:58:47.438Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T19:58:47.438Z] Message: "10"
+[2026-02-25T19:58:47.439Z] Persisted session: {"sessionState":{"medicines":[{"id":2631,"name":"Heparin Injection","quantity":2,"price_per_tablet":"2.67","total_price":5.34}],"stage":"ask_quantity","pendingMedicine":"Paracetamol apodiscounter 500 ten","pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-25T19:58:47.441Z] Loaded existing session - Stage: ask_quantity, Pending: Paracetamol apodiscounter 500 ten
+[2026-02-25T19:58:47.442Z] Top-of-handler state: stage=ask_quantity, pending=Paracetamol apodiscounter 500 ten
+[2026-02-25T19:58:47.443Z] Entering EARLY quantity branch with qty='10' for pending='Paracetamol apodiscounter 500 ten'
+[2026-02-25T19:58:47.452Z] Pending medicine not found in DB: Paracetamol apodiscounter 500 ten
+[2026-02-25T19:59:06.812Z] === NEW REQUEST ===
+[2026-02-25T19:59:06.813Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T19:59:06.816Z] Message: "Aspirin 75 mg Tabletten "
+[2026-02-25T19:59:06.817Z] Persisted session: {"sessionState":{"medicines":[{"id":2631,"name":"Heparin Injection","quantity":2,"price_per_tablet":"2.67","total_price":5.34}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-25T19:59:06.818Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-25T19:59:06.819Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-25T19:59:06.820Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-25T19:59:06.821Z] Stage: initial
+[2026-02-25T19:59:06.822Z] Pending medicine: null
+[2026-02-25T19:59:06.824Z] Message: "Aspirin 75 mg Tabletten "
+[2026-02-25T19:59:06.825Z] Is digits: false
+[2026-02-25T19:59:06.826Z] Condition match: false
+[2026-02-25T19:59:06.827Z] === NORMAL MESSAGE ===
+[2026-02-25T19:59:06.828Z] Message: "Aspirin 75 mg Tabletten "
+[2026-02-25T19:59:06.830Z] Stage: initial
+[2026-02-25T19:59:06.832Z] Pending medicine: null
+[2026-02-25T19:59:06.833Z] Parsed items: [{"name":"Aspirin 75 ten","quantity":null}]
+[2026-02-25T19:59:06.834Z] Setting pending medicine to: Aspirin 75 ten
+[2026-02-25T19:59:14.598Z] === NEW REQUEST ===
+[2026-02-25T19:59:14.599Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T19:59:14.600Z] Message: "2"
+[2026-02-25T19:59:14.601Z] Persisted session: {"sessionState":{"medicines":[{"id":2631,"name":"Heparin Injection","quantity":2,"price_per_tablet":"2.67","total_price":5.34}],"stage":"ask_quantity","pendingMedicine":"Aspirin 75 ten","pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-25T19:59:14.603Z] Loaded existing session - Stage: ask_quantity, Pending: Aspirin 75 ten
+[2026-02-25T19:59:14.608Z] Top-of-handler state: stage=ask_quantity, pending=Aspirin 75 ten
+[2026-02-25T19:59:14.611Z] Entering EARLY quantity branch with qty='2' for pending='Aspirin 75 ten'
+[2026-02-25T19:59:14.667Z] Pending medicine not found in DB: Aspirin 75 ten
+[2026-02-25T19:59:26.222Z] === NEW REQUEST ===
+[2026-02-25T19:59:26.223Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T19:59:26.224Z] Message: "aaaaaa "
+[2026-02-25T19:59:26.225Z] Persisted session: {"sessionState":{"medicines":[{"id":2631,"name":"Heparin Injection","quantity":2,"price_per_tablet":"2.67","total_price":5.34}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-25T19:59:26.228Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-25T19:59:26.229Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-25T19:59:26.231Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-25T19:59:26.234Z] Stage: initial
+[2026-02-25T19:59:26.235Z] Pending medicine: null
+[2026-02-25T19:59:26.236Z] Message: "aaaaaa "
+[2026-02-25T19:59:26.236Z] Is digits: false
+[2026-02-25T19:59:26.239Z] Condition match: false
+[2026-02-25T19:59:26.241Z] === NORMAL MESSAGE ===
+[2026-02-25T19:59:26.241Z] Message: "aaaaaa "
+[2026-02-25T19:59:26.242Z] Stage: initial
+[2026-02-25T19:59:26.242Z] Pending medicine: null
+[2026-02-25T19:59:26.243Z] Parsed items: [{"name":"aaaaaa","quantity":null}]
+[2026-02-25T19:59:26.245Z] Setting pending medicine to: aaaaaa
+[2026-02-25T19:59:28.377Z] === NEW REQUEST ===
+[2026-02-25T19:59:28.378Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T19:59:28.379Z] Message: "1"
+[2026-02-25T19:59:28.380Z] Persisted session: {"sessionState":{"medicines":[{"id":2631,"name":"Heparin Injection","quantity":2,"price_per_tablet":"2.67","total_price":5.34}],"stage":"ask_quantity","pendingMedicine":"aaaaaa","pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-25T19:59:28.381Z] Loaded existing session - Stage: ask_quantity, Pending: aaaaaa
+[2026-02-25T19:59:28.394Z] Top-of-handler state: stage=ask_quantity, pending=aaaaaa
+[2026-02-25T19:59:28.394Z] Entering EARLY quantity branch with qty='1' for pending='aaaaaa'
+[2026-02-25T19:59:28.398Z] DB match for pending: aaaaaa
+[2026-02-25T19:59:28.401Z] EARLY ADD✅ aaaaaa x1 | Cart: ₹10.34
+[2026-02-25T19:59:36.057Z] === NEW REQUEST ===
+[2026-02-25T19:59:36.058Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T19:59:36.059Z] Message: "N"
+[2026-02-25T19:59:36.061Z] Persisted session: {"sessionState":{"medicines":[{"id":2631,"name":"Heparin Injection","quantity":2,"price_per_tablet":"2.67","total_price":5.34},{"id":2727,"name":"aaaaaa","quantity":1,"price_per_tablet":"5.00","total_price":5}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-25T19:59:36.065Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-25T19:59:36.067Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-25T19:59:36.067Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-25T19:59:36.068Z] Stage: initial
+[2026-02-25T19:59:36.068Z] Pending medicine: null
+[2026-02-25T19:59:36.069Z] Message: "N"
+[2026-02-25T19:59:36.070Z] Is digits: false
+[2026-02-25T19:59:36.072Z] Condition match: false
+[2026-02-25T19:59:36.073Z] === NORMAL MESSAGE ===
+[2026-02-25T19:59:36.074Z] Message: "N"
+[2026-02-25T19:59:36.075Z] Stage: initial
+[2026-02-25T19:59:36.076Z] Pending medicine: null
+[2026-02-25T19:59:36.078Z] Parsed items: [{"name":"N","quantity":null}]
+[2026-02-25T19:59:36.079Z] Setting pending medicine to: N
+[2026-02-25T20:00:12.592Z] === NEW REQUEST ===
+[2026-02-25T20:00:12.593Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T20:00:12.594Z] Message: "aaaaaa "
+[2026-02-25T20:00:12.597Z] Persisted session: {"sessionState":{"medicines":[{"id":2631,"name":"Heparin Injection","quantity":2,"price_per_tablet":"2.67","total_price":5.34},{"id":2727,"name":"aaaaaa","quantity":1,"price_per_tablet":"5.00","total_price":5}],"stage":"ask_quantity","pendingMedicine":"N","pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-25T20:00:12.598Z] Loaded existing session - Stage: ask_quantity, Pending: N
+[2026-02-25T20:00:12.599Z] Top-of-handler state: stage=ask_quantity, pending=N
+[2026-02-25T20:00:12.600Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-25T20:00:12.600Z] Stage: ask_quantity
+[2026-02-25T20:00:12.601Z] Pending medicine: N
+[2026-02-25T20:00:12.601Z] Message: "aaaaaa "
+[2026-02-25T20:00:12.602Z] Is digits: false
+[2026-02-25T20:00:12.603Z] Condition match: false
+[2026-02-25T20:00:12.603Z] === NORMAL MESSAGE ===
+[2026-02-25T20:00:12.604Z] Message: "aaaaaa "
+[2026-02-25T20:00:12.604Z] Stage: ask_quantity
+[2026-02-25T20:00:12.605Z] Pending medicine: N
+[2026-02-25T20:00:12.605Z] Parsed items: [{"name":"aaaaaa","quantity":null}]
+[2026-02-25T20:00:12.605Z] Setting pending medicine to: aaaaaa
+[2026-02-25T20:00:14.665Z] === NEW REQUEST ===
+[2026-02-25T20:00:14.666Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T20:00:14.666Z] Message: "1"
+[2026-02-25T20:00:14.668Z] Persisted session: {"sessionState":{"medicines":[{"id":2631,"name":"Heparin Injection","quantity":2,"price_per_tablet":"2.67","total_price":5.34},{"id":2727,"name":"aaaaaa","quantity":1,"price_per_tablet":"5.00","total_price":5}],"stage":"ask_quantity","pendingMedicine":"aaaaaa","pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-25T20:00:14.670Z] Loaded existing session - Stage: ask_quantity, Pending: aaaaaa
+[2026-02-25T20:00:14.673Z] Top-of-handler state: stage=ask_quantity, pending=aaaaaa
+[2026-02-25T20:00:14.676Z] Entering EARLY quantity branch with qty='1' for pending='aaaaaa'
+[2026-02-25T20:00:14.680Z] DB match for pending: aaaaaa
+[2026-02-25T20:00:14.682Z] EARLY ADD✅ aaaaaa x1 | Cart: ₹15.34
+[2026-02-25T20:00:22.770Z] === NEW REQUEST ===
+[2026-02-25T20:00:22.771Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T20:00:22.772Z] Message: "N"
+[2026-02-25T20:00:22.773Z] Persisted session: {"sessionState":{"medicines":[{"id":2631,"name":"Heparin Injection","quantity":2,"price_per_tablet":"2.67","total_price":5.34},{"id":2727,"name":"aaaaaa","quantity":1,"price_per_tablet":"5.00","total_price":5},{"id":2727,"name":"aaaaaa","quantity":1,"price_per_tablet":"5.00","total_price":5}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-25T20:00:22.775Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-25T20:00:22.777Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-25T20:00:22.781Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-25T20:00:22.782Z] Stage: initial
+[2026-02-25T20:00:22.783Z] Pending medicine: null
+[2026-02-25T20:00:22.784Z] Message: "N"
+[2026-02-25T20:00:22.785Z] Is digits: false
+[2026-02-25T20:00:22.786Z] Condition match: false
+[2026-02-25T20:00:22.786Z] === NORMAL MESSAGE ===
+[2026-02-25T20:00:22.787Z] Message: "N"
+[2026-02-25T20:00:22.788Z] Stage: initial
+[2026-02-25T20:00:22.790Z] Pending medicine: null
+[2026-02-25T20:00:22.791Z] Parsed items: [{"name":"N","quantity":null}]
+[2026-02-25T20:00:22.794Z] Setting pending medicine to: N
+[2026-02-25T20:00:28.480Z] === NEW REQUEST ===
+[2026-02-25T20:00:28.481Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T20:00:28.482Z] Message: "1"
+[2026-02-25T20:00:28.483Z] Persisted session: {"sessionState":{"medicines":[{"id":2631,"name":"Heparin Injection","quantity":2,"price_per_tablet":"2.67","total_price":5.34},{"id":2727,"name":"aaaaaa","quantity":1,"price_per_tablet":"5.00","total_price":5},{"id":2727,"name":"aaaaaa","quantity":1,"price_per_tablet":"5.00","total_price":5}],"stage":"ask_quantity","pendingMedicine":"N","pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-25T20:00:28.488Z] Loaded existing session - Stage: ask_quantity, Pending: N
+[2026-02-25T20:00:28.489Z] Top-of-handler state: stage=ask_quantity, pending=N
+[2026-02-25T20:00:28.490Z] Entering EARLY quantity branch with qty='1' for pending='N'
+[2026-02-25T20:00:28.549Z] DB match for pending: Panthenol Spray, 46,3 mg/g Schaum zur Anwendung auf der Haut
+[2026-02-25T20:00:28.551Z] EARLY ADD✅ Panthenol Spray, 46,3 mg/g Schaum zur Anwendung auf der Haut x1 | Cart: ₹36.77
+[2026-02-25T20:00:35.653Z] === NEW REQUEST ===
+[2026-02-25T20:00:35.654Z] Session key: DEBUG_SESSION_KEY
+[2026-02-25T20:00:35.656Z] Message: "N"
+[2026-02-25T20:00:35.657Z] Persisted session: {"sessionState":{"medicines":[{"id":2631,"name":"Heparin Injection","quantity":2,"price_per_tablet":"2.67","total_price":5.34},{"id":2727,"name":"aaaaaa","quantity":1,"price_per_tablet":"5.00","total_price":5},{"id":2727,"name":"aaaaaa","quantity":1,"price_per_tablet":"5.00","total_price":5},{"id":2516,"name":"Panthenol Spray, 46,3 mg/g Schaum zur Anwendung auf der Haut","quantity":1,"price_per_tablet":"21.43","total_price":21.43}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-25T20:00:35.659Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-25T20:00:35.660Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-25T20:00:35.661Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-25T20:00:35.662Z] Stage: initial
+[2026-02-25T20:00:35.663Z] Pending medicine: null
+[2026-02-25T20:00:35.664Z] Message: "N"
+[2026-02-25T20:00:35.665Z] Is digits: false
+[2026-02-25T20:00:35.667Z] Condition match: false
+[2026-02-25T20:00:35.671Z] === NORMAL MESSAGE ===
+[2026-02-25T20:00:35.672Z] Message: "N"
+[2026-02-25T20:00:35.675Z] Stage: initial
+[2026-02-25T20:00:35.676Z] Pending medicine: null
+[2026-02-25T20:00:35.677Z] Parsed items: [{"name":"N","quantity":null}]
+[2026-02-25T20:00:35.678Z] Setting pending medicine to: N
+[2026-02-26T14:16:02.547Z] === NEW REQUEST ===
+[2026-02-26T14:16:02.549Z] Session key: DEBUG_SESSION_KEY
+[2026-02-26T14:16:02.549Z] Message: "Paracetamol apodiscounter 500 mg Tabletten "
+[2026-02-26T14:16:02.550Z] Persisted session: undefined
+[2026-02-26T14:16:02.551Z] Starting new session
+[2026-02-26T14:16:02.552Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-26T14:16:02.553Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-26T14:16:02.553Z] Stage: initial
+[2026-02-26T14:16:02.554Z] Pending medicine: null
+[2026-02-26T14:16:02.555Z] Message: "Paracetamol apodiscounter 500 mg Tabletten "
+[2026-02-26T14:16:02.557Z] Is digits: false
+[2026-02-26T14:16:02.558Z] Condition match: false
+[2026-02-26T14:16:02.559Z] === NORMAL MESSAGE ===
+[2026-02-26T14:16:02.559Z] Message: "Paracetamol apodiscounter 500 mg Tabletten "
+[2026-02-26T14:16:02.560Z] Stage: initial
+[2026-02-26T14:16:02.560Z] Pending medicine: null
+[2026-02-26T14:16:02.562Z] Parsed items: [{"name":"Paracetamol apodiscounter 500 ten","quantity":null}]
+[2026-02-26T14:16:02.563Z] Setting pending medicine to: Paracetamol apodiscounter 500 ten
+[2026-02-26T14:16:06.129Z] === NEW REQUEST ===
+[2026-02-26T14:16:06.129Z] Session key: DEBUG_SESSION_KEY
+[2026-02-26T14:16:06.130Z] Message: "1"
+[2026-02-26T14:16:06.131Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":"Paracetamol apodiscounter 500 ten","pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772130600000}
+[2026-02-26T14:16:06.131Z] Loaded existing session - Stage: ask_quantity, Pending: Paracetamol apodiscounter 500 ten
+[2026-02-26T14:16:06.132Z] Top-of-handler state: stage=ask_quantity, pending=Paracetamol apodiscounter 500 ten
+[2026-02-26T14:16:06.134Z] Entering EARLY quantity branch with qty='1' for pending='Paracetamol apodiscounter 500 ten'
+[2026-02-26T14:16:06.137Z] Pending medicine not found in DB: Paracetamol apodiscounter 500 ten

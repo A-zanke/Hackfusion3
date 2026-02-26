@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import axios from 'axios';
 import { 
     FileText, Plus, Minus, Search, Download, Save, 
@@ -49,6 +50,31 @@ const Orders = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [showSearch, setShowSearch] = useState(false);
+    const inputRef = useRef(null);
+    const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+    const updateDropdownPos = useCallback(() => {
+        if (inputRef.current) {
+            const rect = inputRef.current.getBoundingClientRect();
+            setDropdownPos({
+                top: rect.bottom + window.scrollY + 4,
+                left: rect.left + window.scrollX,
+                width: rect.width
+            });
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!showSearch) return;
+        updateDropdownPos();
+        const onScroll = () => updateDropdownPos();
+        const onResize = () => updateDropdownPos();
+        window.addEventListener('scroll', onScroll, true);
+        window.addEventListener('resize', onResize);
+        return () => {
+            window.removeEventListener('scroll', onScroll, true);
+            window.removeEventListener('resize', onResize);
+        };
+    }, [showSearch, updateDropdownPos]);
     
     // AI Recommendations
     const [suggestions, setSuggestions] = useState([]);
@@ -99,10 +125,11 @@ const Orders = () => {
             med.name.toLowerCase().includes(term.toLowerCase()) ||
             med.brand?.toLowerCase().includes(term.toLowerCase()) ||
             med.category?.toLowerCase().includes(term.toLowerCase())
-        ).slice(0, 5);
+        ).slice(0, 8);
         
         setSearchResults(filtered);
-    }, [medicines]);
+        updateDropdownPos();
+    }, [medicines, updateDropdownPos]);
 
     // Add medicine to quotation
     const addMedicineToQuotation = (medicine) => {
@@ -689,14 +716,13 @@ const Orders = () => {
                         
                         <div className="orders-input-row" style={{ position: 'relative', zIndex: 50 }}>
                             <input
+                                ref={inputRef}
                                 type="text"
                                 value={searchTerm}
                                 onChange={e => handleSearch(e.target.value)}
-                                onFocus={() => setShowSearch(true)}
-                                onBlur={() => setTimeout(() => setShowSearch(false), 200)}
+                                onFocus={() => { setShowSearch(true); updateDropdownPos(); }}
                                 placeholder="Search medicines by name, brand, or category..."
                                 className="orders-input"
-                                style={{ position: 'relative', zIndex: 51 }}
                             />
                             <button 
                                 onClick={addLowStockItems}
@@ -707,116 +733,102 @@ const Orders = () => {
                             </button>
 
                             {showSearch && searchResults.length > 0 && (
-                                <div className="search-results-container" style={{
-                                    position: 'absolute',
-                                    top: '100%',
-                                    left: '0',
-                                    right: '0',
-                                    marginTop: '4px',
-                                    zIndex: 100,
-                                    background: 'white',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '8px',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                                    width: '100%'
-                                }}>
-                                    <div className="search-dropdown-list" style={{ 
-                                        maxHeight: '250px', 
-                                        overflowY: 'auto',
-                                        padding: '4px'
-                                    }}>
-                                        {searchResults.map(med => (
-                                            <div
-                                                key={med.id}
-                                                onClick={() => {
-                                                    addMedicineToQuotation(med);
-                                                    setShowSearch(false);
-                                                }}
-                                                className="search-dropdown-item-enhanced"
-                                                style={{
-                                                    padding: '8px 12px',
-                                                    cursor: 'pointer',
-                                                    borderBottom: '1px solid #f1f5f9',
-                                                    transition: 'all 0.2s ease',
-                                                    gap: '8px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    background: 'white'
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    e.currentTarget.style.backgroundColor = '#f8fafc';
-                                                    e.currentTarget.style.borderColor = '#10b981';
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.currentTarget.style.backgroundColor = 'white';
-                                                    e.currentTarget.style.borderColor = '#f1f5f9';
-                                                }}
-                                            >
-                                                <div className="search-item-main" style={{ flex: 1, minWidth: 0 }}>
-                                                    <div className="search-item-name-enhanced" style={{ 
-                                                        fontWeight: '600', 
-                                                        color: '#1e293b', 
-                                                        fontSize: '13px', 
-                                                        marginBottom: '2px',
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis'
-                                                    }}>
-                                                        {med.name}
+                                ReactDOM.createPortal(
+                                    <>
+                                        <div
+                                            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0)', zIndex: 99998 }}
+                                            onClick={() => setShowSearch(false)}
+                                        />
+                                        <div
+                                            className="search-results-container"
+                                            style={{
+                                                position: 'absolute',
+                                                top: dropdownPos.top,
+                                                left: dropdownPos.left,
+                                                width: dropdownPos.width,
+                                                background: '#ffffff',
+                                                border: '1px solid #e2e8f0',
+                                                borderRadius: '12px',
+                                                boxShadow: '0 20px 60px rgba(15,23,42,0.2), 0 2px 10px rgba(15,23,42,0.08)',
+                                                zIndex: 99999,
+                                                overflow: 'hidden'
+                                            }}
+                                        >
+                                            <div className="search-dropdown-list" style={{ maxHeight: '360px', overflowY: 'auto', padding: '6px' }}>
+                                                {searchResults.map(med => (
+                                                    <div
+                                                        key={med.id}
+                                                        onClick={() => {
+                                                            addMedicineToQuotation(med);
+                                                            setShowSearch(false);
+                                                        }}
+                                                        className="search-dropdown-item-enhanced"
+                                                        style={{
+                                                            padding: '12px 14px',
+                                                            cursor: 'pointer',
+                                                            borderBottom: '1px solid #f1f5f9',
+                                                            transition: 'background 0.2s ease',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '12px',
+                                                            background: 'white'
+                                                        }}
+                                                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f8fafc'; }}
+                                                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'white'; }}
+                                                    >
+                                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                                            <div style={{
+                                                                fontWeight: 700,
+                                                                color: '#0f172a',
+                                                                fontSize: '14px',
+                                                                marginBottom: '2px',
+                                                                whiteSpace: 'nowrap',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis'
+                                                            }}>{med.name}</div>
+                                                            <div style={{
+                                                                fontSize: '12px',
+                                                                color: '#64748b',
+                                                                whiteSpace: 'nowrap',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis'
+                                                            }}>{med.brand}</div>
+                                                        </div>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', minWidth: '100px' }}>
+                                                            {med.category && (
+                                                                <div style={{
+                                                                    fontSize: '11px',
+                                                                    color: '#10b981',
+                                                                    background: '#ecfdf5',
+                                                                    padding: '3px 8px',
+                                                                    borderRadius: '9999px',
+                                                                    fontWeight: 700
+                                                                }}>{med.category}</div>
+                                                            )}
+                                                            <div style={{ fontSize: '12px', color: '#f97316', fontWeight: 700 }}>
+                                                                ₹{med.price_per_tablet}/tablet
+                                                            </div>
+                                                        </div>
+                                                        <div style={{
+                                                            width: '28px',
+                                                            height: '28px',
+                                                            borderRadius: '6px',
+                                                            background: '#10b981',
+                                                            color: 'white',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            flexShrink: 0
+                                                        }}>
+                                                            <Plus size={14} />
+                                                        </div>
                                                     </div>
-                                                    <div className="search-item-brand" style={{ 
-                                                        fontSize: '11px', 
-                                                        color: '#64748b',
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis'
-                                                    }}>
-                                                        {med.brand}
-                                                    </div>
-                                                </div>
-                                                <div className="search-item-meta" style={{ 
-                                                    display: 'flex', 
-                                                    flexDirection: 'column', 
-                                                    alignItems: 'flex-end', 
-                                                    gap: '2px', 
-                                                    minWidth: '80px' 
-                                                }}>
-                                                    <div className="search-item-category" style={{ 
-                                                        fontSize: '10px', 
-                                                        color: '#10b981', 
-                                                        background: '#ecfdf5', 
-                                                        padding: '2px 6px', 
-                                                        borderRadius: '4px', 
-                                                        fontWeight: '600' 
-                                                    }}>
-                                                        {med.category}
-                                                    </div>
-                                                    <div className="search-item-price" style={{ 
-                                                        fontSize: '11px', 
-                                                        color: '#f97316', 
-                                                        fontWeight: '600' 
-                                                    }}>
-                                                        ₹{med.price_per_tablet}/tablet
-                                                    </div>
-                                                </div>
-                                                <div className="search-item-add" style={{ 
-                                                    width: '20px', 
-                                                    height: '20px', 
-                                                    borderRadius: '4px', 
-                                                    background: '#10b981', 
-                                                    color: 'white', 
-                                                    display: 'flex', 
-                                                    alignItems: 'center', 
-                                                    justifyContent: 'center', 
-                                                    transition: 'all 0.2s ease', 
-                                                    flexShrink: 0
-                                                }}>
-                                                    <Plus size={10} />
-                                                </div>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
+                                        </div>
+                                    </>,
+                                    document.body
+                                )
                             )}
                         </div>
                         <div className="orders-recent-header">

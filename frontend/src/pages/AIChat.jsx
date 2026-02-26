@@ -417,7 +417,7 @@ How can I assist you today? Would you like to re-order something from your previ
                                 </button>
                             </div>
                         </div>
-
+                        
                         {showTabletSelector && (
                             <div className="tablet-selector">
                                 <div className="tablet-selector-header">

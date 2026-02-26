@@ -175,14 +175,6 @@ async function enhancedChatHandler(req,res){
       debugLog(`Starting new session`);
     }
 
-    // Reset invalid session state
-    if (orderSession.stage === 'ask_quantity' && orderSession.pendingMedicine === 'Y') {
-      debugLog(`Resetting invalid session state where pendingMedicine is 'Y'`);
-      orderSession.stage = 'initial';
-      orderSession.pendingMedicine = null;
-      sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-    }
-
     // =========================
     // HARD GUARD: QUANTITY FIRST
     // =========================
@@ -494,50 +486,17 @@ Name Age Mobile`
               [orderId, m.id, m.quantity, parseFloat(m.price_per_tablet) || 0]
             );
             
-            // Update stock - deduct individual tablets properly
-            // Get current stock info
-            const medInfo = await db.query('SELECT stock_packets, tablets_per_packet, individual_tablets FROM medicines WHERE id = $1', [m.id]);
-            const currentStockPackets = medInfo.rows[0]?.stock_packets || 0;
+            // Update stock safely - update stock_packets instead of total_tablets
+            // Calculate how many packets to reduce based on tablets ordered
+            const medInfo = await db.query('SELECT tablets_per_packet FROM medicines WHERE id = $1', [m.id]);
             const tabletsPerPacket = medInfo.rows[0]?.tablets_per_packet || 1;
-            const currentIndividualTablets = medInfo.rows[0]?.individual_tablets || 0;
-            
-            // Calculate total available tablets
-            const totalAvailableTablets = (currentStockPackets * tabletsPerPacket) + currentIndividualTablets;
-            
-            if (totalAvailableTablets < m.quantity) {
-              throw new Error(`Insufficient stock for ${m.name}. Available: ${totalAvailableTablets} tablets, Requested: ${m.quantity} tablets`);
-            }
-            
-            let newIndividualTablets = currentIndividualTablets;
-            let newStockPackets = currentStockPackets;
-            let tabletsNeeded = m.quantity;
-            
-            // First, use individual tablets if available
-            if (newIndividualTablets >= tabletsNeeded) {
-              newIndividualTablets -= tabletsNeeded;
-              tabletsNeeded = 0;
-            } else {
-              tabletsNeeded -= newIndividualTablets;
-              newIndividualTablets = 0;
-            }
-            
-            // If still need more tablets, open packets
-            if (tabletsNeeded > 0) {
-              const packetsToOpen = Math.ceil(tabletsNeeded / tabletsPerPacket);
-              if (newStockPackets >= packetsToOpen) {
-                newStockPackets -= packetsToOpen;
-                const tabletsFromOpenedPackets = packetsToOpen * tabletsPerPacket;
-                newIndividualTablets += tabletsFromOpenedPackets - tabletsNeeded;
-              } else {
-                throw new Error(`Insufficient stock for ${m.name}. Not enough complete packets available.`);
-              }
-            }
+            const packetsToReduce = Math.ceil(m.quantity / tabletsPerPacket);
             
             await db.query(
               `UPDATE medicines 
-               SET stock_packets = $1, individual_tablets = $2 
-               WHERE id = $3`,
-              [newStockPackets, newIndividualTablets, m.id]
+               SET stock_packets = stock_packets - $1 
+               WHERE id = $2 AND stock_packets >= $1`,
+              [packetsToReduce, m.id]
             );
           }
 
@@ -605,7 +564,6 @@ Name Age Mobile`
       if (/^(n|no)$/i.test(message)) {
         debugLog(`User wants to proceed to checkout`);
         orderSession.stage = 'ask_customer';
-        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
         return res.json({ reply: '👤 Please provide your details: Name Age Mobile\n(e.g., "John Doe 25 9876543210")' });
       }
     }
@@ -617,14 +575,6 @@ Name Age Mobile`
     debugLog(`Message: "${message}"`);
     debugLog(`Stage: ${orderSession.stage}`);
     debugLog(`Pending medicine: ${JSON.stringify(orderSession.pendingMedicine)}`);
-    
-    // IMPORTANT: Check if this is a Y/N response before processing with Grok
-    if (orderSession.stage === 'initial' && orderSession.medicines.length > 0) {
-      if (/^(y|yes|n|no)$/i.test(message)) {
-        debugLog(`Y/N response detected but not handled above - this should not happen`);
-        return res.json({ reply: 'Please specify a medicine name or type *proceed* to checkout.' });
-      }
-    }
     
     // Use Grok AI to understand the message
     const aiResult = await processWithGrok(message);

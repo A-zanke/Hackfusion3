@@ -71,7 +71,7 @@ function App() {
         <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
 
         {/* AI Chat is protected */}
-        <Route path="/chat" element={<ProtectedRoute><AIChat /></ProtectedRoute>} />
+        <Route path="/ai-chat" element={<ProtectedRoute><AIChat /></ProtectedRoute>} />
 
         {/* Admin routes with sidebar layout */}
         <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>

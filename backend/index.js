@@ -447,8 +447,6 @@ app.get('/api/medicines/search', async (req, res) => {
         res.json(medicines);
     } catch (err) {
         console.error('Medicine search error:', err);
-        console.error('Search query:', searchQuery);
-        console.error('Search term:', searchTerm);
         res.status(500).json({ error: 'Database error' });
     }
 });
@@ -977,3 +975,6 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
     console.log('Server is running on port ' + PORT);
 });
+
+
+

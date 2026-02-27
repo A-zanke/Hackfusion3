@@ -271,7 +271,6 @@ const Dashboard = () => {
                         )}
                     </div>
                 </div>
-
             </div>
             <StatsModal config={modalConfig} onClose={() => setModalConfig(null)} />
         </div>

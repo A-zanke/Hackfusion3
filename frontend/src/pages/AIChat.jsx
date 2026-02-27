@@ -52,6 +52,18 @@ How can I assist you today?`,
         };
         fetchMeds();
 
+        // Function to refresh medicines data
+        const refreshMedicines = async () => {
+            try {
+                const res = await fetch('http://localhost:5000/api/medicines');
+                const data = await res.json();
+                setAllMedicines(data);
+                console.log('Medicines data refreshed after stock change');
+            } catch (e) {
+                console.error("Failed to refresh medicines", e);
+            }
+        };
+
         // Check login session
         const userStr = localStorage.getItem('user');
         if (userStr) {
@@ -197,6 +209,18 @@ How can I assist you today? Would you like to re-order something from your previ
                     chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
                 }
             }, 100);
+
+            // Refocus the input field after sending
+            setTimeout(() => {
+                const inputField = document.querySelector('.chat-input-field');
+                if (inputField) {
+                    inputField.focus();
+                }
+            }, 150);
+
+            // Refresh medicines data to show updated stock levels
+            refreshMedicines();
+
         } catch (error) {
             console.error("AI Chat Error:", error);
 
@@ -219,6 +243,14 @@ How can I assist you today? Would you like to re-order something from your previ
                 };
                 setMessages(prev => [...prev, specificErrorMsg]);
             }
+
+            // Refocus the input field even after error
+            setTimeout(() => {
+                const inputField = document.querySelector('.chat-input-field');
+                if (inputField) {
+                    inputField.focus();
+                }
+            }, 150);
         } finally {
             setIsTyping(false);
         }

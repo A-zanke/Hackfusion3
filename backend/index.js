@@ -35,6 +35,7 @@ async function initializeDatabase() {
             await db.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_age INTEGER');
             await db.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE');
             await db.query('ALTER TABLE medicines ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE');
+            await db.query('ALTER TABLE medicines ADD COLUMN IF NOT EXISTS individual_tablets INTEGER DEFAULT 0');
             console.log('✅ Database columns updated');
         } catch (alterError) {
             console.log('Columns may already exist:', alterError.message);

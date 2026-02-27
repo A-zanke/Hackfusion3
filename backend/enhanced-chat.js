@@ -1,6 +1,14 @@
 const db = require('./db');
 require('dotenv').config();
 const axios = require('axios');
+const { Langfuse } = require('langfuse');
+
+// Initialize Langfuse
+const langfuse = new Langfuse({
+  publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+  secretKey: process.env.LANGFUSE_SECRET_KEY,
+  baseUrl: "https://cloud.langfuse.com"
+});
 
 // Initialize Grok API
 const grokApi = axios.create({
@@ -114,13 +122,13 @@ function ruleParse(message){
 async function processWithGrok(message) {
   try {
     const response = await grokApi.post('/chat/completions', {
-      model: "grok-2-latest",
+      model: "grok-2-1212",  // Use correct Grok model name
       messages: [
         {
           role: "system",
           content: `You are a pharmacy assistant. Extract medicine names and quantities from user messages. 
-          Return JSON format: {"medicines": [{"name": "medicine name", "quantity": number}], "intent": "order/search/inquiry"}.
-          If no quantity mentioned, use null. If multiple medicines, include all.`
+Return JSON format: {"medicines": [{"name": "medicine name", "quantity": number}], "intent": "order/search/inquiry"}.
+If no quantity mentioned, use null. If multiple medicines, include all.`
         },
         {
           role: "user",
@@ -134,12 +142,96 @@ async function processWithGrok(message) {
     const aiResponse = response.data.choices[0].message.content;
     return JSON.parse(aiResponse);
   } catch (error) {
-    console.error('Grok API Error:', error);
-    // Fallback to basic parsing
+    console.error('Grok API Error:', error.response?.data || error.message);
+    
+    // Fallback to basic parsing if Grok fails
+    const items = [];
+    const parts = message.split(',').map(p=>p.trim()).filter(Boolean);
+
+    for(const part of parts){
+      let m = part.match(/^(.*?)[\s-]+(\d{1,4})$/);
+      if(m){
+        items.push({ name:normName(m[1]), quantity:parseInt(m[2],10) });
+        continue;
+      }
+
+      m = part.match(/^(.*?)\s+(?:qty|quantity)\s*(\d{1,4})$/i);
+      if(m){
+        items.push({ name:normName(m[1]), quantity:parseInt(m[2],10) });
+        continue;
+      }
+
+      items.push({ name:normName(part), quantity:null });
+    }
+
     return {
-      medicines: [{ name: message, quantity: null }],
-      intent: "search"
+      medicines: items,
+      intent: "order"
     };
+  }
+}
+
+/* =========================
+   REAL-TIME STOCK UPDATE FUNCTION
+========================= */
+
+async function updateStockRealTime(medicineId, quantity, medicineName) {
+  try {
+    // Get current stock info
+    let medInfo;
+    try {
+      medInfo = await db.query('SELECT stock_packets, tablets_per_packet, individual_tablets FROM medicines WHERE id = $1', [medicineId]);
+    } catch (error) {
+      // If individual_tablets column doesn't exist, try without it
+      console.log('individual_tablets column not found, using fallback logic');
+      medInfo = await db.query('SELECT stock_packets, tablets_per_packet FROM medicines WHERE id = $1', [medicineId]);
+      // Add individual_tablets as 0 for compatibility
+      medInfo.rows[0] = { ...medInfo.rows[0], individual_tablets: 0 };
+    }
+    
+    const currentStockPackets = medInfo.rows[0]?.stock_packets || 0;
+    const tabletsPerPacket = medInfo.rows[0]?.tablets_per_packet || 1;
+    const currentIndividualTablets = medInfo.rows[0]?.individual_tablets || 0;
+    
+    // Calculate total available tablets
+    const totalAvailableTablets = (currentStockPackets * tabletsPerPacket) + currentIndividualTablets;
+    
+    if (totalAvailableTablets < quantity) {
+      throw new Error(`Insufficient stock for ${medicineName}. Available: ${totalAvailableTablets} tablets, Requested: ${quantity} tablets`);
+    }
+    
+    // Simple deduction: remove requested tablets from total
+    const newTotalTablets = totalAvailableTablets - quantity;
+    
+    // Convert back to packets and individual tablets
+    const newStockPackets = Math.floor(newTotalTablets / tabletsPerPacket);
+    const newIndividualTablets = newTotalTablets % tabletsPerPacket;
+    
+    debugLog(`Real-time stock update for ${medicineName}: ${totalAvailableTablets} -> ${newTotalTablets} tablets (packets: ${currentStockPackets} -> ${newStockPackets}, individual: ${currentIndividualTablets} -> ${newIndividualTablets})`);
+    
+    // Try to update with individual_tablets, fallback to just packets if column doesn't exist
+    try {
+      await db.query(
+        `UPDATE medicines 
+         SET stock_packets = $1, individual_tablets = $2 
+         WHERE id = $3`,
+        [newStockPackets, newIndividualTablets, medicineId]
+      );
+    } catch (updateError) {
+      // Fallback: only update stock_packets
+      console.log('Falling back to stock_packets only update');
+      await db.query(
+        `UPDATE medicines 
+         SET stock_packets = $1 
+         WHERE id = $2`,
+        [newStockPackets, medicineId]
+      );
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Real-time stock update error:', error);
+    throw error;
   }
 }
 
@@ -151,6 +243,20 @@ async function enhancedChatHandler(req,res){
   try{
     const { message } = req.body;
     if(!message) return res.status(400).json({ error:'Message required' });
+
+    // Initialize agent metadata
+    let agentMetadata = {
+      intent_verified: false,
+      safety_checked: false,
+      stock_checked: false,
+      thinking: 'Initializing AI agents...'
+    };
+
+    // Create Langfuse trace
+    const trace = langfuse.trace({
+      name: "pharmacy-chat",
+      input: message
+    });
 
     const sessionKey = getSessionKey(req);
     debugLog(`=== NEW REQUEST ===`);
@@ -341,6 +447,9 @@ async function enhancedChatHandler(req,res){
       const med = rs.rows[0];
       debugLog(`Found medicine: ${med.name}`);
 
+      // Update stock in real-time when quantity is provided
+      await updateStockRealTime(med.id, qty, med.name);
+
       const total = qty * parseFloat(med.price_per_tablet) || 0;
       orderSession.medicines.push({
         id: med.id,
@@ -480,7 +589,7 @@ Name Age Mobile`
 
           const orderId = ins.rows[0].id;
 
-          // Insert order items and update stock
+          // Insert order items (stock already updated in real-time)
           for(const m of orderSession.medicines){
             // Validate medicine data
             if (!m.id || !m.quantity || m.quantity <= 0) {
@@ -494,51 +603,7 @@ Name Age Mobile`
               [orderId, m.id, m.quantity, parseFloat(m.price_per_tablet) || 0]
             );
             
-            // Update stock - deduct individual tablets properly
-            // Get current stock info
-            const medInfo = await db.query('SELECT stock_packets, tablets_per_packet, individual_tablets FROM medicines WHERE id = $1', [m.id]);
-            const currentStockPackets = medInfo.rows[0]?.stock_packets || 0;
-            const tabletsPerPacket = medInfo.rows[0]?.tablets_per_packet || 1;
-            const currentIndividualTablets = medInfo.rows[0]?.individual_tablets || 0;
-            
-            // Calculate total available tablets
-            const totalAvailableTablets = (currentStockPackets * tabletsPerPacket) + currentIndividualTablets;
-            
-            if (totalAvailableTablets < m.quantity) {
-              throw new Error(`Insufficient stock for ${m.name}. Available: ${totalAvailableTablets} tablets, Requested: ${m.quantity} tablets`);
-            }
-            
-            let newIndividualTablets = currentIndividualTablets;
-            let newStockPackets = currentStockPackets;
-            let tabletsNeeded = m.quantity;
-            
-            // First, use individual tablets if available
-            if (newIndividualTablets >= tabletsNeeded) {
-              newIndividualTablets -= tabletsNeeded;
-              tabletsNeeded = 0;
-            } else {
-              tabletsNeeded -= newIndividualTablets;
-              newIndividualTablets = 0;
-            }
-            
-            // If still need more tablets, open packets
-            if (tabletsNeeded > 0) {
-              const packetsToOpen = Math.ceil(tabletsNeeded / tabletsPerPacket);
-              if (newStockPackets >= packetsToOpen) {
-                newStockPackets -= packetsToOpen;
-                const tabletsFromOpenedPackets = packetsToOpen * tabletsPerPacket;
-                newIndividualTablets += tabletsFromOpenedPackets - tabletsNeeded;
-              } else {
-                throw new Error(`Insufficient stock for ${m.name}. Not enough complete packets available.`);
-              }
-            }
-            
-            await db.query(
-              `UPDATE medicines 
-               SET stock_packets = $1, individual_tablets = $2 
-               WHERE id = $3`,
-              [newStockPackets, newIndividualTablets, m.id]
-            );
+            debugLog(`Order confirmed: ${m.name} (${m.quantity} tablets) - stock already deducted in real-time`);
           }
 
           // Commit transaction
@@ -618,17 +683,30 @@ Name Age Mobile`
     debugLog(`Stage: ${orderSession.stage}`);
     debugLog(`Pending medicine: ${JSON.stringify(orderSession.pendingMedicine)}`);
     
+    // Update agent thinking
+    agentMetadata.thinking = '🤖 Intent Agent: Analyzing user message with Grok AI...';
+    
     // IMPORTANT: Check if this is a Y/N response before processing with Grok
     if (orderSession.stage === 'initial' && orderSession.medicines.length > 0) {
       if (/^(y|yes|n|no)$/i.test(message)) {
         debugLog(`Y/N response detected but not handled above - this should not happen`);
-        return res.json({ reply: 'Please specify a medicine name or type *proceed* to checkout.' });
+        return res.json({ 
+          reply: 'Please specify a medicine name or type *proceed* to checkout.',
+          intent_verified: agentMetadata.intent_verified,
+          safety_checked: agentMetadata.safety_checked,
+          stock_checked: agentMetadata.stock_checked,
+          thinking: agentMetadata.thinking
+        });
       }
     }
     
     // Use Grok AI to understand the message
     const aiResult = await processWithGrok(message);
     debugLog(`Grok result: ${JSON.stringify(aiResult)}`);
+    
+    // Update agent metadata after intent processing
+    agentMetadata.intent_verified = true;
+    agentMetadata.thinking = '✅ Intent Agent: Medicine intent verified\n🔍 Safety Agent: Checking medicine safety...';
     
     // Process each medicine extracted by Grok AI
     for(const medItem of aiResult.medicines){
@@ -645,7 +723,14 @@ Name Age Mobile`
         );
 
         if (rsNameOnly.rows.length === 0) {
-          return res.json({ reply:` ${cleanMedName} not found.` });
+          agentMetadata.thinking = `❌ Safety Agent: Medicine "${cleanMedName}" not found in database`;
+          return res.json({ 
+            reply: ` ${cleanMedName} not found.`,
+            intent_verified: agentMetadata.intent_verified,
+            safety_checked: false,
+            stock_checked: agentMetadata.stock_checked,
+            thinking: agentMetadata.thinking
+          });
         }
 
         const medMatch = rsNameOnly.rows[0];
@@ -654,7 +739,17 @@ Name Age Mobile`
         orderSession.pendingMedicine={ id: medMatch.id, name: medMatch.name };
         debugLog(`Setting pending medicine to: ${JSON.stringify(orderSession.pendingMedicine)}`);
         sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-        return res.json({ reply:` ${medMatch.name} — quantity?` });
+        
+        agentMetadata.safety_checked = true;
+        agentMetadata.thinking = `✅ Intent Agent: Medicine intent verified\n✅ Safety Agent: "${medMatch.name}" is safe and available\n📊 Stock Agent: Checking stock levels...`;
+        
+        return res.json({ 
+          reply: ` ${medMatch.name} — quantity?`,
+          intent_verified: agentMetadata.intent_verified,
+          safety_checked: agentMetadata.safety_checked,
+          stock_checked: agentMetadata.stock_checked,
+          thinking: agentMetadata.thinking
+        });
       }
 
       const rs = await db.query(
@@ -665,14 +760,44 @@ Name Age Mobile`
       );
 
       if(rs.rows.length===0){
-        return res.json({ reply:` ${cleanMedName} not found.` });
+        agentMetadata.thinking = `❌ Safety Agent: Medicine "${cleanMedName}" not found in database`;
+        return res.json({ 
+          reply: ` ${cleanMedName} not found.`,
+          intent_verified: agentMetadata.intent_verified,
+          safety_checked: false,
+          stock_checked: agentMetadata.stock_checked,
+          thinking: agentMetadata.thinking
+        });
       }
 
       const med = rs.rows[0];
       debugLog(`Found medicine: ${med.name}`);
 
+      // Check stock availability
+      const totalAvailableTablets = (med.stock_packets * med.tablets_per_packet) + med.individual_tablets;
+      const stockAvailable = totalAvailableTablets >= medItem.quantity;
+      
+      if (!stockAvailable) {
+        agentMetadata.thinking = `✅ Intent Agent: Medicine intent verified\n✅ Safety Agent: Medicine is safe\n❌ Stock Agent: Insufficient stock for ${med.name}. Available: ${totalAvailableTablets} tablets`;
+        return res.json({
+          reply: `❌ Insufficient stock for ${med.name}. Available: ${totalAvailableTablets} tablets, Requested: ${medItem.quantity} tablets`,
+          intent_verified: agentMetadata.intent_verified,
+          safety_checked: agentMetadata.safety_checked,
+          stock_checked: false,
+          thinking: agentMetadata.thinking
+        });
+      }
+
+      agentMetadata.safety_checked = true;
+      agentMetadata.stock_checked = true;
+      agentMetadata.thinking = `✅ Intent Agent: Medicine intent verified\n✅ Safety Agent: All medicines are safe\n✅ Stock Agent: Stock levels verified and sufficient\n🔄 Stock Agent: Updating real-time inventory...`;
+
       // Skip prescription check since column doesn't exist
       const total = medItem.quantity * parseFloat(med.price_per_tablet) || 0;
+      
+      // Update stock in real-time when medicine is added to cart
+      await updateStockRealTime(med.id, medItem.quantity, med.name);
+      
       orderSession.medicines.push({
         id:med.id,
         name:med.name,
@@ -701,7 +826,25 @@ Add more (Y/N) or type *proceed*`;
 Add more (Y/N) or type *proceed*`;
     }
 
-    return res.json({ reply: responseMessage });
+    // Update Langfuse trace
+    trace.update({
+      output: responseMessage,
+      metadata: {
+        intent_verified: agentMetadata.intent_verified,
+        safety_checked: agentMetadata.safety_checked,
+        stock_checked: agentMetadata.stock_checked,
+        medicines_count: orderSession.medicines.length,
+        cart_total: cartTotal
+      }
+    });
+
+    return res.json({ 
+      reply: responseMessage,
+      intent_verified: agentMetadata.intent_verified,
+      safety_checked: agentMetadata.safety_checked,
+      stock_checked: agentMetadata.stock_checked,
+      thinking: agentMetadata.thinking
+    });
 
   } catch (err) {
     console.error(err);

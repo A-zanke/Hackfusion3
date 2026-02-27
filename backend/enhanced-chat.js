@@ -116,6 +116,32 @@ function ruleParse(message){
 }
 
 /* =========================
+   LANGUAGE & INTENT HELPERS
+========================= */
+
+function detectLanguage(message) {
+  const text = String(message || '').trim();
+  // Basic Devanagari check
+  const hasDevanagari = /[\u0900-\u097F]/.test(text);
+  const lower = text.toLowerCase();
+
+  if (hasDevanagari) {
+    if (lower.includes('आहे') || lower.includes('का')) return 'mr';
+    return 'hi';
+  }
+
+  // Roman-script Hindi / Marathi heuristics
+  if (lower.includes('hai kya') || lower.includes('kya hai') || lower.includes('dawa') || lower.includes('karna hai')) {
+    return 'hi';
+  }
+  if (lower.includes('aahe ka') || lower.includes('ahe ka') || lower.includes('ka na')) {
+    return 'mr';
+  }
+
+  return 'en';
+}
+
+/* =========================
    GROK AI PROCESSING
 ========================= */
 
@@ -126,9 +152,21 @@ async function processWithGrok(message) {
       messages: [
         {
           role: "system",
-          content: `You are a pharmacy assistant. Extract medicine names and quantities from user messages. 
-Return JSON format: {"medicines": [{"name": "medicine name", "quantity": number}], "intent": "order/search/inquiry"}.
-If no quantity mentioned, use null. If multiple medicines, include all.`
+          content: `You are an intelligent multi-lingual pharmacy assistant.
+Detect:
+- medicines: list of medicines mentioned and optional quantities
+- intent: "order" | "search" | "inquiry"
+- action: "check_stock" | "add_stock" | "order" | "other"
+- language: "en" | "hi" | "mr"
+
+Return STRICT JSON:
+{"medicines":[{"name":"name","quantity":number|null}],"intent":"order","action":"check_stock","language":"en"}
+
+Notes:
+- If the user is asking things like "Do we have Dolo?" or "Dolo hai kya?" or "Dolo aahe ka?", action = "check_stock".
+- If the user wants to add/increase stock (e.g. "add stock", "stock add karna hai", "Dolo add karo", "Dolo ka stock daalo", "stock increase karo", "medicine add karna hai"), action = "add_stock".
+- Detect language from the message and set language accordingly.
+- If no quantity is mentioned for a medicine, use null. If multiple medicines, include all.`
         },
         {
           role: "user",
@@ -140,7 +178,11 @@ If no quantity mentioned, use null. If multiple medicines, include all.`
     });
 
     const aiResponse = response.data.choices[0].message.content;
-    return JSON.parse(aiResponse);
+    const parsed = JSON.parse(aiResponse);
+    // Ensure defaults
+    if (!parsed.language) parsed.language = detectLanguage(message);
+    if (!parsed.action) parsed.action = parsed.intent || 'order';
+    return parsed;
   } catch (error) {
     console.error('Grok API Error:', error.response?.data || error.message);
     
@@ -166,7 +208,9 @@ If no quantity mentioned, use null. If multiple medicines, include all.`
 
     return {
       medicines: items,
-      intent: "order"
+      intent: "order",
+      action: "order",
+      language: detectLanguage(message)
     };
   }
 }
@@ -177,24 +221,22 @@ If no quantity mentioned, use null. If multiple medicines, include all.`
 
 async function updateStockRealTime(medicineId, quantity, medicineName) {
   try {
-    // Get current stock info
-    let medInfo;
-    try {
-      medInfo = await db.query('SELECT stock_packets, tablets_per_packet, individual_tablets FROM medicines WHERE id = $1', [medicineId]);
-    } catch (error) {
-      // If individual_tablets column doesn't exist, try without it
-      console.log('individual_tablets column not found, using fallback logic');
-      medInfo = await db.query('SELECT stock_packets, tablets_per_packet FROM medicines WHERE id = $1', [medicineId]);
-      // Add individual_tablets as 0 for compatibility
-      medInfo.rows[0] = { ...medInfo.rows[0], individual_tablets: 0 };
+    // Get current stock info (use total_tablets as the single source of truth)
+    const medInfo = await db.query(
+      'SELECT stock_packets, tablets_per_packet, total_tablets FROM medicines WHERE id = $1',
+      [medicineId]
+    );
+
+    if (medInfo.rows.length === 0) {
+      throw new Error(`Medicine ${medicineName} (ID ${medicineId}) not found for stock update`);
     }
-    
-    const currentStockPackets = medInfo.rows[0]?.stock_packets || 0;
-    const tabletsPerPacket = medInfo.rows[0]?.tablets_per_packet || 1;
-    const currentIndividualTablets = medInfo.rows[0]?.individual_tablets || 0;
+
+    const currentStockPackets = medInfo.rows[0].stock_packets ?? 0;
+    const tabletsPerPacket = medInfo.rows[0].tablets_per_packet ?? 1;
+    const currentTotalTablets = medInfo.rows[0].total_tablets ?? (currentStockPackets * tabletsPerPacket);
     
     // Calculate total available tablets
-    const totalAvailableTablets = (currentStockPackets * tabletsPerPacket) + currentIndividualTablets;
+    const totalAvailableTablets = currentTotalTablets;
     
     if (totalAvailableTablets < quantity) {
       throw new Error(`Insufficient stock for ${medicineName}. Available: ${totalAvailableTablets} tablets, Requested: ${quantity} tablets`);
@@ -203,36 +245,64 @@ async function updateStockRealTime(medicineId, quantity, medicineName) {
     // Simple deduction: remove requested tablets from total
     const newTotalTablets = totalAvailableTablets - quantity;
     
-    // Convert back to packets and individual tablets
+    // Recalculate packets based on new total (rounding down)
     const newStockPackets = Math.floor(newTotalTablets / tabletsPerPacket);
-    const newIndividualTablets = newTotalTablets % tabletsPerPacket;
     
-    debugLog(`Real-time stock update for ${medicineName}: ${totalAvailableTablets} -> ${newTotalTablets} tablets (packets: ${currentStockPackets} -> ${newStockPackets}, individual: ${currentIndividualTablets} -> ${newIndividualTablets})`);
+    debugLog(`Real-time stock update for ${medicineName}: ${totalAvailableTablets} -> ${newTotalTablets} tablets (packets: ${currentStockPackets} -> ${newStockPackets})`);
     
-    // Try to update with individual_tablets, fallback to just packets if column doesn't exist
-    try {
-      await db.query(
-        `UPDATE medicines 
-         SET stock_packets = $1, individual_tablets = $2 
-         WHERE id = $3`,
-        [newStockPackets, newIndividualTablets, medicineId]
-      );
-    } catch (updateError) {
-      // Fallback: only update stock_packets
-      console.log('Falling back to stock_packets only update');
-      await db.query(
-        `UPDATE medicines 
-         SET stock_packets = $1 
-         WHERE id = $2`,
-        [newStockPackets, medicineId]
-      );
-    }
+    // Persist both packets and the exact total tablets
+    await db.query(
+      `UPDATE medicines 
+       SET stock_packets = $1,
+           total_tablets = $2
+       WHERE id = $3`,
+      [newStockPackets, newTotalTablets, medicineId]
+    );
     
     return true;
   } catch (error) {
     console.error('Real-time stock update error:', error);
     throw error;
   }
+}
+
+/* =========================
+   STOCK ADD HELPER
+========================= */
+
+async function addStockByConfig(medicineName, packetsToAdd, tabletsPerPacket, packetPrice) {
+  const name = normName(medicineName);
+  const pkt = Math.max(0, parseInt(packetsToAdd, 10) || 0);
+  const tabsPerPkt = Math.max(1, parseInt(tabletsPerPacket, 10) || 1);
+  const pricePerPacket = Math.max(0, parseFloat(packetPrice) || 0);
+
+  const addedTablets = pkt * tabsPerPkt;
+  const pricePerTablet = tabsPerPkt > 0 ? pricePerPacket / tabsPerPkt : 0;
+
+  if (!name || pkt <= 0) {
+    throw new Error('Invalid stock configuration');
+  }
+
+  const result = await db.query(
+    `
+    INSERT INTO medicines (
+      name, stock_packets, tablets_per_packet, total_tablets,
+      price_per_packet, price_per_tablet, is_deleted
+    )
+    VALUES ($1,$2,$3,$4,$5,$6,FALSE)
+    ON CONFLICT (name) DO UPDATE SET
+      stock_packets = medicines.stock_packets + EXCLUDED.stock_packets,
+      tablets_per_packet = EXCLUDED.tablets_per_packet,
+      total_tablets = medicines.total_tablets + EXCLUDED.total_tablets,
+      price_per_packet = EXCLUDED.price_per_packet,
+      price_per_tablet = EXCLUDED.price_per_tablet,
+      is_deleted = FALSE
+    RETURNING *;
+    `,
+    [name, pkt, tabsPerPkt, addedTablets, pricePerPacket, pricePerTablet]
+  );
+
+  return result.rows[0];
 }
 
 /* =========================
@@ -281,6 +351,25 @@ async function enhancedChatHandler(req,res){
       debugLog(`Starting new session`);
     }
 
+    // Ensure stock flow state
+    const msgTrim = String(message).trim();
+    const detectedLang = detectLanguage(msgTrim);
+    if (!orderSession.stockFlow) {
+      orderSession.stockFlow = {
+        stage: 'idle',              // idle | offer_add_missing | offer_use_previous | ask_packets_prev | ask_packets_new | ask_tabs | ask_price
+        language: detectedLang,
+        targetName: null,
+        lastMissingName: null,
+        previousConfig: null,
+        tempPackets: null,
+        tempTabsPerPacket: null,
+        tempPacketPrice: null
+      };
+    } else if (!orderSession.stockFlow.language) {
+      orderSession.stockFlow.language = detectedLang;
+    }
+    const stockFlow = orderSession.stockFlow;
+
     // Reset invalid session state
     if (orderSession.stage === 'ask_quantity' && orderSession.pendingMedicine === 'Y') {
       debugLog(`Resetting invalid session state where pendingMedicine is 'Y'`);
@@ -292,7 +381,6 @@ async function enhancedChatHandler(req,res){
     // =========================
     // HARD GUARD: QUANTITY FIRST
     // =========================
-    const msgTrim = String(message).trim();
     debugLog(`Top-of-handler state: stage=${orderSession.stage}, pending=${JSON.stringify(orderSession.pendingMedicine)}`);
     
     if (orderSession.stage === 'ask_quantity' && orderSession.pendingMedicine && /^\d+$/.test(msgTrim)) {
@@ -323,6 +411,9 @@ async function enhancedChatHandler(req,res){
       const med = rs.rows[0];
       debugLog(`DB match for pending: ${med.name}`);
 
+      // Real-time stock update (same behaviour as main quantity handler)
+      await updateStockRealTime(med.id, qty, med.name);
+
       const total = qty * parseFloat(med.price_per_tablet) || 0;
       orderSession.medicines.push({
         id: med.id,
@@ -347,6 +438,119 @@ async function enhancedChatHandler(req,res){
       debugLog(`Numeric-only message while not awaiting quantity -> returning guidance`);
       sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
       return res.json({ reply: 'ℹ️ Please specify a medicine name first (e.g., "Aspirin - 2" or "Aspirin qty 2").' });
+    }
+
+    /* =========================
+       STOCK FLOW: HANDLE YES/NO & NUMERIC ANSWERS
+    ========================= */
+
+    const lowerMsg = msgTrim.toLowerCase();
+
+    // Y/N when offering to add a missing medicine (no previous config)
+    if (stockFlow.stage === 'offer_add_missing') {
+      if (/^(y|yes|haan|ha|ho)$/i.test(msgTrim)) {
+        // Start new configuration flow
+        stockFlow.stage = 'ask_packets_new';
+        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+        return res.json({ reply: `${stockFlow.targetName} के लिए कितने पैकेट जोड़ने हैं? (How many packets would you like to add?)` });
+      }
+      if (/^(n|no|nah|nahi)$/i.test(msgTrim)) {
+        stockFlow.stage = 'idle';
+        stockFlow.lastMissingName = stockFlow.targetName;
+        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+        return res.json({ reply: 'ठीक है, जब चाहें तब स्टॉक जोड़ सकते हैं। (Okay, you can add stock anytime.)' });
+      }
+    }
+
+    // Y/N when offering to use previous configuration
+    if (stockFlow.stage === 'offer_use_previous') {
+      if (/^(y|yes|haan|ha|ho)$/i.test(msgTrim)) {
+        stockFlow.stage = 'ask_packets_prev';
+        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+        return res.json({ reply: ` ${stockFlow.targetName} के लिए कितने पैकेट जोड़ने हैं? (How many packets would you like to add?)` });
+      }
+      if (/^(n|no|nah|nahi)$/i.test(msgTrim)) {
+        // Move to full custom config
+        stockFlow.stage = 'ask_packets_new';
+        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+        return res.json({ reply: `कितने पैकेट जोड़ने हैं? (How many packets would you like to add?)` });
+      }
+    }
+
+    // Packets input (either using previous config or new config)
+    if ((stockFlow.stage === 'ask_packets_prev' || stockFlow.stage === 'ask_packets_new') && /^\d+$/.test(msgTrim)) {
+      const pkt = parseInt(msgTrim, 10);
+      if (pkt <= 0) {
+        return res.json({ reply: 'कृपया मान्य पैकेट संख्या दें (Please provide a valid number of packets).' });
+      }
+      stockFlow.tempPackets = pkt;
+
+      if (stockFlow.stage === 'ask_packets_prev' && stockFlow.previousConfig) {
+        // We already know tablets_per_packet and packet price -> perform DB update
+        const cfg = stockFlow.previousConfig;
+        const updated = await addStockByConfig(stockFlow.targetName, pkt, cfg.tablets_per_packet, cfg.price_per_packet);
+        stockFlow.stage = 'idle';
+        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+
+        const addedTabs = pkt * cfg.tablets_per_packet;
+        const reply = `✅ ${stockFlow.targetName} stock updated.\nAdded: ${pkt} packets (${addedTabs} tablets)\nNew total tablets: ${updated.total_tablets}`;
+        return res.json({ reply });
+      }
+
+      // New configuration requires tablets_per_packet next
+      if (stockFlow.stage === 'ask_packets_new') {
+        stockFlow.stage = 'ask_tabs';
+        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+        return res.json({ reply: 'हर पैकेट में कितनी गोलियां हैं? (How many tablets in each packet?)' });
+      }
+    }
+
+    if (stockFlow.stage === 'ask_tabs' && /^\d+$/.test(msgTrim)) {
+      const tabs = parseInt(msgTrim, 10);
+      if (tabs <= 0) {
+        return res.json({ reply: 'कृपया मान्य टैबलेट संख्या दें (Please provide a valid tablets-per-packet).' });
+      }
+      stockFlow.tempTabsPerPacket = tabs;
+      stockFlow.stage = 'ask_price';
+      sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+      return res.json({ reply: 'एक पैकेट की कीमत क्या है? (What is the price of one packet, in ₹?)' });
+    }
+
+    if (stockFlow.stage === 'ask_price') {
+      const num = parseFloat(msgTrim.replace(/[^0-9.]/g,''));
+      if (!Number.isFinite(num) || num <= 0) {
+        return res.json({ reply: 'कृपया मान्य कीमत दें (Please provide a valid packet price).' });
+      }
+      stockFlow.tempPacketPrice = num;
+
+      const cfgName = stockFlow.targetName || stockFlow.lastMissingName || 'medicine';
+      const updated = await addStockByConfig(
+        cfgName,
+        stockFlow.tempPackets,
+        stockFlow.tempTabsPerPacket,
+        stockFlow.tempPacketPrice
+      );
+
+      const addedTabs = stockFlow.tempPackets * stockFlow.tempTabsPerPacket;
+      const reply = `✅ ${updated.name} stock added.\nPackets: ${stockFlow.tempPackets}\nTablets/packet: ${stockFlow.tempTabsPerPacket}\nAdded tablets: ${addedTabs}\nNew total tablets: ${updated.total_tablets}`;
+
+      // Reset stock flow
+      orderSession.stockFlow = {
+        stage: 'idle',
+        language: detectedLang,
+        targetName: updated.name,
+        lastMissingName: updated.name,
+        previousConfig: {
+          tablets_per_packet: updated.tablets_per_packet,
+          price_per_packet: parseFloat(updated.price_per_packet || 0)
+        },
+        tempPackets: null,
+        tempTabsPerPacket: null,
+        tempPacketPrice: null
+      };
+      sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+
+      return res.json({ reply });
     }
 
     /* =========================
@@ -526,6 +730,8 @@ Name Age Mobile`
       let summary = '📋 **Order Summary**\n\n';
       let total = 0;
       
+      let anyPrescriptionRequired = false;
+
       for(const m of orderSession.medicines){
         const pricePerTablet = parseFloat(m.price_per_tablet) || 0;
         const medTotal = m.quantity * pricePerTablet;
@@ -535,14 +741,21 @@ Name Age Mobile`
         summary += `   Price: ₹${pricePerTablet.toFixed(2)} each\n`;
         summary += `   Subtotal: ₹${medTotal.toFixed(2)}\n`;
         
-        // Check if prescription is required by looking up the medicine
-        const medRs = await db.query('SELECT * FROM medicines WHERE id = $1', [m.id]);
-        const prescriptionRequired = medRs.rows.length > 0 ? false : false; // Default to false since column doesn't exist
+        // Check if prescription is required from DB
+        const medRs = await db.query('SELECT prescription_required FROM medicines WHERE id = $1', [m.id]);
+        const prescriptionRequired = medRs.rows.length > 0 ? !!medRs.rows[0].prescription_required : false;
+        if (prescriptionRequired) anyPrescriptionRequired = true;
         summary += `   Prescription: ${prescriptionRequired ? 'Required' : 'Not required'}\n\n`;
       }
       
       summary += `💰 **Total: ₹${total.toFixed(2)}**\n\n`;
-      summary += `Proceed with order? (Y/N)`;
+      if (anyPrescriptionRequired) {
+        summary += `⚕️ One or more medicines require a valid prescription.\n`;
+        summary += `Do you confirm that you have a valid prescription for the required items? (Y/N)\n\n`;
+        summary += `Then we will proceed to place the order.`;
+      } else {
+        summary += `Proceed with order? (Y/N)`;
+      }
 
       orderSession.stage='confirm_order';
       sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
@@ -659,19 +872,58 @@ Name Age Mobile`
 
     /* =========================
        Y/N RESPONSE FOR ADDING MORE MEDICINES
+       Updated: 'Y' now means proceed to order summary,
+       'N' cancels the current cart.
     ========================= */
     if (orderSession.stage === 'initial' && orderSession.medicines.length > 0) {
       if (/^(y|yes)$/i.test(message)) {
-        debugLog(`User wants to add more medicines`);
-        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-        return res.json({ reply: '💊 What medicine would you like to add?' });
+        debugLog(`User chose to proceed directly with current cart (Y)`);
+        // Reuse the proceed logic: build summary and set stage=confirm_order
+        let summary = '📋 **Order Summary**\n\n';
+        let total = 0;
+        let anyPrescriptionRequired = false;
+
+        for (const m of orderSession.medicines) {
+          const pricePerTablet = parseFloat(m.price_per_tablet) || 0;
+          const medTotal = m.quantity * pricePerTablet;
+          total += medTotal;
+          summary += `💊 ${m.name}\n`;
+          summary += `   Qty: ${m.quantity} tablets\n`;
+          summary += `   Price: ₹${pricePerTablet.toFixed(2)} each\n`;
+          summary += `   Subtotal: ₹${medTotal.toFixed(2)}\n`;
+
+          const medRs = await db.query('SELECT prescription_required FROM medicines WHERE id = $1', [m.id]);
+          const prescriptionRequired = medRs.rows.length > 0 ? !!medRs.rows[0].prescription_required : false;
+          if (prescriptionRequired) anyPrescriptionRequired = true;
+          summary += `   Prescription: ${prescriptionRequired ? 'Required' : 'Not required'}\n\n`;
+        }
+
+        summary += `💰 **Total: ₹${total.toFixed(2)}**\n\n`;
+        if (anyPrescriptionRequired) {
+          summary += `⚕️ One or more medicines require a valid prescription.\n`;
+          summary += `Do you confirm that you have a valid prescription for the required items? (Y/N)\n\n`;
+          summary += `Then we will proceed to place the order.`;
+        } else {
+          summary += `Confirm order? (Y/N)`;
+        }
+
+        orderSession.stage = 'confirm_order';
+        sessionsByKey.set(sessionKey, { sessionState: orderSession, expiresAt: nextDayMidnightTs() });
+
+        return res.json({ reply: summary });
       }
       
       if (/^(n|no)$/i.test(message)) {
-        debugLog(`User wants to proceed to checkout`);
-        orderSession.stage = 'ask_customer';
-        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-        return res.json({ reply: '👤 Please provide your details: Name Age Mobile\n(e.g., "John Doe 25 9876543210")' });
+        debugLog(`User cancelled current cart (N) before checkout`);
+        orderSession = {
+          medicines: [],
+          stage: 'initial',
+          pendingMedicine: null,
+          pendingPrescription: null,
+          customer: { name: null, age: null, mobile: null }
+        };
+        sessionsByKey.set(sessionKey, { sessionState: orderSession, expiresAt: nextDayMidnightTs() });
+        return res.json({ reply: '❌ Order cancelled. You can start a new order anytime.' });
       }
     }
 
@@ -714,23 +966,56 @@ Name Age Mobile`
       const cleanMedName = medItem.name.trim();
       
       if(medItem.quantity === null){
-        // User only provided medicine name; first verify it exists in DB
+        // User only provided medicine name; first verify it exists in active DB
         const rsNameOnly = await db.query(
           `SELECT * FROM medicines 
            WHERE (name ILIKE $1 OR brand ILIKE $1)
+             AND is_deleted = FALSE
            LIMIT 1`,
           [`%${cleanMedName}%`]
         );
 
         if (rsNameOnly.rows.length === 0) {
-          agentMetadata.thinking = `❌ Safety Agent: Medicine "${cleanMedName}" not found in database`;
-          return res.json({ 
-            reply: ` ${cleanMedName} not found.`,
-            intent_verified: agentMetadata.intent_verified,
-            safety_checked: false,
-            stock_checked: agentMetadata.stock_checked,
-            thinking: agentMetadata.thinking
-          });
+          // Not currently in stock. Check for previous configuration (any row by name).
+          const prevRs = await db.query(
+            `SELECT * FROM medicines 
+             WHERE LOWER(name) = LOWER($1)
+             ORDER BY created_at DESC
+             LIMIT 1`,
+            [cleanMedName]
+          );
+
+          stockFlow.language = aiResult.language || stockFlow.language || detectedLang;
+          stockFlow.targetName = cleanMedName;
+          stockFlow.lastMissingName = cleanMedName;
+
+          if (prevRs.rows.length > 0) {
+            const prev = prevRs.rows[0];
+            stockFlow.previousConfig = {
+              tablets_per_packet: prev.tablets_per_packet || 1,
+              price_per_packet: parseFloat(prev.price_per_packet || 0),
+              stock_packets: prev.stock_packets || 0
+            };
+            stockFlow.stage = 'offer_use_previous';
+            sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+
+            const reply = 
+`I found previous stock details for ${cleanMedName}:
+• Packets: ${stockFlow.previousConfig.stock_packets}
+• Tablets per packet: ${stockFlow.previousConfig.tablets_per_packet}
+• Price per packet: ₹${stockFlow.previousConfig.price_per_packet.toFixed(2)}
+
+Would you like to add stock using the same configuration? (Y/N)`;
+
+            return res.json({ reply });
+          } else {
+            // No previous record either – offer to add new medicine
+            stockFlow.stage = 'offer_add_missing';
+            sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+
+            const reply = `${cleanMedName} is currently not in stock. Would you like to add it? (Y/N)`;
+            return res.json({ reply });
+          }
         }
 
         const medMatch = rsNameOnly.rows[0];

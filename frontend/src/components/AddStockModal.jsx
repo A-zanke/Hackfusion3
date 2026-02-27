@@ -180,41 +180,137 @@ const AddStockModal = ({ isOpen, onClose, onStockAdded }) => {
         try {
             let processedData = data;
 
-            if (action === 'skip') {
-                // Remove duplicates
+            // Fetch existing medicines once when we need duplicate awareness
+            let existingMedicines = [];
+            if (action === 'skip' || action === 'update') {
                 const response = await fetch(`${API_BASE}/medicines`);
-                const existingMedicines = await response.json();
+                existingMedicines = await response.json();
+            }
+
+            if (action === 'skip') {
+                // Remove items that already exist
                 processedData = data.filter(item =>
                     !existingMedicines.some(med =>
-                        med.name && item.medicine_name &&
+                        med.name &&
+                        item.medicine_name &&
                         med.name.toLowerCase() === item.medicine_name.toLowerCase()
                     )
                 );
-            }
 
-            if (processedData.length === 0) {
-                showMessage('No new items to import (all were duplicates).', 'error');
-                setLoading(false);
-                return;
-            }
+                if (processedData.length === 0) {
+                    showMessage('No new items to import (all were duplicates).', 'error');
+                    setLoading(false);
+                    return;
+                }
 
-            // Import data
-            const importPromises = processedData.map(item =>
-                fetch(`${API_BASE}/medicines`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(item)
-                })
-            );
+                // Pure create flow for non-duplicates
+                const createResults = await Promise.all(
+                    processedData.map(item =>
+                        fetch(`${API_BASE}/medicines`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(item)
+                        })
+                    )
+                );
 
-            const results = await Promise.all(importPromises);
-            const failedCount = results.filter(r => !r.ok).length;
-            const successCount = processedData.length - failedCount;
+                const failedCount = createResults.filter(r => !r.ok).length;
+                const successCount = processedData.length - failedCount;
 
-            if (failedCount === 0) {
-                showMessage(`✅ ${successCount} item(s) imported successfully!`, 'success');
+                if (failedCount === 0) {
+                    showMessage(`✅ ${successCount} new item(s) imported successfully!`, 'success');
+                } else {
+                    showMessage(`⚠️ ${successCount} imported, ${failedCount} failed. Check data format.`, 'error');
+                }
+            } else if (action === 'update') {
+                // For update, split into items to update vs create based on name match
+                const toUpdate = [];
+                const toCreate = [];
+
+                processedData.forEach(item => {
+                    // Prefer explicit Excel field, fall back to generic name
+                    const excelName = (item.medicine_name || item.name || '').toLowerCase();
+
+                    const match = existingMedicines.find(med =>
+                        med.name &&
+                        excelName &&
+                        med.name.toLowerCase() === excelName
+                    );
+
+                    if (match) {
+                        toUpdate.push({ existing: match, item });
+                    } else {
+                        toCreate.push(item);
+                    }
+                });
+
+                const updatePromises = toUpdate.map(({ existing, item }) =>
+                    fetch(`${API_BASE}/medicines/${existing.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: item.medicine_name || existing.name,
+                            description: item.description ?? existing.description,
+                            category: item.category ?? existing.category,
+                            brand: item.brand ?? existing.brand,
+                            // Excel uses total_packets → backend expects stock_packets
+                            stock_packets: item.total_packets ?? existing.stock_packets,
+                            tablets_per_packet: item.tablets_per_packet ?? existing.tablets_per_packet,
+                            packet_price_inr: item.packet_price_inr ?? existing.price_per_packet,
+                            expiry_date: item.expiry_date ?? existing.expiry_date,
+                            prescription_required: item.prescription_required ?? existing.prescription_required
+                        })
+                    })
+                );
+
+                const createPromises = toCreate.map(item =>
+                    fetch(`${API_BASE}/medicines`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(item)
+                    })
+                );
+
+                const [updateResults, createResults] = await Promise.all([
+                    Promise.all(updatePromises),
+                    Promise.all(createPromises)
+                ]);
+
+                const updateFailed = updateResults.filter(r => !r.ok).length;
+                const createFailed = createResults.filter(r => !r.ok).length;
+                const updateSuccess = toUpdate.length - updateFailed;
+                const createSuccess = toCreate.length - createFailed;
+
+                if (updateFailed === 0 && createFailed === 0) {
+                    showMessage(`✅ ${updateSuccess} item(s) updated, ${createSuccess} new item(s) added from Excel.`, 'success');
+                } else {
+                    showMessage(`⚠️ Updated ${updateSuccess} / ${toUpdate.length} and added ${createSuccess} / ${toCreate.length}. Check failed rows.`, 'error');
+                }
             } else {
-                showMessage(`⚠️ ${successCount} imported, ${failedCount} failed. Check data format.`, 'error');
+                // Default: add everything, even duplicates (previous behaviour)
+                if (processedData.length === 0) {
+                    showMessage('No items to import.', 'error');
+                    setLoading(false);
+                    return;
+                }
+
+                const importPromises = processedData.map(item =>
+                    fetch(`${API_BASE}/medicines`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(item)
+                    })
+                );
+
+                const results = await Promise.all(importPromises);
+                const failedCount = results.filter(r => !r.ok).length;
+                const successCount = processedData.length - failedCount;
+
+                if (failedCount === 0) {
+                    showMessage(`✅ ${successCount} item(s) imported successfully!`, 'success');
+                } else {
+                    showMessage(`⚠️ ${successCount} imported, ${failedCount} failed. Check data format.`, 'error');
+                }
             }
 
             onStockAdded && onStockAdded();
@@ -597,6 +693,13 @@ const AddStockModal = ({ isOpen, onClose, onStockAdded }) => {
                                 onClick={() => handleDuplicateAction('skip')}
                             >
                                 Skip Existing
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-primary"
+                                onClick={() => handleDuplicateAction('update')}
+                            >
+                                Update from Excel
                             </button>
                             <button
                                 type="button"

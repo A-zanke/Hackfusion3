@@ -1623,3 +1623,572 @@
 [2026-02-27T14:42:20.846Z] Pending medicine: null
 [2026-02-27T14:42:25.999Z] Grok result: {"medicines":[{"name":"Aceclofenac Tabletten","quantity":null}],"intent":"order"}
 [2026-02-27T14:42:26.005Z] Setting pending medicine to: {"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-27T18:50:29.130Z] === NEW REQUEST ===
+[2026-02-27T18:50:29.133Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T18:50:29.135Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T18:50:29.136Z] Persisted session: undefined
+[2026-02-27T18:50:29.138Z] Starting new session
+[2026-02-27T18:50:29.141Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T18:50:29.143Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T18:50:29.146Z] Stage: initial
+[2026-02-27T18:50:29.148Z] Pending medicine: null
+[2026-02-27T18:50:29.151Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T18:50:29.153Z] Is digits: false
+[2026-02-27T18:50:29.156Z] Condition match: false
+[2026-02-27T18:50:29.158Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-27T18:50:29.159Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T18:50:29.162Z] Stage: initial
+[2026-02-27T18:50:29.163Z] Pending medicine: null
+[2026-02-27T18:50:30.035Z] Grok result: {"medicines":[{"name":"Aceclofenac Tabletten","quantity":null}],"intent":"order"}
+[2026-02-27T18:50:30.223Z] Setting pending medicine to: {"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T18:57:16.627Z] === NEW REQUEST ===
+[2026-02-27T18:57:16.629Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T18:57:16.631Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T18:57:16.632Z] Persisted session: undefined
+[2026-02-27T18:57:16.634Z] Starting new session
+[2026-02-27T18:57:16.637Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T18:57:16.640Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T18:57:16.642Z] Stage: initial
+[2026-02-27T18:57:16.644Z] Pending medicine: null
+[2026-02-27T18:57:16.646Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T18:57:16.648Z] Is digits: false
+[2026-02-27T18:57:16.650Z] Condition match: false
+[2026-02-27T18:57:16.652Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-27T18:57:16.655Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T18:57:16.659Z] Stage: initial
+[2026-02-27T18:57:16.663Z] Pending medicine: null
+[2026-02-27T18:57:17.376Z] Grok result: {"medicines":[{"name":"Aceclofenac Tabletten","quantity":null}],"intent":"order"}
+[2026-02-27T18:57:17.384Z] Setting pending medicine to: {"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T18:58:39.022Z] === NEW REQUEST ===
+[2026-02-27T18:58:39.024Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T18:58:39.025Z] Message: "2"
+[2026-02-27T18:58:39.028Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":118,"name":"Aceclofenac Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T18:58:39.030Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-27T18:58:39.031Z] Top-of-handler state: stage=ask_quantity, pending={"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T18:58:39.033Z] Entering EARLY quantity branch with qty='2' for pending='{"id":118,"name":"Aceclofenac Tabletten"}'
+[2026-02-27T18:58:39.123Z] DB match for pending: Aceclofenac Tabletten
+[2026-02-27T18:58:39.125Z] EARLY ADD✅ Aceclofenac Tabletten x2 | Cart: ₹7.14
+[2026-02-27T18:58:57.719Z] === NEW REQUEST ===
+[2026-02-27T18:58:57.722Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T18:58:57.723Z] Message: "proceed"
+[2026-02-27T18:58:57.727Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":2,"price_per_tablet":"3.57","total_price":7.14}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T18:58:57.729Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-27T18:58:57.731Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T18:58:57.733Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T18:58:57.734Z] Stage: initial
+[2026-02-27T18:58:57.735Z] Pending medicine: null
+[2026-02-27T18:58:57.737Z] Message: "proceed"
+[2026-02-27T18:58:57.738Z] Is digits: false
+[2026-02-27T18:58:57.739Z] Condition match: false
+[2026-02-27T19:04:08.196Z] === NEW REQUEST ===
+[2026-02-27T19:04:08.201Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:04:08.203Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:04:08.205Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":2,"price_per_tablet":"3.57","total_price":7.14}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:04:08.207Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-27T19:04:08.209Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T19:04:08.211Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:04:08.213Z] Stage: initial
+[2026-02-27T19:04:08.214Z] Pending medicine: null
+[2026-02-27T19:04:08.216Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:04:08.218Z] Is digits: false
+[2026-02-27T19:04:08.219Z] Condition match: false
+[2026-02-27T19:04:08.221Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-27T19:04:08.223Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:04:08.226Z] Stage: initial
+[2026-02-27T19:04:08.227Z] Pending medicine: null
+[2026-02-27T19:04:08.719Z] Grok result: {"medicines":[{"name":"Aceclofenac Tabletten","quantity":null}],"intent":"order"}
+[2026-02-27T19:04:08.724Z] Setting pending medicine to: {"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T19:04:12.908Z] === NEW REQUEST ===
+[2026-02-27T19:04:12.910Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:04:12.912Z] Message: "1"
+[2026-02-27T19:04:12.914Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":2,"price_per_tablet":"3.57","total_price":7.14}],"stage":"ask_quantity","pendingMedicine":{"id":118,"name":"Aceclofenac Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:04:12.916Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-27T19:04:12.917Z] Top-of-handler state: stage=ask_quantity, pending={"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T19:04:12.919Z] Entering EARLY quantity branch with qty='1' for pending='{"id":118,"name":"Aceclofenac Tabletten"}'
+[2026-02-27T19:04:12.924Z] DB match for pending: Aceclofenac Tabletten
+[2026-02-27T19:04:12.926Z] EARLY ADD✅ Aceclofenac Tabletten x1 | Cart: ₹10.71
+[2026-02-27T19:04:19.822Z] === NEW REQUEST ===
+[2026-02-27T19:04:19.824Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:04:19.826Z] Message: "proceed"
+[2026-02-27T19:04:19.827Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":2,"price_per_tablet":"3.57","total_price":7.14},{"id":118,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"3.57","total_price":3.57}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:04:19.829Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-27T19:04:19.832Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T19:04:19.834Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:04:19.836Z] Stage: initial
+[2026-02-27T19:04:19.839Z] Pending medicine: null
+[2026-02-27T19:04:19.842Z] Message: "proceed"
+[2026-02-27T19:04:19.843Z] Is digits: false
+[2026-02-27T19:04:19.846Z] Condition match: false
+[2026-02-27T19:04:39.687Z] === NEW REQUEST ===
+[2026-02-27T19:04:39.690Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:04:39.693Z] Message: "apurva 22 1234567890"
+[2026-02-27T19:04:39.695Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":2,"price_per_tablet":"3.57","total_price":7.14},{"id":118,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"3.57","total_price":3.57}],"stage":"ask_customer","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:04:39.699Z] Loaded existing session - Stage: ask_customer, Pending: null
+[2026-02-27T19:04:39.701Z] Top-of-handler state: stage=ask_customer, pending=null
+[2026-02-27T19:04:39.704Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:04:39.706Z] Stage: ask_customer
+[2026-02-27T19:04:39.707Z] Pending medicine: null
+[2026-02-27T19:04:39.709Z] Message: "apurva 22 1234567890"
+[2026-02-27T19:04:39.711Z] Is digits: false
+[2026-02-27T19:04:39.714Z] Condition match: false
+[2026-02-27T19:04:46.075Z] === NEW REQUEST ===
+[2026-02-27T19:04:46.077Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:04:46.079Z] Message: "proceed"
+[2026-02-27T19:04:46.082Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":2,"price_per_tablet":"3.57","total_price":7.14},{"id":118,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"3.57","total_price":3.57}],"stage":"ready","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":"apurva","age":22,"mobile":"1234567890"}},"expiresAt":1772303400000}
+[2026-02-27T19:04:46.083Z] Loaded existing session - Stage: ready, Pending: null
+[2026-02-27T19:04:46.085Z] Top-of-handler state: stage=ready, pending=null
+[2026-02-27T19:04:46.086Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:04:46.088Z] Stage: ready
+[2026-02-27T19:04:46.089Z] Pending medicine: null
+[2026-02-27T19:04:46.091Z] Message: "proceed"
+[2026-02-27T19:04:46.092Z] Is digits: false
+[2026-02-27T19:04:46.093Z] Condition match: false
+[2026-02-27T19:04:56.668Z] === NEW REQUEST ===
+[2026-02-27T19:04:56.670Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:04:56.671Z] Message: "Y"
+[2026-02-27T19:04:56.673Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":2,"price_per_tablet":"3.57","total_price":7.14},{"id":118,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"3.57","total_price":3.57}],"stage":"confirm_order","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":"apurva","age":22,"mobile":"1234567890"}},"expiresAt":1772303400000}
+[2026-02-27T19:04:56.674Z] Loaded existing session - Stage: confirm_order, Pending: null
+[2026-02-27T19:04:56.675Z] Top-of-handler state: stage=confirm_order, pending=null
+[2026-02-27T19:04:56.676Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:04:56.679Z] Stage: confirm_order
+[2026-02-27T19:04:56.681Z] Pending medicine: null
+[2026-02-27T19:04:56.683Z] Message: "Y"
+[2026-02-27T19:04:56.684Z] Is digits: false
+[2026-02-27T19:04:56.686Z] Condition match: false
+[2026-02-27T19:04:56.805Z] Order confirmed: Aceclofenac Tabletten (2 tablets) - stock already deducted in real-time
+[2026-02-27T19:04:56.808Z] Order confirmed: Aceclofenac Tabletten (1 tablets) - stock already deducted in real-time
+[2026-02-27T19:20:32.940Z] === NEW REQUEST ===
+[2026-02-27T19:20:32.942Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:20:32.943Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:20:32.945Z] Persisted session: undefined
+[2026-02-27T19:20:32.946Z] Starting new session
+[2026-02-27T19:20:32.948Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T19:20:32.950Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:20:32.951Z] Stage: initial
+[2026-02-27T19:20:32.954Z] Pending medicine: null
+[2026-02-27T19:20:32.958Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:20:32.962Z] Is digits: false
+[2026-02-27T19:20:32.965Z] Condition match: false
+[2026-02-27T19:20:32.969Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-27T19:20:32.973Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:20:32.978Z] Stage: initial
+[2026-02-27T19:20:32.980Z] Pending medicine: null
+[2026-02-27T19:20:33.758Z] Grok result: {"medicines":[{"name":"Aceclofenac Tabletten","quantity":null}],"intent":"order"}
+[2026-02-27T19:20:33.762Z] Setting pending medicine to: {"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T19:20:36.655Z] === NEW REQUEST ===
+[2026-02-27T19:20:36.657Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:20:36.658Z] Message: "2"
+[2026-02-27T19:20:36.660Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":118,"name":"Aceclofenac Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:20:36.662Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-27T19:20:36.663Z] Top-of-handler state: stage=ask_quantity, pending={"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T19:20:36.665Z] Entering EARLY quantity branch with qty='2' for pending='{"id":118,"name":"Aceclofenac Tabletten"}'
+[2026-02-27T19:20:36.672Z] DB match for pending: Aceclofenac Tabletten
+[2026-02-27T19:20:36.675Z] EARLY ADD✅ Aceclofenac Tabletten x2 | Cart: ₹7.14
+[2026-02-27T19:20:44.744Z] === NEW REQUEST ===
+[2026-02-27T19:20:44.746Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:20:44.747Z] Message: "proceed"
+[2026-02-27T19:20:44.749Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":2,"price_per_tablet":"3.57","total_price":7.14}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:20:44.751Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-27T19:20:44.754Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T19:20:44.757Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:20:44.759Z] Stage: initial
+[2026-02-27T19:20:44.763Z] Pending medicine: null
+[2026-02-27T19:20:44.765Z] Message: "proceed"
+[2026-02-27T19:20:44.769Z] Is digits: false
+[2026-02-27T19:20:44.774Z] Condition match: false
+[2026-02-27T19:21:27.309Z] === NEW REQUEST ===
+[2026-02-27T19:21:27.310Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:21:27.312Z] Message: "Y"
+[2026-02-27T19:21:27.314Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":2,"price_per_tablet":"3.57","total_price":7.14}],"stage":"confirm_order","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:21:27.316Z] Loaded existing session - Stage: confirm_order, Pending: null
+[2026-02-27T19:21:27.318Z] Top-of-handler state: stage=confirm_order, pending=null
+[2026-02-27T19:21:27.321Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:21:27.322Z] Stage: confirm_order
+[2026-02-27T19:21:27.324Z] Pending medicine: null
+[2026-02-27T19:21:27.325Z] Message: "Y"
+[2026-02-27T19:21:27.327Z] Is digits: false
+[2026-02-27T19:21:27.328Z] Condition match: false
+[2026-02-27T19:21:27.433Z] Order confirmed: Aceclofenac Tabletten (2 tablets) - stock already deducted in real-time
+[2026-02-27T19:25:06.006Z] === NEW REQUEST ===
+[2026-02-27T19:25:06.008Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:25:06.009Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:25:06.011Z] Persisted session: undefined
+[2026-02-27T19:25:06.012Z] Starting new session
+[2026-02-27T19:25:06.014Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T19:25:06.015Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:25:06.017Z] Stage: initial
+[2026-02-27T19:25:06.018Z] Pending medicine: null
+[2026-02-27T19:25:06.020Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:25:06.022Z] Is digits: false
+[2026-02-27T19:25:06.024Z] Condition match: false
+[2026-02-27T19:25:06.027Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-27T19:25:06.029Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:25:06.030Z] Stage: initial
+[2026-02-27T19:25:06.033Z] Pending medicine: null
+[2026-02-27T19:25:07.164Z] Grok result: {"medicines":[{"name":"Aceclofenac Tabletten","quantity":null}],"intent":"order"}
+[2026-02-27T19:25:07.172Z] Setting pending medicine to: {"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T19:25:09.902Z] === NEW REQUEST ===
+[2026-02-27T19:25:09.903Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:25:09.904Z] Message: "1"
+[2026-02-27T19:25:09.906Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":118,"name":"Aceclofenac Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:25:09.909Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-27T19:25:09.911Z] Top-of-handler state: stage=ask_quantity, pending={"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T19:25:09.913Z] Entering EARLY quantity branch with qty='1' for pending='{"id":118,"name":"Aceclofenac Tabletten"}'
+[2026-02-27T19:25:09.919Z] DB match for pending: Aceclofenac Tabletten
+[2026-02-27T19:25:09.924Z] Real-time stock update for Aceclofenac Tabletten: 1288 -> 1287 tablets (packets: 46 -> 45, individual: 0 -> 27)
+[2026-02-27T19:25:09.974Z] EARLY ADD✅ Aceclofenac Tabletten x1 | Cart: ₹3.57
+[2026-02-27T19:25:18.104Z] === NEW REQUEST ===
+[2026-02-27T19:25:18.106Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:25:18.108Z] Message: "proceed"
+[2026-02-27T19:25:18.110Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"3.57","total_price":3.57}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:25:18.114Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-27T19:25:18.115Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T19:25:18.117Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:25:18.118Z] Stage: initial
+[2026-02-27T19:25:18.121Z] Pending medicine: null
+[2026-02-27T19:25:18.123Z] Message: "proceed"
+[2026-02-27T19:25:18.125Z] Is digits: false
+[2026-02-27T19:25:18.127Z] Condition match: false
+[2026-02-27T19:25:21.695Z] === NEW REQUEST ===
+[2026-02-27T19:25:21.697Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:25:21.700Z] Message: "Y"
+[2026-02-27T19:25:21.702Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"3.57","total_price":3.57}],"stage":"confirm_order","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:25:21.707Z] Loaded existing session - Stage: confirm_order, Pending: null
+[2026-02-27T19:25:21.710Z] Top-of-handler state: stage=confirm_order, pending=null
+[2026-02-27T19:25:21.712Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:25:21.716Z] Stage: confirm_order
+[2026-02-27T19:25:21.718Z] Pending medicine: null
+[2026-02-27T19:25:21.722Z] Message: "Y"
+[2026-02-27T19:25:21.726Z] Is digits: false
+[2026-02-27T19:25:21.729Z] Condition match: false
+[2026-02-27T19:25:21.750Z] Order confirmed: Aceclofenac Tabletten (1 tablets) - stock already deducted in real-time
+[2026-02-27T19:30:42.352Z] === NEW REQUEST ===
+[2026-02-27T19:30:42.354Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:30:42.355Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:30:42.356Z] Persisted session: undefined
+[2026-02-27T19:30:42.358Z] Starting new session
+[2026-02-27T19:30:42.360Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T19:30:42.363Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:30:42.365Z] Stage: initial
+[2026-02-27T19:30:42.368Z] Pending medicine: null
+[2026-02-27T19:30:42.371Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:30:42.374Z] Is digits: false
+[2026-02-27T19:30:42.377Z] Condition match: false
+[2026-02-27T19:30:42.380Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-27T19:30:42.384Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:30:42.386Z] Stage: initial
+[2026-02-27T19:30:42.389Z] Pending medicine: null
+[2026-02-27T19:30:43.110Z] Grok result: {"medicines":[{"name":"Aceclofenac Tabletten","quantity":null}],"intent":"order"}
+[2026-02-27T19:30:43.115Z] Setting pending medicine to: {"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T19:30:46.061Z] === NEW REQUEST ===
+[2026-02-27T19:30:46.063Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:30:46.065Z] Message: "1"
+[2026-02-27T19:30:46.067Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":118,"name":"Aceclofenac Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:30:46.070Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-27T19:30:46.072Z] Top-of-handler state: stage=ask_quantity, pending={"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T19:30:46.074Z] Entering EARLY quantity branch with qty='1' for pending='{"id":118,"name":"Aceclofenac Tabletten"}'
+[2026-02-27T19:30:46.087Z] DB match for pending: Aceclofenac Tabletten
+[2026-02-27T19:30:46.093Z] Real-time stock update for Aceclofenac Tabletten: 1260 -> 1259 tablets (packets: 45 -> 44)
+[2026-02-27T19:30:46.110Z] EARLY ADD✅ Aceclofenac Tabletten x1 | Cart: ₹3.57
+[2026-02-27T19:30:50.554Z] === NEW REQUEST ===
+[2026-02-27T19:30:50.555Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:30:50.557Z] Message: "proceed"
+[2026-02-27T19:30:50.560Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"3.57","total_price":3.57}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:30:50.562Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-27T19:30:50.565Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T19:30:50.567Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:30:50.570Z] Stage: initial
+[2026-02-27T19:30:50.573Z] Pending medicine: null
+[2026-02-27T19:30:50.576Z] Message: "proceed"
+[2026-02-27T19:30:50.580Z] Is digits: false
+[2026-02-27T19:30:50.583Z] Condition match: false
+[2026-02-27T19:30:53.138Z] === NEW REQUEST ===
+[2026-02-27T19:30:53.141Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:30:53.142Z] Message: "Y"
+[2026-02-27T19:30:53.144Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"3.57","total_price":3.57}],"stage":"confirm_order","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:30:53.147Z] Loaded existing session - Stage: confirm_order, Pending: null
+[2026-02-27T19:30:53.149Z] Top-of-handler state: stage=confirm_order, pending=null
+[2026-02-27T19:30:53.151Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:30:53.153Z] Stage: confirm_order
+[2026-02-27T19:30:53.155Z] Pending medicine: null
+[2026-02-27T19:30:53.157Z] Message: "Y"
+[2026-02-27T19:30:53.159Z] Is digits: false
+[2026-02-27T19:30:53.163Z] Condition match: false
+[2026-02-27T19:30:53.207Z] Order confirmed: Aceclofenac Tabletten (1 tablets) - stock already deducted in real-time
+[2026-02-27T19:31:40.218Z] === NEW REQUEST ===
+[2026-02-27T19:31:40.220Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:31:40.222Z] Message: "Albendazole Tabletten "
+[2026-02-27T19:31:40.224Z] Persisted session: {"sessionState":{"medicines":[],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:31:40.226Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-27T19:31:40.228Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T19:31:40.230Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:31:40.232Z] Stage: initial
+[2026-02-27T19:31:40.235Z] Pending medicine: null
+[2026-02-27T19:31:40.236Z] Message: "Albendazole Tabletten "
+[2026-02-27T19:31:40.238Z] Is digits: false
+[2026-02-27T19:31:40.241Z] Condition match: false
+[2026-02-27T19:31:40.243Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-27T19:31:40.247Z] Message: "Albendazole Tabletten "
+[2026-02-27T19:31:40.251Z] Stage: initial
+[2026-02-27T19:31:40.254Z] Pending medicine: null
+[2026-02-27T19:31:41.025Z] Grok result: {"medicines":[{"name":"Albendazole Tabletten","quantity":null}],"intent":"order"}
+[2026-02-27T19:31:41.029Z] Setting pending medicine to: {"id":184,"name":"Albendazole Tabletten"}
+[2026-02-27T19:31:47.915Z] === NEW REQUEST ===
+[2026-02-27T19:31:47.916Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:31:47.918Z] Message: "1"
+[2026-02-27T19:31:47.920Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":184,"name":"Albendazole Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:31:47.923Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-27T19:31:47.924Z] Top-of-handler state: stage=ask_quantity, pending={"id":184,"name":"Albendazole Tabletten"}
+[2026-02-27T19:31:47.927Z] Entering EARLY quantity branch with qty='1' for pending='{"id":184,"name":"Albendazole Tabletten"}'
+[2026-02-27T19:31:47.934Z] DB match for pending: Albendazole Tabletten
+[2026-02-27T19:31:47.941Z] Real-time stock update for Albendazole Tabletten: 3500 -> 3499 tablets (packets: 70 -> 69)
+[2026-02-27T19:31:47.949Z] EARLY ADD✅ Albendazole Tabletten x1 | Cart: ₹15.20
+[2026-02-27T19:31:55.271Z] === NEW REQUEST ===
+[2026-02-27T19:31:55.273Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:31:55.276Z] Message: "proceed"
+[2026-02-27T19:31:55.279Z] Persisted session: {"sessionState":{"medicines":[{"id":184,"name":"Albendazole Tabletten","quantity":1,"price_per_tablet":"15.20","total_price":15.2}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:31:55.282Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-27T19:31:55.288Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T19:31:55.291Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:31:55.293Z] Stage: initial
+[2026-02-27T19:31:55.296Z] Pending medicine: null
+[2026-02-27T19:31:55.298Z] Message: "proceed"
+[2026-02-27T19:31:55.303Z] Is digits: false
+[2026-02-27T19:31:55.307Z] Condition match: false
+[2026-02-27T19:32:02.504Z] === NEW REQUEST ===
+[2026-02-27T19:32:02.506Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:32:02.509Z] Message: "Y"
+[2026-02-27T19:32:02.510Z] Persisted session: {"sessionState":{"medicines":[{"id":184,"name":"Albendazole Tabletten","quantity":1,"price_per_tablet":"15.20","total_price":15.2}],"stage":"confirm_order","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:32:02.514Z] Loaded existing session - Stage: confirm_order, Pending: null
+[2026-02-27T19:32:02.516Z] Top-of-handler state: stage=confirm_order, pending=null
+[2026-02-27T19:32:02.518Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:32:02.521Z] Stage: confirm_order
+[2026-02-27T19:32:02.523Z] Pending medicine: null
+[2026-02-27T19:32:02.525Z] Message: "Y"
+[2026-02-27T19:32:02.528Z] Is digits: false
+[2026-02-27T19:32:02.532Z] Condition match: false
+[2026-02-27T19:32:02.544Z] Order confirmed: Albendazole Tabletten (1 tablets) - stock already deducted in real-time
+[2026-02-27T19:33:22.125Z] === NEW REQUEST ===
+[2026-02-27T19:33:22.127Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:33:22.129Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:33:22.130Z] Persisted session: {"sessionState":{"medicines":[],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:33:22.132Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-27T19:33:22.133Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T19:33:22.136Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:33:22.137Z] Stage: initial
+[2026-02-27T19:33:22.140Z] Pending medicine: null
+[2026-02-27T19:33:22.142Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:33:22.144Z] Is digits: false
+[2026-02-27T19:33:22.145Z] Condition match: false
+[2026-02-27T19:33:22.147Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-27T19:33:22.148Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:33:22.149Z] Stage: initial
+[2026-02-27T19:33:22.151Z] Pending medicine: null
+[2026-02-27T19:33:22.737Z] Grok result: {"medicines":[{"name":"Aceclofenac Tabletten","quantity":null}],"intent":"order"}
+[2026-02-27T19:33:22.816Z] Setting pending medicine to: {"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T19:39:23.206Z] === NEW REQUEST ===
+[2026-02-27T19:39:23.208Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:39:23.210Z] Message: "Aceclofenac Tabletten"
+[2026-02-27T19:39:23.212Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":118,"name":"Aceclofenac Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:39:23.216Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-27T19:39:23.218Z] Top-of-handler state: stage=ask_quantity, pending={"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T19:39:23.220Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:39:23.221Z] Stage: ask_quantity
+[2026-02-27T19:39:23.223Z] Pending medicine: {"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T19:39:23.225Z] Message: "Aceclofenac Tabletten"
+[2026-02-27T19:39:23.227Z] Is digits: false
+[2026-02-27T19:39:23.228Z] Condition match: false
+[2026-02-27T19:39:23.230Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-27T19:39:23.232Z] Message: "Aceclofenac Tabletten"
+[2026-02-27T19:39:23.233Z] Stage: ask_quantity
+[2026-02-27T19:39:23.235Z] Pending medicine: {"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T19:39:23.850Z] Grok result: {"medicines":[{"name":"Aceclofenac Tabletten","quantity":null}],"intent":"order"}
+[2026-02-27T19:39:23.853Z] Setting pending medicine to: {"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T19:39:27.354Z] === NEW REQUEST ===
+[2026-02-27T19:39:27.356Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:39:27.358Z] Message: "1"
+[2026-02-27T19:39:27.360Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":118,"name":"Aceclofenac Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:39:27.363Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-27T19:39:27.364Z] Top-of-handler state: stage=ask_quantity, pending={"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T19:39:27.366Z] Entering EARLY quantity branch with qty='1' for pending='{"id":118,"name":"Aceclofenac Tabletten"}'
+[2026-02-27T19:39:27.374Z] DB match for pending: Aceclofenac Tabletten
+[2026-02-27T19:39:27.379Z] Real-time stock update for Aceclofenac Tabletten: 1259 -> 1258 tablets (packets: 44 -> 44)
+[2026-02-27T19:39:27.393Z] EARLY ADD✅ Aceclofenac Tabletten x1 | Cart: ₹3.57
+[2026-02-27T19:39:45.612Z] === NEW REQUEST ===
+[2026-02-27T19:39:45.614Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:39:45.615Z] Message: "Y"
+[2026-02-27T19:39:45.617Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"3.57","total_price":3.57}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:39:45.620Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-27T19:39:45.622Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T19:39:45.624Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:39:45.626Z] Stage: initial
+[2026-02-27T19:39:45.629Z] Pending medicine: null
+[2026-02-27T19:39:45.630Z] Message: "Y"
+[2026-02-27T19:39:45.632Z] Is digits: false
+[2026-02-27T19:39:45.635Z] Condition match: false
+[2026-02-27T19:39:45.637Z] User wants to add more medicines
+[2026-02-27T19:39:58.129Z] === NEW REQUEST ===
+[2026-02-27T19:39:58.131Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:39:58.134Z] Message: "Heparin Injection "
+[2026-02-27T19:39:58.137Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"3.57","total_price":3.57}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:39:58.140Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-27T19:39:58.142Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T19:39:58.144Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:39:58.146Z] Stage: initial
+[2026-02-27T19:39:58.148Z] Pending medicine: null
+[2026-02-27T19:39:58.149Z] Message: "Heparin Injection "
+[2026-02-27T19:39:58.151Z] Is digits: false
+[2026-02-27T19:39:58.154Z] Condition match: false
+[2026-02-27T19:39:58.156Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-27T19:39:58.159Z] Message: "Heparin Injection "
+[2026-02-27T19:39:58.160Z] Stage: initial
+[2026-02-27T19:39:58.163Z] Pending medicine: null
+[2026-02-27T19:39:59.138Z] Grok result: {"medicines":[{"name":"Heparin Injection","quantity":null}],"intent":"order"}
+[2026-02-27T19:39:59.142Z] Setting pending medicine to: {"id":116,"name":"Heparin Injection"}
+[2026-02-27T19:40:03.633Z] === NEW REQUEST ===
+[2026-02-27T19:40:03.635Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:40:03.637Z] Message: "1"
+[2026-02-27T19:40:03.639Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"3.57","total_price":3.57}],"stage":"ask_quantity","pendingMedicine":{"id":116,"name":"Heparin Injection"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:40:03.642Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-27T19:40:03.645Z] Top-of-handler state: stage=ask_quantity, pending={"id":116,"name":"Heparin Injection"}
+[2026-02-27T19:40:03.647Z] Entering EARLY quantity branch with qty='1' for pending='{"id":116,"name":"Heparin Injection"}'
+[2026-02-27T19:40:03.651Z] DB match for pending: Heparin Injection
+[2026-02-27T19:40:03.656Z] Real-time stock update for Heparin Injection: 900 -> 899 tablets (packets: 30 -> 29)
+[2026-02-27T19:40:03.664Z] EARLY ADD✅ Heparin Injection x1 | Cart: ₹6.24
+[2026-02-27T19:40:19.666Z] === NEW REQUEST ===
+[2026-02-27T19:40:19.667Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:40:19.669Z] Message: "proceed"
+[2026-02-27T19:40:19.672Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"3.57","total_price":3.57},{"id":116,"name":"Heparin Injection","quantity":1,"price_per_tablet":"2.67","total_price":2.67}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:40:19.674Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-27T19:40:19.676Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T19:40:19.677Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:40:19.679Z] Stage: initial
+[2026-02-27T19:40:19.680Z] Pending medicine: null
+[2026-02-27T19:40:19.682Z] Message: "proceed"
+[2026-02-27T19:40:19.684Z] Is digits: false
+[2026-02-27T19:40:19.685Z] Condition match: false
+[2026-02-27T19:40:30.409Z] === NEW REQUEST ===
+[2026-02-27T19:40:30.411Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:40:30.413Z] Message: "Y"
+[2026-02-27T19:40:30.415Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"3.57","total_price":3.57},{"id":116,"name":"Heparin Injection","quantity":1,"price_per_tablet":"2.67","total_price":2.67}],"stage":"confirm_order","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:40:30.418Z] Loaded existing session - Stage: confirm_order, Pending: null
+[2026-02-27T19:40:30.420Z] Top-of-handler state: stage=confirm_order, pending=null
+[2026-02-27T19:40:30.423Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:40:30.425Z] Stage: confirm_order
+[2026-02-27T19:40:30.427Z] Pending medicine: null
+[2026-02-27T19:40:30.429Z] Message: "Y"
+[2026-02-27T19:40:30.430Z] Is digits: false
+[2026-02-27T19:40:30.432Z] Condition match: false
+[2026-02-27T19:40:30.509Z] Order confirmed: Aceclofenac Tabletten (1 tablets) - stock already deducted in real-time
+[2026-02-27T19:40:30.512Z] Order confirmed: Heparin Injection (1 tablets) - stock already deducted in real-time
+[2026-02-27T19:45:15.801Z] === NEW REQUEST ===
+[2026-02-27T19:45:15.803Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:45:15.805Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:45:15.807Z] Persisted session: undefined
+[2026-02-27T19:45:15.808Z] Starting new session
+[2026-02-27T19:45:15.812Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T19:45:15.819Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:45:15.822Z] Stage: initial
+[2026-02-27T19:45:15.826Z] Pending medicine: null
+[2026-02-27T19:45:15.830Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:45:15.834Z] Is digits: false
+[2026-02-27T19:45:15.837Z] Condition match: false
+[2026-02-27T19:45:15.839Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-27T19:45:15.841Z] Message: "Aceclofenac Tabletten "
+[2026-02-27T19:45:15.844Z] Stage: initial
+[2026-02-27T19:45:15.852Z] Pending medicine: null
+[2026-02-27T19:45:17.376Z] Grok result: {"medicines":[{"name":"Aceclofenac Tabletten","quantity":null}],"intent":"order"}
+[2026-02-27T19:45:17.459Z] Setting pending medicine to: {"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T19:45:31.277Z] === NEW REQUEST ===
+[2026-02-27T19:45:31.278Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:45:31.281Z] Message: "1"
+[2026-02-27T19:45:31.283Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":118,"name":"Aceclofenac Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:45:31.286Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-27T19:45:31.289Z] Top-of-handler state: stage=ask_quantity, pending={"id":118,"name":"Aceclofenac Tabletten"}
+[2026-02-27T19:45:31.291Z] Entering EARLY quantity branch with qty='1' for pending='{"id":118,"name":"Aceclofenac Tabletten"}'
+[2026-02-27T19:45:31.400Z] DB match for pending: Aceclofenac Tabletten
+[2026-02-27T19:45:31.403Z] Real-time stock update for Aceclofenac Tabletten: 1258 -> 1257 tablets (packets: 44 -> 44)
+[2026-02-27T19:45:31.419Z] EARLY ADD✅ Aceclofenac Tabletten x1 | Cart: ₹3.57
+[2026-02-27T19:46:23.003Z] === NEW REQUEST ===
+[2026-02-27T19:46:23.005Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:46:23.006Z] Message: "Y"
+[2026-02-27T19:46:23.008Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"3.57","total_price":3.57}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:46:23.009Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-27T19:46:23.012Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T19:46:23.014Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:46:23.016Z] Stage: initial
+[2026-02-27T19:46:23.018Z] Pending medicine: null
+[2026-02-27T19:46:23.020Z] Message: "Y"
+[2026-02-27T19:46:23.022Z] Is digits: false
+[2026-02-27T19:46:23.028Z] Condition match: false
+[2026-02-27T19:46:23.031Z] User chose to proceed directly with current cart (Y)
+[2026-02-27T19:46:47.218Z] === NEW REQUEST ===
+[2026-02-27T19:46:47.220Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T19:46:47.221Z] Message: "y"
+[2026-02-27T19:46:47.223Z] Persisted session: {"sessionState":{"medicines":[{"id":118,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"3.57","total_price":3.57}],"stage":"confirm_order","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null}},"expiresAt":1772303400000}
+[2026-02-27T19:46:47.225Z] Loaded existing session - Stage: confirm_order, Pending: null
+[2026-02-27T19:46:47.228Z] Top-of-handler state: stage=confirm_order, pending=null
+[2026-02-27T19:46:47.230Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T19:46:47.233Z] Stage: confirm_order
+[2026-02-27T19:46:47.236Z] Pending medicine: null
+[2026-02-27T19:46:47.238Z] Message: "y"
+[2026-02-27T19:46:47.241Z] Is digits: false
+[2026-02-27T19:46:47.246Z] Condition match: false
+[2026-02-27T19:46:47.484Z] Order confirmed: Aceclofenac Tabletten (1 tablets) - stock already deducted in real-time
+[2026-02-27T20:32:29.857Z] === NEW REQUEST ===
+[2026-02-27T20:32:29.859Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T20:32:29.861Z] Message: "Digene syrup quantity to"
+[2026-02-27T20:32:29.862Z] Persisted session: undefined
+[2026-02-27T20:32:29.867Z] Starting new session
+[2026-02-27T20:32:29.874Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T20:32:29.877Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T20:32:29.880Z] Stage: initial
+[2026-02-27T20:32:29.882Z] Pending medicine: null
+[2026-02-27T20:32:29.889Z] Message: "Digene syrup quantity to"
+[2026-02-27T20:32:29.892Z] Is digits: false
+[2026-02-27T20:32:29.895Z] Condition match: false
+[2026-02-27T20:32:29.897Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-27T20:32:29.900Z] Message: "Digene syrup quantity to"
+[2026-02-27T20:32:29.905Z] Stage: initial
+[2026-02-27T20:32:29.909Z] Pending medicine: null
+[2026-02-27T20:32:30.886Z] Grok result: {"medicines":[{"name":"Digene syrup quantity to","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-27T20:32:50.827Z] === NEW REQUEST ===
+[2026-02-27T20:32:50.829Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T20:32:50.831Z] Message: "Digene syrup"
+[2026-02-27T20:32:50.832Z] Persisted session: {"sessionState":{"medicines":[],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"offer_add_missing","language":"en","targetName":"Digene syrup quantity to","lastMissingName":"Digene syrup quantity to","previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null}},"expiresAt":1772303400000}
+[2026-02-27T20:32:50.835Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-27T20:32:50.838Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T20:32:50.841Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T20:32:50.844Z] Stage: initial
+[2026-02-27T20:32:50.848Z] Pending medicine: null
+[2026-02-27T20:32:50.850Z] Message: "Digene syrup"
+[2026-02-27T20:32:50.853Z] Is digits: false
+[2026-02-27T20:32:50.856Z] Condition match: false
+[2026-02-27T20:32:50.859Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-27T20:32:50.862Z] Message: "Digene syrup"
+[2026-02-27T20:32:50.864Z] Stage: initial
+[2026-02-27T20:32:50.866Z] Pending medicine: null
+[2026-02-27T20:32:51.310Z] Grok result: {"medicines":[{"name":"Digene syrup","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-27T20:32:51.408Z] Setting pending medicine to: {"id":96,"name":"Digene Syrup"}
+[2026-02-27T20:33:31.520Z] === NEW REQUEST ===
+[2026-02-27T20:33:31.522Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T20:33:31.524Z] Message: "2"
+[2026-02-27T20:33:31.526Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":96,"name":"Digene Syrup"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"offer_add_missing","language":"en","targetName":"Digene syrup quantity to","lastMissingName":"Digene syrup quantity to","previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null}},"expiresAt":1772303400000}
+[2026-02-27T20:33:31.529Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-27T20:33:31.532Z] Top-of-handler state: stage=ask_quantity, pending={"id":96,"name":"Digene Syrup"}
+[2026-02-27T20:33:31.535Z] Entering EARLY quantity branch with qty='2' for pending='{"id":96,"name":"Digene Syrup"}'
+[2026-02-27T20:33:31.622Z] DB match for pending: Digene Syrup
+[2026-02-27T20:33:31.626Z] Real-time stock update for Digene Syrup: 1932 -> 1930 tablets (packets: 138 -> 137)
+[2026-02-27T20:33:31.641Z] EARLY ADD✅ Digene Syrup x2 | Cart: ₹1185.72
+[2026-02-27T20:33:44.339Z] === NEW REQUEST ===
+[2026-02-27T20:33:44.341Z] Session key: DEBUG_SESSION_KEY
+[2026-02-27T20:33:44.342Z] Message: "proceed"
+[2026-02-27T20:33:44.344Z] Persisted session: {"sessionState":{"medicines":[{"id":96,"name":"Digene Syrup","quantity":2,"price_per_tablet":"592.86","total_price":1185.72}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"offer_add_missing","language":"en","targetName":"Digene syrup quantity to","lastMissingName":"Digene syrup quantity to","previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null}},"expiresAt":1772303400000}
+[2026-02-27T20:33:44.347Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-27T20:33:44.349Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-27T20:33:44.351Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-27T20:33:44.353Z] Stage: initial
+[2026-02-27T20:33:44.354Z] Pending medicine: null
+[2026-02-27T20:33:44.356Z] Message: "proceed"
+[2026-02-27T20:33:44.357Z] Is digits: false
+[2026-02-27T20:33:44.360Z] Condition match: false

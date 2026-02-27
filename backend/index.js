@@ -871,12 +871,109 @@ app.post('/test', (req, res) => {
     res.json({ message: 'Test endpoint working' });
 });
 
+// --- DASHBOARD STATS ROUTE ---
+app.get('/api/dashboard/stats', async (req, res) => {
+    try {
+        // All Sales (for filtering)
+        const allSalesQuery = `
+            SELECT o.id as order_id, m.name as medicine_name, oi.quantity, oi.price_at_time as price, (oi.quantity * oi.price_at_time) as total, o.created_at
+            FROM order_items oi
+            JOIN orders o ON oi.order_id = o.id
+            JOIN medicines m ON oi.medicine_id = m.id
+            WHERE o.status = 'completed'
+            ORDER BY o.created_at DESC
+        `;
+        const allSalesResult = await db.query(allSalesQuery);
+
+        // Today's Sales
+        const todaySalesQuery = `
+            SELECT o.id as order_id, m.name as medicine_name, oi.quantity, oi.price_at_time as price, (oi.quantity * oi.price_at_time) as total, o.created_at
+            FROM order_items oi
+            JOIN orders o ON oi.order_id = o.id
+            JOIN medicines m ON oi.medicine_id = m.id
+            WHERE DATE(o.created_at) = CURRENT_DATE AND o.status = 'completed'
+            ORDER BY o.created_at DESC
+        `;
+        const todaySalesResult = await db.query(todaySalesQuery);
+
+        // All Orders
+        const allOrdersQuery = `
+            SELECT o.id as order_id, o.customer_name, o.status, o.created_at,
+            (SELECT string_agg(m.name || ' (' || oi.quantity || ')', ', ') 
+             FROM order_items oi 
+             JOIN medicines m ON oi.medicine_id = m.id 
+             WHERE oi.order_id = o.id) as medicines
+            FROM orders o
+            ORDER BY o.created_at DESC
+        `;
+        const allOrdersResult = await db.query(allOrdersQuery);
+
+        // Low Stock
+        const lowStockQuery = `
+            SELECT id, name, total_tablets as remaining_quantity, low_stock_threshold
+            FROM medicines
+            WHERE total_tablets < low_stock_threshold AND is_deleted = FALSE
+            ORDER BY total_tablets ASC
+        `;
+        const lowStockResult = await db.query(lowStockQuery);
+
+        // Repeat Customers
+        const repeatCustomersQuery = `
+            SELECT customer_name as name, mobile, COUNT(id) as order_count 
+            FROM orders 
+            WHERE customer_name IS NOT NULL
+            GROUP BY customer_name, mobile 
+            HAVING COUNT(id) > 1 
+            ORDER BY order_count DESC
+        `;
+        const repeatCustomersResult = await db.query(repeatCustomersQuery);
+
+        // Fast Moving Medicines
+        const fastMovingQuery = `
+            SELECT m.id, m.name, SUM(oi.quantity) as total_sold
+            FROM order_items oi
+            JOIN medicines m ON oi.medicine_id = m.id
+            JOIN orders o ON oi.order_id = o.id
+            WHERE o.status = 'completed' AND m.is_deleted = FALSE
+            GROUP BY m.id, m.name
+            ORDER BY total_sold DESC
+            LIMIT 10
+        `;
+        const fastMovingResult = await db.query(fastMovingQuery);
+
+        // Near Expiry Medicines
+        const nearExpiryQuery = `
+            SELECT id, name, expiry_date 
+            FROM medicines 
+            WHERE is_deleted = FALSE 
+            AND expiry_date IS NOT NULL 
+            AND expiry_date <= CURRENT_DATE + INTERVAL '60 days'
+            AND expiry_date >= CURRENT_DATE
+            ORDER BY expiry_date ASC
+        `;
+        const nearExpiryResult = await db.query(nearExpiryQuery);
+
+        res.json({
+            allSales: allSalesResult.rows,
+            todaySales: todaySalesResult.rows,
+            allOrders: allOrdersResult.rows,
+            lowStock: lowStockResult.rows,
+            repeatCustomers: repeatCustomersResult.rows,
+            fastMoving: fastMovingResult.rows,
+            nearExpiry: nearExpiryResult.rows
+        });
+    } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
 app.get('/', (req, res) => {
     res.json({ message: 'PharmaBuddy Backend is running with Database connection' });
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log('Server is running on port ' + PORT);
 });
 
 

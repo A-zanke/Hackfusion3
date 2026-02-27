@@ -17,14 +17,18 @@ cur.execute("DROP TABLE IF EXISTS medicines CASCADE")
 cur.execute('''
     CREATE TABLE IF NOT EXISTS medicines (
         id SERIAL PRIMARY KEY,
+        product_id_str VARCHAR(50),
         name VARCHAR(255) NOT NULL,
         category VARCHAR(100),
+        brand VARCHAR(255),
+        description TEXT,
         stock_packets INTEGER NOT NULL DEFAULT 0,
         tablets_per_packet INTEGER NOT NULL DEFAULT 1,
         total_tablets INTEGER GENERATED ALWAYS AS (stock_packets * tablets_per_packet) STORED,
         price_per_tablet DECIMAL(10, 2) NOT NULL DEFAULT 0,
         expiry_date DATE,
         low_stock_threshold INTEGER DEFAULT 30,
+        is_deleted BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 ''')

@@ -5,17 +5,17 @@ import '../App.css';
 import { Link } from "react-router-dom";
 const AIChat = () => {
     const [input, setInput] = useState('');
-    const [messages, setMessages] = useState([
-        {
-            role: 'assistant',
-            content: `👋 Hello! I'm **PharmaAI**, your intelligent pharmacy assistant.
+    const initialGreeting = {
+        role: 'assistant',
+        content: `👋 Hello! I'm **PharmaAI**, your intelligent pharmacy assistant.
 I help only with medicine ordering, refills, or pharmacy-related questions.
 
 🎙 You can also use **voice input** — just click the mic button!
 How can I assist you today?`,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-    ]);
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    const [messages, setMessages] = useState([initialGreeting]);
     const [isTyping, setIsTyping] = useState(false);
     const [suggestions, setSuggestions] = useState([]);
     const [selectedMedicine, setSelectedMedicine] = useState(null);
@@ -33,6 +33,8 @@ How can I assist you today?`,
     const [isVoiceInput, setIsVoiceInput] = useState(false);
     const chatMessagesRef = useRef(null);
 
+    const [userLanguage, setUserLanguage] = useState('en'); // 'en' | 'hi' | 'mr'
+
     const [currentTime, setCurrentTime] = useState(new Date());
     const navigate = useNavigate();
 
@@ -40,6 +42,23 @@ How can I assist you today?`,
         const timer = setInterval(() => {
             setCurrentTime(new Date());
         }, 1000);
+
+        // Load persisted chat (24-hour window)
+        try {
+            const stored = localStorage.getItem('pharma_ai_chat_v1');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                const savedAt = parsed.savedAt || 0;
+                const twentyFourHoursMs = 24 * 60 * 60 * 1000;
+                if (Date.now() - savedAt < twentyFourHoursMs && Array.isArray(parsed.messages) && parsed.messages.length > 0) {
+                    setMessages(parsed.messages);
+                } else {
+                    localStorage.removeItem('pharma_ai_chat_v1');
+                }
+            }
+        } catch (e) {
+            console.error('Failed to restore chat history', e);
+        }
 
         const fetchMeds = async () => {
             try {
@@ -99,6 +118,19 @@ How can I assist you today? Would you like to re-order something from your previ
         return () => clearInterval(timer);
     }, []);
 
+    // Persist chat history on every change (for up to 24 hours, enforced on load)
+    useEffect(() => {
+        try {
+            const payload = {
+                messages,
+                savedAt: Date.now()
+            };
+            localStorage.setItem('pharma_ai_chat_v1', JSON.stringify(payload));
+        } catch (e) {
+            console.error('Failed to persist chat history', e);
+        }
+    }, [messages]);
+
     const dateStr = currentTime.toLocaleDateString('en-GB', {
         weekday: 'long',
         day: 'numeric',
@@ -118,6 +150,24 @@ How can I assist you today? Would you like to re-order something from your previ
     // const handleAdminClick = () => {
     // navigate("/admin/login");
     // };
+
+    const detectLanguageClient = (text) => {
+        const str = String(text || '').trim();
+        const hasDevanagari = /[\u0900-\u097F]/.test(str);
+        const lower = str.toLowerCase();
+
+        if (hasDevanagari) {
+            if (lower.includes('आहे') || lower.includes('का')) return 'mr';
+            return 'hi';
+        }
+        if (lower.includes('hai kya') || lower.includes('kya hai') || lower.includes('dawa') || lower.includes('karna hai')) {
+            return 'hi';
+        }
+        if (lower.includes('aahe ka') || lower.includes('ahe ka') || lower.includes('ka na')) {
+            return 'mr';
+        }
+        return 'en';
+    };
 
     const handleInputChange = async (e) => {
         const value = e.target.value;
@@ -154,6 +204,9 @@ How can I assist you today? Would you like to re-order something from your previ
         const textToSearch = overrideInput || input;
         if (!textToSearch.trim()) return;
 
+        const detectedLang = detectLanguageClient(textToSearch);
+        setUserLanguage(detectedLang);
+
         const userMsg = { role: 'user', content: textToSearch, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
         setMessages(prev => [...prev, userMsg]);
         setInput('');
@@ -172,11 +225,26 @@ How can I assist you today? Would you like to re-order something from your previ
                 body: JSON.stringify({ message: textToSearch, history })
             });
 
-            if (!response.ok) {
-                throw new Error('Backend not responding');
+            let data;
+            try {
+                data = await response.json();
+            } catch (parseErr) {
+                console.error('Failed to parse chat response JSON:', parseErr);
+                throw new Error('Invalid response from backend');
             }
 
-            const data = await response.json();
+            if (!response.ok) {
+                // Backend explicitly returned an error; show its message but do NOT throw generic error bubble
+                const errorText = data.reply || '❌ Backend error while processing your request.';
+                const errorMsg = {
+                    role: 'assistant',
+                    content: errorText,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    isError: true
+                };
+                setMessages(prev => [...prev, errorMsg]);
+                return;
+            }
 
             const botMsg = {
                 role: 'assistant',
@@ -194,7 +262,7 @@ How can I assist you today? Would you like to re-order something from your previ
             });
             // Only speak if voice input was used
             if (currentIsVoice) {
-                speakResponse(data.reply);
+                speakResponse(data.reply, detectedLang || userLanguage);
                 setIsVoiceInput(false);
             }
 
@@ -224,25 +292,14 @@ How can I assist you today? Would you like to re-order something from your previ
         } catch (error) {
             console.error("AI Chat Error:", error);
 
-            // Show error message in chat
+            // Only show a generic error if the request truly failed (network / unexpected error)
             const errorMsg = {
                 role: 'assistant',
-                content: '❌ Sorry, I encountered an error while processing your request. Please try again or contact support if the problem persists.',
+                content: '❌ Network error while talking to the assistant. Please check your connection and try again.',
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 isError: true
             };
             setMessages(prev => [...prev, errorMsg]);
-
-            // Also try to show more specific error if available
-            if (error.response && error.response.data && error.response.data.reply) {
-                const specificErrorMsg = {
-                    role: 'assistant',
-                    content: error.response.data.reply,
-                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    isError: true
-                };
-                setMessages(prev => [...prev, specificErrorMsg]);
-            }
 
             // Refocus the input field even after error
             setTimeout(() => {
@@ -263,7 +320,8 @@ How can I assist you today? Would you like to re-order something from your previ
             return;
         }
         const recognition = new SpeechRecognition();
-        recognition.lang = 'en-US';
+        // Use last detected language for speech recognition where possible
+        recognition.lang = userLanguage === 'hi' ? 'hi-IN' : userLanguage === 'mr' ? 'mr-IN' : 'en-US';
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
             setInput(transcript);
@@ -273,10 +331,16 @@ How can I assist you today? Would you like to re-order something from your previ
         recognition.start();
     };
 
-    const speakResponse = (text) => {
+    const speakResponse = (text, langCode = 'en') => {
         const synth = window.speechSynthesis;
         const utter = new SpeechSynthesisUtterance(text);
-        // Try to detect language or just let browser handle it
+        if (langCode === 'hi') {
+            utter.lang = 'hi-IN';
+        } else if (langCode === 'mr') {
+            utter.lang = 'mr-IN';
+        } else {
+            utter.lang = 'en-IN';
+        }
         synth.speak(utter);
     };
 

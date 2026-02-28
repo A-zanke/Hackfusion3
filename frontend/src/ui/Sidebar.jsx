@@ -10,6 +10,7 @@ import {
     Trash2,
     ShieldCheck
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import '../App.css';
 
 const navItems = [
@@ -19,14 +20,28 @@ const navItems = [
     { to: '/bin', icon: Trash2, label: 'Bin' },
     { to: '/ai-chat', icon: MessageSquare, label: 'AI Chat' },
     { to: '/trace-logs', icon: FileText, label: 'Trace Logs' },
-    { to: '/admin', icon: ShieldCheck, label: 'Admin Hub' },
+    { to: '/admin', icon: ShieldCheck, label: 'Control Panel' },
 ];
 
 const Sidebar = () => {
     const navigate = useNavigate();
+    const { user, logout, getInitials, isAuthenticated } = useAuth();
 
     const handleSignOut = () => {
+        logout();
         navigate('/login');
+    };
+
+    // Get user display name or fallback to email
+    const getDisplayName = () => {
+        if (!user) return 'User';
+        return user.name || user.fullName || user.displayName || user.email || 'User';
+    };
+
+    // Get user initials for avatar
+    const getUserInitials = () => {
+        if (!user) return 'U';
+        return getInitials(getDisplayName());
     };
 
     return (
@@ -62,10 +77,12 @@ const Sidebar = () => {
 
             <div className="sidebar-profile-area">
                 <div className="sidebar-profile-card">
-                    <div className="profile-avatar">AD</div>
+                    <div className="profile-avatar">{getUserInitials()}</div>
                     <div>
-                        <p className="profile-name">Administrator</p>
-                        <p className="profile-role">Authenticated</p>
+                        <p className="profile-name">{getDisplayName()}</p>
+                        {isAuthenticated && (
+                            <p className="profile-role">Admin · Authenticated</p>
+                        )}
                     </div >
                 </div >
                 <button onClick={handleSignOut} className="signout-btn">

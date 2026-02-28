@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import '../App.css';
 
 const Login = () => {
     const navigate = useNavigate();
+    const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -26,8 +28,8 @@ const Login = () => {
             const data = await response.json();
 
             if (response.ok) {
-                // Store user info in localStorage
-                localStorage.setItem('user', JSON.stringify(data.user));
+                // Use AuthContext login function
+                login(data.user);
                 // Redirect to AI chat page after successful login
                 navigate('/chat');
             } else {

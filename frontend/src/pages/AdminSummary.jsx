@@ -32,6 +32,11 @@ const AdminHub = () => {
 
     const [loading, setLoading] = useState(true);
 
+    // AI Recommendations state
+    const [recommendations, setRecommendations] = useState([]);
+    const [recommendationsLoading, setRecommendationsLoading] = useState(true);
+    const [lastUpdated, setLastUpdated] = useState(null);
+
     // User search states
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
@@ -99,6 +104,49 @@ const AdminHub = () => {
 
         fetchStats();
 
+    }, []);
+
+    // Fetch AI-powered recommendations
+    const fetchRecommendations = async () => {
+        try {
+            setRecommendationsLoading(true);
+            const response = await axios.get(`${API_BASE}/recommendations`);
+            
+            if (response.data.success) {
+                setRecommendations(response.data.recommendations);
+                setLastUpdated(new Date());
+            } else {
+                console.error('Failed to fetch recommendations:', response.data.error);
+                // Fallback recommendations
+                setRecommendations([
+                    "Monitor inventory levels regularly",
+                    "Review expiring medicines soon",
+                    "Analyze sales trends for insights",
+                    "Consider automated reordering system"
+                ]);
+            }
+        } catch (err) {
+            console.error('Error fetching recommendations:', err);
+            // Fallback recommendations
+            setRecommendations([
+                "Monitor inventory levels regularly",
+                "Review expiring medicines soon", 
+                "Analyze sales trends for insights",
+                "Consider automated reordering system"
+            ]);
+        } finally {
+            setRecommendationsLoading(false);
+        }
+    };
+
+    // Fetch recommendations on mount and set up auto-refresh
+    useEffect(() => {
+        fetchRecommendations();
+
+        // Set up auto-refresh every 60 seconds
+        const interval = setInterval(fetchRecommendations, 60000);
+
+        return () => clearInterval(interval);
     }, []);
 
     // Search functions - Real database integration
@@ -170,8 +218,8 @@ const AdminHub = () => {
     if (stats.totalMedicines === 0 && stats.lowStockCount === 0 && stats.deletedCount === 0 && stats.totalSales === 0) {
         return (
             <div className="admin-page-container">
-                <div className="admin-title-area">
-                    <h1 className="admin-title">Admin Hub</h1>
+                <div className="admin-title-area" style={{ marginBottom: '20px' }}>
+                    <h1 className="admin-title">Control Panel</h1>
                     <p className="admin-subtitle">System Overview & Management</p>
                 </div>
                 <div style={{
@@ -214,79 +262,23 @@ const AdminHub = () => {
     return (
 
         <div className="admin-page-container">
+           
 
-            <div className="admin-stats-grid">
-
-                {/* Alert Cards */}
-
-                <div className="stat-card alert-card" onClick={() => navigate('/inventory?filter=expiring')} style={{ cursor: 'pointer' }}>
-
-                    <div className="stat-icon icon-orange"><TrendingUp size={20} /></div>
-
-                    <div className="stat-info">
-
-                        <p className="stat-label">⚠️ Expiring Items</p>
-
-                        <h2 className="stat-value">{stats.recentOrders.filter(o => {
-                            // This is a placeholder - you might want to add expiring items to the stats
-                            return false; // Will show 0 until you implement expiring items tracking
-                        }).length}</h2>
-
-                    </div>
-
-                </div>
-
-                <div className="stat-card alert-card" onClick={() => navigate('/inventory?filter=below-30')} style={{ cursor: 'pointer' }}>
-
-                    <div className="stat-icon icon-red"><LayoutDashboard size={20} /></div>
-
-                    <div className="stat-info">
-
-                        <p className="stat-label">🚨 Low Stock Items</p>
-
-                        <h2 className="stat-value">{stats.lowStockCount}</h2>
-
-                    </div>
-
-                </div>
-
-
-
-                {/* Original Stats */}
-
-                <div className="stat-card">
-
-                    <div className="stat-icon icon-blue"><Package size={20} /></div>
-
-                    <div className="stat-info">
-
-                        <p className="stat-label">Total Inventory</p>
-
-                        <h2 className="stat-value">{stats.totalMedicines}</h2>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-
-            <div className="admin-content-grid">
+            <div className="admin-content-grid" style={{ marginTop: '10px' }}>
 
                 {/* User Search Block - Replaced System Alerts */}
-                <div className="admin-card" style={{ zIndex: showSearchResults && searchResults.length > 0 ? 2000 : 1, position: 'relative' }}>
+                <div className="admin-card" style={{ zIndex: showSearchResults && searchResults.length > 0 ? 2000 : 1, position: 'relative', marginBottom: '6px' }}>
                     <div className="card-header">
                         <h3 className="card-title">🔍 User & Order Search</h3>
                     </div>
-                    <div style={{ padding: '24px' }}>
+                    <div style={{ padding: '8px' }}>
                         {/* Search Input with Filter Button */}
-                        <div style={{ position: 'relative', marginBottom: '16px' }}>
-                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <div style={{ position: 'relative', marginBottom: '6px' }}>
+                            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                                 <div style={{ flex: 1, position: 'relative' }}>
-                                    <Search size={18} style={{
+                                    <Search size={12} style={{
                                         position: 'absolute',
-                                        left: '16px',
+                                        left: '8px',
                                         top: '50%',
                                         transform: 'translateY(-50%)',
                                         color: '#94a3b8',
@@ -300,10 +292,10 @@ const AdminHub = () => {
                                         onKeyPress={(e) => e.key === 'Enter' && handleSearchChange({ target: { value: searchQuery } })}
                                         style={{
                                             width: '100%',
-                                            padding: '16px 20px 16px 48px',
+                                            padding: '6px 10px 6px 28px',
                                             border: '2px solid #e2e8f0',
-                                            borderRadius: '12px',
-                                            fontSize: '15px',
+                                            borderRadius: '6px',
+                                            fontSize: '12px',
                                             outline: 'none',
                                             transition: 'all 0.2s ease',
                                             background: '#ffffff',
@@ -320,29 +312,17 @@ const AdminHub = () => {
                                     />
                                     {searchQuery && (
                                         <button
-                                            onClick={() => {
-                                                setSearchQuery('');
-                                                setSearchResults([]);
-                                                setShowSearchResults(false);
-                                            }}
+                                            onClick={clearSearch}
                                             style={{
                                                 position: 'absolute',
-                                                right: '12px',
+                                                right: '4px',
                                                 top: '50%',
                                                 transform: 'translateY(-50%)',
-                                                width: '24px',
-                                                height: '24px',
+                                                background: 'none',
                                                 border: 'none',
-                                                background: '#ef4444',
-                                                borderRadius: '50%',
-                                                color: 'white',
+                                                color: '#94a3b8',
                                                 cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontSize: '16px',
-                                                fontWeight: 'bold',
-                                                zIndex: 5
+                                                fontSize: '12px'
                                             }}
                                         >
                                             ×
@@ -352,40 +332,40 @@ const AdminHub = () => {
                                 <button
                                     onClick={() => handleSearchChange({ target: { value: searchQuery } })}
                                     style={{
-                                        padding: '16px',
+                                        padding: '8px',
                                         background: '#10b981',
                                         color: 'white',
                                         border: 'none',
-                                        borderRadius: '12px',
+                                        borderRadius: '6px',
                                         cursor: 'pointer',
                                         transition: 'all 0.2s ease',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        width: '52px'
+                                        width: '36px'
                                     }}
                                     title="Search now"
                                 >
-                                    <Search size={18} />
+                                    <Search size={12} />
                                 </button>
                                 <button
                                     onClick={() => setShowDateFilter(!showDateFilter)}
                                     style={{
-                                        padding: '16px',
+                                        padding: '8px',
                                         background: showDateFilter ? '#10b981' : '#f8fafc',
                                         color: showDateFilter ? 'white' : '#64748b',
                                         border: '2px solid #e2e8f0',
-                                        borderRadius: '12px',
+                                        borderRadius: '6px',
                                         cursor: 'pointer',
                                         transition: 'all 0.2s ease',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        width: '52px'
+                                        width: '36px'
                                     }}
-                                    title="Filter by date"
+                                    title="Toggle date filter"
                                 >
-                                    <Filter size={18} />
+                                    <Filter size={12} />
                                 </button>
                             </div>
 
@@ -789,43 +769,35 @@ const AdminHub = () => {
 
                     <div className="card-header">
 
-                        <h3 className="card-title">📋 Recommendations</h3>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h3 className="card-title">
+                                <span className="emoji">🤖</span>
+                                AI-Powered Insights
+                            </h3>
+                            {lastUpdated && (
+                                <span className="update-timestamp">
+                                    Updated: {lastUpdated.toLocaleTimeString()}
+                                </span>
+                            )}
+                        </div>
 
                     </div>
 
                     <div className="recommendations-list">
 
-                        <div className="recommendation-item">
-
-                            <span className="rec-icon">💊</span>
-
-                            <span className="rec-text">Review expiring medicines and plan restock</span>
-
-                        </div>
-
-                        <div className="recommendation-item">
-
-                            <span className="rec-icon">📈</span>
-
-                            <span className="rec-text">Monitor low stock items frequently</span>
-
-                        </div>
-
-                        <div className="recommendation-item">
-
-                            <span className="rec-icon">🔄</span>
-
-                            <span className="rec-text">Consider automated reordering system</span>
-
-                        </div>
-
-                        <div className="recommendation-item">
-
-                            <span className="rec-icon">📊</span>
-
-                            <span className="rec-text">Analyze sales trends for better forecasting</span>
-
-                        </div>
+                        {recommendationsLoading ? (
+                            <div className="recommendations-loading">
+                                <div className="loading-spinner"></div>
+                                <p>Generating AI insights...</p>
+                            </div>
+                        ) : (
+                            recommendations.map((recommendation, index) => (
+                                <div key={index} className="recommendation-item">
+                                    <span className="rec-icon">💡</span>
+                                    <span className="rec-text">{recommendation}</span>
+                                </div>
+                            ))
+                        )}
 
                     </div>
 
@@ -911,7 +883,7 @@ const AdminHub = () => {
                 borderTop: '1px solid #f1f5f9'
             }}>
                 <div style={{ marginBottom: '8px' }}>
-                    <strong>Admin Hub Dashboard</strong> - Real-time System Monitoring
+                    <strong>Control Panel Dashboard</strong> - Real-time System Monitoring
                 </div>
                 <div>
                     <strong>Last Updated:</strong> {new Date().toLocaleString()}

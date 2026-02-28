@@ -378,46 +378,51 @@ How can I assist you today? Would you like to re-order something from your previ
             return;
         }
         const recognition = new SpeechRecognition();
-        // Use last detected language for speech recognition where possible
+        
+        // Enhanced language detection and continuous listening
+        recognition.continuous = true;
+        recognition.interimResults = true;
         recognition.lang = userLanguage === 'hi' ? 'hi-IN' : userLanguage === 'mr' ? 'mr-IN' : 'en-US';
-
+        
         recognition.onstart = () => {
             setIsListening(true);
             setIsVoiceInput(true);
         };
-
+        
         recognition.onend = () => {
             setIsListening(false);
         };
-
+        
         recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
+            const transcript = event.results[event.results.length - 1][0].transcript;
             setInput(transcript);
-            setIsVoiceInput(true);
-            handleSend(transcript, true); // Pass true explicitly
+            
+            // Auto-process if it's a complete sentence
+            if (event.results[event.results.length - 1].isFinal) {
+                setIsVoiceInput(true);
+                handleSend(transcript, true);
+            }
         };
         recognition.start();
     };
 
     const speakResponse = (text, langCode = 'en') => {
         const synth = window.speechSynthesis;
-
+        
         // Cancel any ongoing speech
         synth.cancel();
         setIsSpeaking(true);
-
-        // 1. Emoji & Symbol Filtering (Strict)
-        // Removes all emojis: 🎉✅❌⚠️⚕️💊💰📦📝🧾
-        // Removes symbols: ★☆♦♥♠♣•
+        
+        // Filter out emojis and symbols, keep only important text
         const cleanText = text
-            .replace(/[🎉✅❌⚠️⚕️💊💰📦📝🧾]/g, '')
-            .replace(/[★☆♦♥♠♣]/g, '')
-            .replace(/[•]/g, '')
-            .replace(/\s+/g, ' ')
+            .replace(/[🎉✅❌⚠️⚕️💊💰📦📝🧾]/g, '') // Remove emojis
+            .replace(/[★☆♦♥♠♣]/g, '') // Remove symbols
+            .replace(/[•]/g, '') // Remove bullet points
+            .replace(/\s+/g, ' ') // Normalize spaces
             .trim();
-
+        
         const utter = new SpeechSynthesisUtterance(cleanText);
-
+        
         // Set language
         if (langCode === 'hi') {
             utter.lang = 'hi-IN';
@@ -426,59 +431,52 @@ How can I assist you today? Would you like to re-order something from your previ
         } else {
             utter.lang = 'en-IN';
         }
-
-        // 2. Zira Voice Priority
+        
+        // Specifically try to get Zira voice first
         const voices = synth.getVoices();
         let selectedVoice = null;
-
-        // Specifically searches for "zira" in voice name first
-        selectedVoice = voices.find(voice =>
+        
+        // Try Zira first for all languages
+        selectedVoice = voices.find(voice => 
             voice.name.toLowerCase().includes('zira')
         );
-
-        // Falls back to female voices if Zira not available
+        
+        // If not Zira, try other female voices
         if (!selectedVoice) {
             if (langCode === 'hi') {
-                selectedVoice = voices.find(voice =>
-                    voice.lang.includes('hi') && (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman'))
+                selectedVoice = voices.find(voice => 
+                    voice.lang.includes('hi') && (voice.name.includes('Female') || voice.name.includes('Woman'))
                 ) || voices.find(voice => voice.lang.includes('hi'));
             } else if (langCode === 'mr') {
-                selectedVoice = voices.find(voice =>
-                    voice.lang.includes('mr') && (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman'))
+                selectedVoice = voices.find(voice => 
+                    voice.lang.includes('mr') && (voice.name.includes('Female') || voice.name.includes('Woman'))
                 ) || voices.find(voice => voice.lang.includes('mr'));
             } else {
-                selectedVoice = voices.find(voice =>
-                    voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman') || voice.name.toLowerCase().includes('samantha')
+                selectedVoice = voices.find(voice => 
+                    voice.name.includes('Female') || voice.name.includes('Woman') || voice.name.includes('Samantha')
                 ) || voices.find(voice => voice.lang.includes('en'));
             }
         }
-
+        
         if (selectedVoice) {
             utter.voice = selectedVoice;
-            // Console logging shows which voice is being used
-            console.log(`[PharmaAI Voice] Using: ${selectedVoice.name} (${selectedVoice.lang})`);
-        } else {
-            console.log('[PharmaAI Voice] Default system voice used (No Zira or Female voice found)');
+            console.log('Using voice:', selectedVoice.name, 'Language:', selectedVoice.lang);
         }
-
-        // 3. Natural Speech Parameters
-        utter.rate = 1.0;   // normal speed, not robotic
-        utter.pitch = 1.0;  // natural tone
-        utter.volume = 0.9; // comfortable level
-
+        
+        // Set natural speech parameters
+        utter.rate = 1.0; // Normal speed, not too fast
+        utter.pitch = 1.0; // Natural pitch
+        utter.volume = 0.9;
+        
         utter.onend = () => {
             setIsSpeaking(false);
         };
-
-        utter.onstart = () => {
-            console.log(`[PharmaAI Voice] Speaking: "${cleanText.substring(0, 50)}${cleanText.length > 50 ? '...' : ''}"`);
-        };
-
+        
         utter.onerror = (error) => {
-            console.error('[PharmaAI Voice] Speech error:', error);
+            console.error('Speech error:', error);
             setIsSpeaking(false);
         };
-
+        
         synth.speak(utter);
     };
 
@@ -509,6 +507,21 @@ How can I assist you today? Would you like to re-order something from your previ
 
     const renderMessageContent = (text) => {
         return text.split('\n').map((line, i) => {
+            // Detect [Restock Medicine] and render as clickable button
+            if (line.trim() === '[Restock Medicine]') {
+                return (
+                    <button
+                        key={i}
+                        className="restock-btn"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleSend('Restock Medicine');
+                        }}
+                    >
+                        🔄 Restock Medicine
+                    </button>
+                );
+            }
             const formatted = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             return (
                 <p key={i} className="message-text"

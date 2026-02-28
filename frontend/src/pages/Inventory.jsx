@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
-import { io } from 'socket.io-client';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Search, Plus, Package, ChevronDown, Filter, Trash2, CheckSquare, Square } from 'lucide-react';
 import StatusBadge from '../ui/StatusBadge';
 import AddStockModal from '../components/AddStockModal';
@@ -10,6 +10,8 @@ import '../App.css';
 const API_BASE = 'http://localhost:5000/api';
 
 const Inventory = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
     const [medicines, setMedicines] = useState([]);
     const [loading, setLoading] = useState(true);      // true only on FIRST load
     const [searchTerm, setSearchTerm] = useState('');
@@ -35,6 +37,12 @@ const Inventory = () => {
         lowStockRange: ''
     });
 
+    // Utility helpers for safe rendering
+    const safeToFixed = (val, digits = 2) => {
+        const n = Number(val);
+        return Number.isFinite(n) ? n.toFixed(digits) : '0.00';
+    };
+
     const showToast = useCallback((text, type = 'success') => {
         if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
         setToast({ text, type });
@@ -42,67 +50,69 @@ const Inventory = () => {
     }, []);
 
     // Silent background refresh — does NOT trigger full-page loader
-    const fetchMedicines = useCallback(async (silent = false) => {
+    const fetchMedicines = useCallback(async (silent = false, filterType = null) => {
         try {
+            console.log('Fetching medicines with filter:', filterType || 'all');
             if (!silent) setLoading(true);
-            const res = await axios.get(`${API_BASE}/medicines`);
+            
+            // Use the new inventory API with filtering
+            let url = `${API_BASE}/inventory`;
+            if (filterType) {
+                url += `?filter=${filterType}`;
+            }
+            
+            console.log('API call to:', url);
+            const res = await axios.get(url);
+            console.log('API response:', res.data);
             setMedicines(res.data);
         } catch (err) {
             console.error("Error fetching medicines:", err);
+            console.error("Error details:", err.response?.data || err.message);
         } finally {
             if (!silent) setLoading(false);
             isFirstLoad.current = false;
         }
     }, []);
 
+    // Get filter from URL on component mount
     useEffect(() => {
         fetchMedicines(false);  // initial load — show spinner
         const interval = setInterval(() => fetchMedicines(true), 60000); // background silent refresh
         
-        // Initialize WebSocket connection
-        const socket = io('http://localhost:5000');
-        
-        // Listen for inventory updates
-        socket.on('inventoryUpdated', (data) => {
-            console.log('Inventory updated via WebSocket:', data);
-            fetchMedicines(true); // silent refresh
-            showToast(`✅ ${data.medicine?.name || 'Medicine'} added to inventory. Total stock: ${data.totalStock || 0} tablets`, 'success');
-        });
-        
-        // Handle connection events
-        socket.on('connect', () => {
-            console.log('Connected to WebSocket server');
-        });
-        
-        socket.on('disconnect', () => {
-            console.log('Disconnected from WebSocket server');
-        });
-        
+                
         return () => {
             clearInterval(interval);
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-            socket.disconnect();
-        };
+         };
     }, [fetchMedicines, showToast]);
 
     // Called by AddStockModal after successful add
     const handleStockAdded = useCallback(() => {
-        fetchMedicines(true);   // silent refresh, no spinner
+        fetchMedicines(true, filter);   // silent refresh, no spinner
         showToast('Stock added successfully!', 'success');
-    }, [fetchMedicines, showToast]);
+        
+        // Trigger dashboard stats refresh (event-based approach)
+        window.dispatchEvent(new CustomEvent('refreshDashboardStats'));
+    }, [fetchMedicines, showToast, filter]);
 
     // Called by EditMedicineModal after successful update
     const handleMedicineUpdated = useCallback(() => {
-        fetchMedicines(true);   // silent refresh, no spinner
+        fetchMedicines(true, filter);   // silent refresh, no spinner
         showToast('✅ Medicine updated successfully!', 'success');
-    }, [fetchMedicines, showToast]);
+        
+        // Trigger dashboard stats refresh
+        window.dispatchEvent(new CustomEvent('refreshDashboardStats'));
+    }, [fetchMedicines, showToast, filter]);
 
     const handleSoftDelete = async (ids) => {
         if (!window.confirm(`Move ${ids.length} item(s) to bin?`)) return;
         try {
             await axios.post(`${API_BASE}/medicines/soft-delete`, { ids });
             setSelectedIds([]);
-            fetchMedicines();
+            fetchMedicines(true, filter);
+            
+            // Trigger dashboard stats refresh
+            window.dispatchEvent(new CustomEvent('refreshDashboardStats'));
         } catch (err) {
             console.error("Error moving to bin:", err);
         }
@@ -120,9 +130,12 @@ const Inventory = () => {
         if (!window.confirm(`Are you sure you want to delete "${medicine.name}"?`)) return;
         try {
             await axios.post(`${API_BASE}/medicines/soft-delete`, { ids: [medicine.id] });
-            fetchMedicines(true);
+            fetchMedicines(true, filter);
             showToast('🗑️ Medicine deleted successfully!', 'success');
             setActiveDropdown(null);
+            
+            // Trigger dashboard stats refresh
+            window.dispatchEvent(new CustomEvent('refreshDashboardStats'));
         } catch (err) {
             console.error("Error deleting medicine:", err);
             showToast('❌ Failed to delete medicine', 'error');
@@ -160,7 +173,9 @@ const Inventory = () => {
 
     const getDaysToExpiry = (date) => {
         if (!date) return null;
-        return Math.ceil((new Date(date) - new Date()) / (1000 * 60 * 60 * 24));
+        const d = new Date(date);
+        if (isNaN(d)) return null;
+        return Math.ceil((d - new Date()) / (1000 * 60 * 60 * 24));
     };
 
     const formatExpiryDisplay = (days) => {
@@ -196,30 +211,37 @@ const Inventory = () => {
     };
 
     const filtered = medicines.filter(med => {
-        // Multi-field search
-        const s = searchTerm.toLowerCase();
+        // Multi-field search with safety
+        const s = (searchTerm || '').toString().toLowerCase();
+        const name = (med.name || '').toString().toLowerCase();
+        const pid = (med.product_id_str || '').toString().toLowerCase();
+        const category = (med.category || '').toString().toLowerCase();
+        const brand = (med.brand || '').toString().toLowerCase();
+        const description = (med.description || '').toString().toLowerCase();
+        const totalTabs = Number(med.total_tablets) || 0;
+
         const matchesSearch =
-            med.name.toLowerCase().includes(s) ||
-            (med.product_id_str && med.product_id_str.toLowerCase().includes(s)) ||
-            (med.category && med.category.toLowerCase().includes(s)) ||
-            (med.brand && med.brand.toLowerCase().includes(s)) ||
-            (med.description && med.description.toLowerCase().includes(s));
+            name.includes(s) ||
+            pid.includes(s) ||
+            category.includes(s) ||
+            brand.includes(s) ||
+            description.includes(s);
 
         // Advanced filters
-        const matchesBrand = !advFilters.brand || (med.brand && med.brand.toLowerCase().includes(advFilters.brand.toLowerCase()));
-        const matchesCat = !advFilters.category || (med.category && med.category.toLowerCase().includes(advFilters.category.toLowerCase()));
-        const matchesID = !advFilters.productId || (med.product_id_str && med.product_id_str.toLowerCase().includes(advFilters.productId.toLowerCase()));
+        const matchesBrand = !advFilters.brand || brand.includes((advFilters.brand || '').toLowerCase());
+        const matchesCat = !advFilters.category || category.includes((advFilters.category || '').toLowerCase());
+        const matchesID = !advFilters.productId || pid.includes((advFilters.productId || '').toLowerCase());
         const matchesPrescription = !advFilters.prescriptionRequired ||
             (advFilters.prescriptionRequired === 'required' && med.prescription_required) ||
             (advFilters.prescriptionRequired === 'not-required' && !med.prescription_required) ||
-            (advFilters.prescriptionRequired === 'below-30' && med.total_tablets < 30);
+            (advFilters.prescriptionRequired === 'below-30' && totalTabs < 30);
 
         // Low stock range filter
         let matchesLowStockRange = true;
         if (advFilters.lowStockRange) {
             const threshold = parseInt(advFilters.lowStockRange);
             if (!isNaN(threshold)) {
-                matchesLowStockRange = med.total_tablets < threshold;
+                matchesLowStockRange = totalTabs < threshold;
             }
         }
 
@@ -236,7 +258,7 @@ const Inventory = () => {
 
         const matchesAdvanced = matchesBrand && matchesCat && matchesID && matchesExpiry && matchesPrescription && matchesLowStockRange;
 
-        if (filter === 'low') return matchesSearch && matchesAdvanced && med.total_tablets < 200;
+        if (filter === 'low') return matchesSearch && matchesAdvanced && totalTabs < 200;
         if (filter === 'expiring') {
             const days = getDaysToExpiry(med.expiry_date);
             return matchesSearch && matchesAdvanced && days !== null && days <= 30;
@@ -322,8 +344,9 @@ const Inventory = () => {
                 <div className="inv-filters">
                     {[
                         { key: 'all', label: 'All' },
-                        { key: 'low', label: '⚠ Low Stock' },
-                        { key: 'expiring', label: '⏳ Expiring' },
+                        { key: 'lowstock', label: '⚠ Low Stock' },
+                        { key: 'expiring', label: '⏳ Expiring This Month' },
+                        { key: 'expired', label: '❌ Expired' },
                     ].map(f => (
                         <button
                             key={f.key}
@@ -495,7 +518,9 @@ const Inventory = () => {
                         </thead>
                         <tbody>
                             {filtered.map((med, index) => {
-                                const isLowStock = med.total_tablets < med.low_stock_threshold;
+                                const totalTabsRow = Number(med.total_tablets) || 0;
+                                const lowThresh = Number(med.low_stock_threshold) || 0;
+                                const isLowStock = totalTabsRow < lowThresh;
                                 const daysToExpiry = getDaysToExpiry(med.expiry_date);
                                 const isNearExpiry = daysToExpiry !== null && daysToExpiry <= 60;
 
@@ -531,8 +556,8 @@ const Inventory = () => {
                                         </td>
                                         <td className="inv-col-center inv-col-number">{med.stock_packets}</td>
                                         <td className="inv-col-center inv-col-number">{med.tablets_per_packet}</td>
-                                        <td className="inv-col-center inv-col-bold">{med.total_tablets}</td>
-                                        <td className="inv-col-center inv-col-price">₹{Number(med.price_per_tablet).toFixed(2)}</td>
+                                        <td className="inv-col-center inv-col-bold">{totalTabsRow}</td>
+                                        <td className="inv-col-center inv-col-price">₹{safeToFixed(med.price_per_tablet, 2)}</td>
                                         <td className="inv-col-center">
                                             <StatusBadge variant={isLowStock ? 'low' : 'stable'} />
                                         </td>

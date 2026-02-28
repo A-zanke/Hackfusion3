@@ -312,7 +312,7 @@ async function updateStockRealTime(medicineId, quantity, medicineName) {
     }
 
     const currentStockPackets = medInfo.rows[0].stock_packets ?? 0;
-    const tabletsPerPacket = medInfo.rows[0].tablets_per_packet ?? 1;
+    const tabletsPerPacket = medInfo.rows[0].tablets_per_packet || 1; // Guard against 0 to prevent Infinity/NaN
     const currentTotalTablets = medInfo.rows[0].total_tablets ?? (currentStockPackets * tabletsPerPacket);
     
     // Calculate total available tablets
@@ -466,8 +466,19 @@ async function enhancedChatHandler(req,res){
         packetPrice: null
       };
     }
+
+    // Ensure restock flow state (OUT OF STOCK restock only)
+    if (!orderSession.restockFlow) {
+      orderSession.restockFlow = {
+        stage: 'idle',              // idle | ask_restock_qty | ask_restock_price
+        medicineId: null,
+        medicineName: null,
+        quantity: null
+      };
+    }
     const stockAddFlow = orderSession.stockAddFlow;
     const stockFlow = orderSession.stockFlow;
+    const restockFlow = orderSession.restockFlow;
 
     // Reset invalid session state
     if (orderSession.stage === 'ask_quantity' && orderSession.pendingMedicine === 'Y') {
@@ -515,13 +526,24 @@ async function enhancedChatHandler(req,res){
       
       // Check if stock is insufficient
       if (stockUpdateResult && stockUpdateResult.insufficientStock) {
-        // Start stock add flow
+        if (stockUpdateResult.available <= 0) {
+          // RESTOCK FLOW: Stock is exactly 0 — offer restock option
+          restockFlow.medicineId = med.id;
+          restockFlow.medicineName = med.name;
+          orderSession.stage = 'initial';
+          orderSession.pendingMedicine = null;
+          sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+          return res.json({
+            reply: '❌ This medicine is currently OUT OF STOCK.\n\n[Restock Medicine]',
+            restockAvailable: true
+          });
+        }
+        // Low stock (available > 0 but < requested): keep existing behavior
         stockAddFlow.stage = 'ask_add_stock_confirmation';
         stockAddFlow.medicineName = med.name;
         sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-        
         return res.json({
-          reply: '❌ This medicine is currently out of stock.\nWould you like to add this medicine to inventory? (Yes/No)'
+          reply: '❌ Insufficient stock. Available: ' + stockUpdateResult.available + ' tablets.\nWould you like to add this medicine to inventory? (Yes/No)'
         });
       }
 
@@ -544,8 +566,112 @@ async function enhancedChatHandler(req,res){
       });
     }
 
+    /* =========================
+       RESTOCK FLOW (OUT OF STOCK only, stock = 0)
+       This does NOT affect the existing ordering workflow.
+       Steps: trigger → ask quantity → ask price → update DB
+    ========================= */
+
+    // Handle "Restock Medicine" button click trigger
+    if (/^restock\s*medicine$/i.test(msgTrim) && restockFlow.stage === 'idle' && restockFlow.medicineId) {
+      restockFlow.stage = 'ask_restock_qty';
+      sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+      return res.json({
+        reply: `📦 Restocking **${restockFlow.medicineName}**\n\nPlease enter:\n• Quantity to add`
+      });
+    }
+
+    // Step 1: Handle restock quantity input
+    if (restockFlow.stage === 'ask_restock_qty' && /^\d+$/.test(msgTrim)) {
+      const restockQty = parseInt(msgTrim, 10);
+      if (restockQty <= 0) {
+        return res.json({ reply: 'Please enter a valid quantity greater than 0.' });
+      }
+
+      // Store quantity, move to price step
+      restockFlow.quantity = restockQty;
+      restockFlow.stage = 'ask_restock_price';
+      sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+      return res.json({
+        reply: `✅ Quantity: ${restockQty}\n\nNow enter the **price per unit/tablet** (in ₹):`
+      });
+    }
+
+    // Step 2: Handle restock price input and complete update
+    if (restockFlow.stage === 'ask_restock_price') {
+      const priceInput = parseFloat(msgTrim.replace(/[^0-9.]/g, ''));
+      if (!Number.isFinite(priceInput) || priceInput <= 0) {
+        return res.json({ reply: 'Please enter a valid price per unit (e.g., 5.50 or 10).' });
+      }
+
+      try {
+        // Look up the medicine
+        const medResult = await db.query(
+          'SELECT * FROM medicines WHERE id = $1',
+          [restockFlow.medicineId]
+        );
+
+        if (medResult.rows.length === 0) {
+          restockFlow.stage = 'idle';
+          restockFlow.medicineId = null;
+          restockFlow.medicineName = null;
+          restockFlow.quantity = null;
+          sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+          return res.json({ reply: '❌ Medicine not found in database.' });
+        }
+
+        const med = medResult.rows[0];
+        const tabletsPerPacket = med.tablets_per_packet || 1;
+        const currentTotal = med.total_tablets || 0;
+        const restockQty = restockFlow.quantity;
+
+        // Calculate new stock distribution
+        const newTotal = currentTotal + restockQty;
+        const newPackets = Math.floor(newTotal / tabletsPerPacket);
+        const newIndividual = newTotal % tabletsPerPacket;
+
+        // Update BOTH stock AND price in database
+        await db.query(
+          `UPDATE medicines 
+           SET stock_packets = $1,
+               individual_tablets = $2,
+               price_per_tablet = $3
+           WHERE id = $4`,
+          [newPackets, newIndividual, priceInput, restockFlow.medicineId]
+        );
+
+        // Get updated total from DB
+        const updatedMed = await db.query(
+          'SELECT total_tablets FROM medicines WHERE id = $1',
+          [restockFlow.medicineId]
+        );
+        const updatedTotal = updatedMed.rows[0]?.total_tablets || newTotal;
+
+        const successReply = `✅ Restock successful.\n\nMedicine: **${restockFlow.medicineName}**\nAdded Quantity: ${restockQty} tablets\nUpdated Stock: ${updatedTotal} tablets\nUpdated Price: ₹${priceInput.toFixed(2)}\n\n📦 This medicine is now available for ordering.`;
+
+        debugLog(`RESTOCK: ${restockFlow.medicineName} +${restockQty} tablets → total: ${updatedTotal}, price: ₹${priceInput}`);
+
+        // Reset restock flow
+        restockFlow.stage = 'idle';
+        restockFlow.medicineId = null;
+        restockFlow.medicineName = null;
+        restockFlow.quantity = null;
+        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+
+        return res.json({ reply: successReply });
+      } catch (error) {
+        console.error('Restock error:', error);
+        restockFlow.stage = 'idle';
+        restockFlow.medicineId = null;
+        restockFlow.medicineName = null;
+        restockFlow.quantity = null;
+        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+        return res.json({ reply: '❌ Error restocking medicine. Please try again.' });
+      }
+    }
+
     // Prevent numeric-only messages from being mis-parsed when NOT awaiting quantity
-    if (/^\d+$/.test(String(message).trim()) && orderSession.stage !== 'ask_quantity') {
+    if (/^\d+$/.test(String(message).trim()) && orderSession.stage !== 'ask_quantity' && restockFlow.stage !== 'ask_restock_qty' && restockFlow.stage !== 'ask_restock_price') {
       debugLog(`Numeric-only message while not awaiting quantity -> returning guidance`);
       sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
       return res.json({ reply: 'ℹ️ Please specify a medicine name first (e.g., "Aspirin - 2" or "Aspirin qty 2").' });
@@ -767,13 +893,24 @@ async function enhancedChatHandler(req,res){
       
       // Check if stock is insufficient
       if (stockUpdateResult && stockUpdateResult.insufficientStock) {
-        // Start stock add flow
+        if (stockUpdateResult.available <= 0) {
+          // RESTOCK FLOW: Stock is exactly 0 — offer restock option
+          restockFlow.medicineId = med.id;
+          restockFlow.medicineName = med.name;
+          orderSession.stage = 'initial';
+          orderSession.pendingMedicine = null;
+          sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+          return res.json({
+            reply: '❌ This medicine is currently OUT OF STOCK.\n\n[Restock Medicine]',
+            restockAvailable: true
+          });
+        }
+        // Low stock (available > 0 but < requested): keep existing behavior
         stockAddFlow.stage = 'ask_add_stock_confirmation';
         stockAddFlow.medicineName = med.name;
         sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-        
         return res.json({
-          reply: '❌ This medicine is currently out of stock.\nWould you like to add this medicine to inventory? (Yes/No)'
+          reply: '❌ Insufficient stock. Available: ' + stockUpdateResult.available + ' tablets.\nWould you like to add this medicine to inventory? (Yes/No)'
         });
       }
 
@@ -1447,10 +1584,27 @@ async function enhancedChatHandler(req,res){
         const stockAvailable = totalAvailableTablets >= quantity;
         
         if (!stockAvailable) {
-          // Return stock insufficient message
-          const stockMsg = getMultilingualResponse('out_of_stock', aiResult.language || detectLanguage(message), med.name, totalAvailableTablets);
-          
           agentMetadata.stock_checked = true;
+          
+          if (totalAvailableTablets <= 0) {
+            // RESTOCK FLOW: Stock is exactly 0 — offer restock option
+            restockFlow.medicineId = med.id;
+            restockFlow.medicineName = med.name;
+            sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+            
+            agentMetadata.thinking = '❌ Stock Agent: ' + med.name + ' is OUT OF STOCK (0 tablets)';
+            return res.status(200).json({
+              reply: '❌ This medicine is currently OUT OF STOCK.\n\n[Restock Medicine]',
+              restockAvailable: true,
+              intent_verified: agentMetadata.intent_verified,
+              safety_checked: agentMetadata.safety_checked,
+              stock_checked: agentMetadata.stock_checked,
+              thinking: agentMetadata.thinking
+            });
+          }
+          
+          // Low stock (available > 0 but < requested): existing behavior
+          const stockMsg = getMultilingualResponse('out_of_stock', aiResult.language || detectLanguage(message), med.name, totalAvailableTablets);
           agentMetadata.thinking = '❌ Stock Agent: Insufficient stock for ' + med.name;
           
           return res.status(200).json({
@@ -1634,13 +1788,22 @@ async function enhancedChatHandler(req,res){
       const stockAvailable = totalAvailableTablets >= medItem.quantity;
       
       if (!stockAvailable) {
-        // Instead of returning error, start stock add flow
+        if (totalAvailableTablets <= 0) {
+          // RESTOCK FLOW: Stock is exactly 0 — offer restock option
+          restockFlow.medicineId = med.id;
+          restockFlow.medicineName = med.name;
+          sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+          return res.json({
+            reply: '❌ This medicine is currently OUT OF STOCK.\n\n[Restock Medicine]',
+            restockAvailable: true
+          });
+        }
+        // Low stock (available > 0 but < requested): keep existing behavior
         stockAddFlow.stage = 'ask_add_stock_confirmation';
         stockAddFlow.medicineName = med.name;
         sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-        
         return res.json({
-          reply: '❌ This medicine is currently out of stock.\nWould you like to add this medicine to inventory? (Yes/No)'
+          reply: '❌ Insufficient stock. Available: ' + totalAvailableTablets + ' tablets.\nWould you like to add this medicine to inventory? (Yes/No)'
         });
       }
 

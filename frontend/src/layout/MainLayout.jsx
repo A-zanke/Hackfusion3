@@ -44,9 +44,9 @@ const MainLayout = () => {
             case '/ai-chat':
                 return 'AI Pharmacy Assistant';
             case '/admin':
-                return 'Admin Hub';
+                return 'Control Panel';
             case '/admin-hub':
-                return 'Admin Hub';
+                return 'Control Panel';
             default:
                 return 'Dashboard';
         }

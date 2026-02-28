@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 5000;
 
 app.use(helmet());
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173'],
   credentials: true
 }));
 app.use(morgan('dev'));
@@ -172,6 +172,24 @@ db.query(`
         created_at TIMESTAMP DEFAULT NOW()
     )
 `).catch(console.error);
+
+// Natural Conversational Chat
+const { naturalChatHandler } = require('./natural-chat');
+const { generatePaymentQR } = require('./qr-generator');
+
+app.post('/api/natural-chat', naturalChatHandler);
+
+// Generate QR Code for Payment
+app.post('/api/generate-qr', async (req, res) => {
+    try {
+        const { amount, orderId, medicineName } = req.body;
+        const qrCode = await generatePaymentQR(amount, orderId, medicineName);
+        res.json({ qrCode });
+    } catch (error) {
+        console.error('QR generation error:', error);
+        res.status(500).json({ error: 'Failed to generate QR code' });
+    }
+});
 
 // --- MEDICINE ROUTES ---
 
@@ -877,6 +895,40 @@ app.get('/api/customers/orders', async (req, res) => {
     }
 });
 
+// AI-Powered Recommendations endpoint
+const analyticsService = require('./services/analyticsService');
+const aiService = require('./services/aiService');
+
+app.get('/api/recommendations', async (req, res) => {
+    try {
+        console.log('Fetching AI-powered recommendations...');
+        
+        // Get analytics data
+        const analyticsData = await analyticsService.getAnalyticsSummary();
+        
+        // Generate AI insights
+        const insights = await aiService.generateRecommendations(analyticsData);
+        
+        res.json({
+            success: true,
+            timestamp: new Date().toISOString(),
+            analytics: {
+                season: analyticsData.season,
+                summary: analyticsData.summary
+            },
+            recommendations: insights
+        });
+        
+    } catch (error) {
+        console.error('Error generating recommendations:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to generate recommendations',
+            message: error.message 
+        });
+    }
+});
+
 // Enhanced AI Chat endpoint for order processing - COMPLETELY FREE, NO APIs
 const { enhancedChatHandler } = require('./enhanced-chat');
 
@@ -890,6 +942,159 @@ app.post('/chat', async (req, res) => {
     } catch (error) {
         console.error('Error in chat handler:', error);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Dashboard Stats API
+app.get('/api/dashboard-stats', async (req, res) => {
+    try {
+        console.log('=== DASHBOARD STATS API CALLED ===');
+
+        // Expired Items (expiry_date < CURRENT_DATE)
+        const expiredQuery = `
+            SELECT COUNT(*) as count 
+            FROM medicines 
+            WHERE expiry_date < CURRENT_DATE::DATE AND is_deleted = FALSE
+        `;
+        const expiredResult = await db.query(expiredQuery);
+        console.log('Expired query result:', expiredResult.rows[0]);
+
+        // Expiring This Month (within next 30 days)
+        const expiringQuery = `
+            SELECT COUNT(*) as count 
+            FROM medicines 
+            WHERE expiry_date >= CURRENT_DATE::DATE 
+            AND expiry_date <= CURRENT_DATE::DATE + INTERVAL '30 days'
+            AND is_deleted = FALSE
+        `;
+        const expiringResult = await db.query(expiringQuery);
+        console.log('Expiring query result:', expiringResult.rows[0]);
+
+        // Low Stock Items
+        const lowStockQuery = `
+            SELECT COUNT(*) as count 
+            FROM medicines 
+            WHERE (stock_packets * tablets_per_packet + individual_tablets) <= low_stock_threshold 
+            AND is_deleted = FALSE
+        `;
+        const lowStockResult = await db.query(lowStockQuery);
+
+        // Total Inventory
+        const totalInventoryQuery = `
+            SELECT COUNT(*) as count 
+            FROM medicines 
+            WHERE is_deleted = FALSE
+        `;
+        const totalInventoryResult = await db.query(totalInventoryQuery);
+
+        res.json({
+            expired: parseInt(expiredResult.rows[0].count),
+            expiring: parseInt(expiringResult.rows[0].count),
+            lowStock: parseInt(lowStockResult.rows[0].count),
+            totalInventory: parseInt(totalInventoryResult.rows[0].count)
+        });
+    } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+        res.status(500).json({ error: 'Database error', message: err.message });
+    }
+});
+
+// Inventory API with filtering
+app.get('/api/inventory', async (req, res) => {
+    try {
+        const { filter } = req.query;
+        console.log('Inventory API called with filter:', filter);
+        
+        const currentDate = new Date().toISOString().split('T')[0];
+        const thirtyDaysFromNow = new Date();
+        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+        const thirtyDaysFromNowStr = thirtyDaysFromNow.toISOString().split('T')[0];
+
+        console.log('Date range:', currentDate, 'to', thirtyDaysFromNowStr);
+
+        let whereClause = 'WHERE is_deleted = FALSE';
+        let queryParams = [];
+
+        switch (filter) {
+            case 'expired':
+                whereClause += ' AND expiry_date < CURRENT_DATE';
+                console.log('Applying expired filter');
+                break;
+            case 'expiring':
+                whereClause += ' AND expiry_date >= CURRENT_DATE AND expiry_date <= CURRENT_DATE + INTERVAL \'30 days\'';
+                console.log('Applying expiring filter (next 30 days)');
+                break;
+            case 'lowstock':
+                whereClause += ' AND (stock_packets * tablets_per_packet + individual_tablets) <= low_stock_threshold';
+                console.log('Applying low stock filter');
+                break;
+            default:
+                console.log('No filter applied, showing all medicines');
+                break;
+        }
+
+        const query = `
+            SELECT 
+                id,
+                name,
+                category,
+                brand,
+                stock_packets,
+                tablets_per_packet,
+                total_tablets,
+                price_per_tablet,
+                expiry_date,
+                low_stock_threshold,
+                created_at,
+                description,
+                product_id_str,
+                prescription_required,
+                price_per_packet,
+                individual_tablets
+            FROM medicines 
+            ${whereClause}
+            ORDER BY name ASC
+        `;
+
+        console.log('Executing query:', query);
+        const result = await db.query(query, queryParams);
+        console.log('Query returned', result.rows.length, 'medicines');
+        
+        // Calculate stock status for each medicine
+        const medicines = result.rows.map(medicine => {
+            const totalStock = (medicine.stock_packets * medicine.tablets_per_packet) + medicine.individual_tablets;
+            const isLowStock = totalStock <= medicine.low_stock_threshold;
+            
+            // Fix the date calculation
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Set to start of day
+            
+            const thirtyDaysFromNow = new Date();
+            thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+            thirtyDaysFromNow.setHours(23, 59, 59, 999); // End of day
+            
+            const expiryDate = medicine.expiry_date ? new Date(medicine.expiry_date) : null;
+            
+            const isExpired = expiryDate && expiryDate < today;
+            const isExpiring = expiryDate && expiryDate >= today && expiryDate <= thirtyDaysFromNow;
+
+            console.log(`Medicine: ${medicine.name}, Expiry: ${medicine.expiry_date}, isExpired: ${isExpired}, isExpiring: ${isExpiring}`);
+
+            return {
+                ...medicine,
+                totalStock,
+                isLowStock,
+                isExpired,
+                isExpiring
+            };
+        });
+
+        console.log('Returning medicines with calculated stock status');
+        res.json(medicines);
+    } catch (err) {
+        console.error('Error fetching inventory:', err);
+        console.error('Error details:', err.message);
+        res.status(500).json({ error: 'Database error', message: err.message });
     }
 });
 

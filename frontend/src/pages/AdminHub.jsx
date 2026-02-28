@@ -209,7 +209,7 @@ const AdminHub = () => {
             <div className="admin-title-section">
               <div className="admin-icon-wrapper">
                 <Users size={32} className="admin-icon" />
-                <h1 className="admin-title">Admin Hub</h1>
+                <h1 className="admin-title">Control Panel</h1>
                 <p className="admin-subtitle">
                   Customer Order Management System
                 </p>
@@ -250,7 +250,7 @@ const AdminHub = () => {
         </div>
 
         {/* User Order Searching Block */}
-        <div className="admin-card user-search-block animate-fade-in">
+        <div className="admin-card user-search-block animate-fade-in" style={{ marginTop: '10px' }}>
           <div className="admin-card-header">
             <div className="admin-card-icon icon-blue">
               <Search size={24} />
@@ -264,7 +264,7 @@ const AdminHub = () => {
             </div>
           </div>
 
-          <div className="search-controls">
+          <div className="search-controls" style={{ padding: '16px' }}>
             <div className="search-type-selector">
               <button
                 className={`search-type-btn ${searchType === "name" ? "active" : ""}`}
@@ -725,7 +725,7 @@ const AdminHub = () => {
       <div className="admin-footer">
         <div className="footer-content">
           <div className="footer-text">
-            Admin Hub - Customer Order Management System
+            Control Panel - Customer Order Management System
           </div>
           <div className="footer-date">
             Last Updated: {new Date().toLocaleDateString()}

@@ -125,6 +125,37 @@ function ruleParse(message){
 }
 
 /* =========================
+   MULTILINGUAL RESPONSE HELPER
+========================= */
+function getMultilingualResponse(messageKey, language, medicineName = null, quantity = null) {
+  const responses = {
+    'en': {
+      'prescription_required': '⚠️ ' + medicineName + ' requires a prescription.\n\n⚕️ This medicine can only be dispensed with a valid prescription.\n\nDo you still want to proceed with this order? (Yes/No)\n\n• Yes: I have a prescription and want to order\n• No: Cancel this order',
+      'order_success': '✅ ' + medicineName + ' (' + quantity + ' tablets)\n💊 Price per tablet: ₹' + parseFloat(medicineName.price_per_tablet || 0).toFixed(2) + '\n📦 Quantity: ' + quantity + '\n💰 Total price: ₹' + (parseFloat(medicineName.price_per_tablet || 0) * quantity).toFixed(2) + '\n\n🎉 Order Placed Successfully!',
+      'out_of_stock': '❌ Sorry, ' + medicineName + ' is currently out of stock.\nAvailable: ' + quantity + ' tablets.\nWould you like to add this to inventory? (Yes/No)',
+      'prescription_cancelled': '❌ Order cancelled due to no prescription. You can continue adding other medicines.',
+      'no_prescription': '❌ Order cancelled due to no prescription. You can continue adding other medicines.'
+    },
+    'hi': {
+      'prescription_required': '⚠️ ' + medicineName + ' के लिए कितने पैकेट जोड़ने हैं\n\n⚕️ इस दवा को केवल मान्य नुस्खर के बिना ही दिया जा सकता है\n\nक्या आप इस ऑर्डर के साथ आगे बढ़ना चाहते हैं? (हां/नहीं)\n\n• हां: मेरे पास में प्रिस्क्रिप्शन है और मैं ऑर्डर करना चाहता हूं\n• नहीं: इस ऑर्डर को रद्द करें',
+      'order_success': '✅ ' + medicineName + ' (' + quantity + ' टैब्लेट)\n💊 प्रति टैब्लेट कीमत: ₹' + parseFloat(medicineName.price_per_tablet || 0).toFixed(2) + '\n📦 मात्रा: ' + quantity + '\n💰 कुल कीमत: ₹' + (parseFloat(medicineName.price_per_tablet || 0) * quantity).toFixed(2) + '\n\n🎉 ऑर्डर सफलतःरी सफलतःरी!',
+      'out_of_stock': '❌ क्षमा करने के लिए, ' + medicineName + ' वर्त्तमान में है\nउपलब्ध: ' + quantity + ' टैब्लेट\nक्या आप इसे इन्वेन्टरी में जोड़ना चाहते हैं? (हां/नहीं)',
+      'prescription_cancelled': '❌ प्रिस्क्रिप्शन न होने के कारण ऑर्डर रद्द किया गया। आप अन्य दवा दवा जोड़ना चाहते हैं।',
+      'no_prescription': '❌ प्रिस्क्रिप्शन न होने के कारण ऑर्डर रद्द किया गया। आप अन्य दवा दवा जोड़ना चाहते हैं।'
+    },
+    'mr': {
+      'prescription_required': `⚠️ ${medicineName} ला रेसिप्शन आवश्यक आहे\n\n⚕️ हे औषध मान्य नुस्खराच्या फक्त फकड़नाची देत शकत नाही\n\nतुम्ही हे ऑर्डर चालू इकटेव आणत काय? (होय/नाही)\n\n• होय: माझे प्रिस्क्रिप्शन आहे आणि मी ऑर्डर करायचो\n• नाही: हा ऑर्डर रद्द करा`,
+      'order_success': `✅ ${medicineName} (${quantity} टॅब्लेट)\n💊 टॅब्लेट ची किंमत: ₹${parseFloat(medicineName.price_per_tablet || 0).toFixed(2)}\n📦 प्रमाण: ${quantity}\n💰 एकूण किंमत: ₹${(parseFloat(medicineName.price_per_tablet || 0) * quantity).toFixed(2)}\n\n🎉 ऑर्डर यशशन्य झाली!`,
+      'out_of_stock': `❌ क्षमा करण्याली, ${medicineName} सध्या उपलब्ध नाही\nउपलब्ध: ${quantity} टॅब्लेट\nतुम्ही हे इन्वेन्टरीत जोडण्यासाठी इच्छुक आहात का? (होय/नाही)`,
+      'prescription_cancelled': '❌ प्रिस्क्रिप्शन नसल्यामुळे ऑर्डर रद्द केला. तुम्ही पुन्हा दवा जोडू शकता.',
+      'no_prescription': '❌ प्रिस्क्रिप्शन नसल्यामुळे ऑर्डर रद्द केला. तुम्ही पुन्हा दवा जोडू शकता.'
+    }
+  };
+  
+  return responses[language]?.[messageKey] || responses['en'][messageKey];
+}
+
+/* =========================
    LANGUAGE & INTENT HELPERS
 ========================= */
 
@@ -161,19 +192,59 @@ async function processWithGrok(message) {
       messages: [
         {
           role: "system",
-          content: `You are an intelligent multi-lingual pharmacy assistant.
-Detect:
-- medicines: list of medicines mentioned and optional quantities
-- intent: "order" | "search" | "inquiry"
-- action: "check_stock" | "add_stock" | "order" | "other"
-- language: "en" | "hi" | "mr"
+          content: `You are PharmaAI Pro – a multilingual intelligent pharmacy voice assistant.
+
+-----------------------------------------
+🌍 LANGUAGE RULE
+-----------------------------------------
+- Detect user language automatically.
+- If user speaks in English → reply fully in English.
+- If user speaks in Hindi → reply in Hindi.
+- If user speaks in Marathi → reply in Marathi.
+- If mixed Hinglish → reply in natural Hinglish.
+- Never change language unless user changes it.
+
+-----------------------------------------
+🎙 VOICE STYLE
+-----------------------------------------
+- Use natural Indian tone.
+- Medium speaking speed.
+- Friendly, professional pharmacy assistant.
+- Not robotic.
+- Not over dramatic.
+
+-----------------------------------------
+🧠 INTENT DETECTION
+-----------------------------------------
+Understand these intents:
+
+1. Order medicine
+2. Check stock
+3. Add stock
+4. General medicine info
+
+Extract only:
+- medicine name
+- strength (500mg etc)
+- quantity
+
+Ignore filler words.
+
+Example:
+"I want 3 paracetamol"
+Extract:
+intent: order
+medicine: paracetamol
+quantity: 3
+
+-----------------------------------------
 
 Return STRICT JSON:
 {"medicines":[{"name":"name","quantity":number|null}],"intent":"order","action":"check_stock","language":"en"}
 
 Notes:
-- If the user is asking things like "Do we have Dolo?" or "Dolo hai kya?" or "Dolo aahe ka?", action = "check_stock".
-- If the user wants to add/increase stock (e.g. "add stock", "stock add karna hai", "Dolo add karo", "Dolo ka stock daalo", "stock increase karo", "medicine add karna hai"), action = "add_stock".
+- If user is asking things like "Do we have Dolo?" or "Dolo hai kya?" or "Dolo aahe ka?", action = "check_stock".
+- If user wants to add/increase stock (e.g. "add stock", "stock add karna hai", "Dolo add karo", "Dolo ka stock daalo", "stock increase karo", "medicine add karna hai"), action = "add_stock".
 - Detect language from the message and set language accordingly.
 - If no quantity is mentioned for a medicine, use null. If multiple medicines, include all.`
         },
@@ -1306,24 +1377,13 @@ async function enhancedChatHandler(req,res){
         sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
         
         return res.json({ 
-          reply: '❌ Order cancelled due to no prescription. You can continue adding other medicines.',
+          reply: getMultilingualResponse('prescription_cancelled', aiResult.language || detectLanguage(message)),
           intent_verified: agentMetadata.intent_verified,
           safety_checked: agentMetadata.safety_checked,
           stock_checked: agentMetadata.stock_checked,
           thinking: agentMetadata.thinking
         });
       }
-    }
-    
-    if (/^(n|no)$/i.test(message)) {
-      debugLog('=== PRESCRIPTION NO RESPONSE DETECTED ===');
-      return res.json({ 
-        reply: '❌ Order cancelled due to no prescription. You can continue adding other medicines.',
-        intent_verified: agentMetadata.intent_verified,
-        safety_checked: agentMetadata.safety_checked,
-        stock_checked: agentMetadata.stock_checked,
-        thinking: agentMetadata.thinking
-      });
     }
     
     // IMPORTANT: Check if this is a Y/N response before processing with Grok
@@ -1388,9 +1448,7 @@ async function enhancedChatHandler(req,res){
         
         if (!stockAvailable) {
           // Return stock insufficient message
-          const stockMsg = '❌ Sorry, ' + med.name + ' is currently out of stock.\n' +
-                         'Available: ' + totalAvailableTablets + ' tablets.\n' +
-                         'Would you like to add this to inventory? (Yes/No)';
+          const stockMsg = getMultilingualResponse('out_of_stock', aiResult.language || detectLanguage(message), med.name, totalAvailableTablets);
           
           agentMetadata.stock_checked = true;
           agentMetadata.thinking = '❌ Stock Agent: Insufficient stock for ' + med.name;
@@ -1422,11 +1480,7 @@ async function enhancedChatHandler(req,res){
           };
           sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
           
-          const prescriptionMsg = '⚠️ ' + med.name + ' requires a prescription.\n\n' +
-                                '⚕️ This medicine can only be dispensed with a valid prescription.\n\n' +
-                                'Do you still want to proceed with this order? (Yes/No)\n\n' +
-                                '• Yes: I have a prescription and want to order\n' +
-                                '• No: Cancel this order';
+          const prescriptionMsg = getMultilingualResponse('prescription_required', aiResult.language || detectLanguage(message), med.name);
           
           return res.status(200).json({
             reply: prescriptionMsg,

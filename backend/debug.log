@@ -3672,3 +3672,306 @@
 
 ⚕️ Prescription verified - Order completed safely
 [2026-02-28T05:06:05.640Z] === END RESPONSE ===
+[2026-02-28T06:06:36.249Z] === NEW REQUEST ===
+[2026-02-28T06:06:36.275Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T06:06:36.278Z] Message: "hello"
+[2026-02-28T06:06:36.285Z] Persisted session: {"sessionState":{"medicines":[],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"idle","language":"en","targetName":null,"lastMissingName":null,"previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null},"stockAddFlow":{"stage":"idle","medicineName":null,"packets":null,"tabletsPerPacket":null,"packetPrice":null}},"expiresAt":1772303400000}
+[2026-02-28T06:06:36.288Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-28T06:06:36.291Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T06:06:36.294Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T06:06:36.295Z] Stage: initial
+[2026-02-28T06:06:36.300Z] Pending medicine: null
+[2026-02-28T06:06:36.301Z] Message: "hello"
+[2026-02-28T06:06:36.302Z] Is digits: false
+[2026-02-28T06:06:36.303Z] Condition match: false
+[2026-02-28T06:06:36.304Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T06:06:36.305Z] Message: "hello"
+[2026-02-28T06:06:36.306Z] Stage: initial
+[2026-02-28T06:06:36.307Z] Pending medicine: null
+[2026-02-28T06:06:36.727Z] Grok result: {"medicines":[{"name":"hello","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T06:06:36.728Z] === ORDER INTENT DETECTED ===
+[2026-02-28T06:06:36.729Z] Processing medicine: hello, quantity: 1
+[2026-02-28T06:57:32.374Z] === NEW REQUEST ===
+[2026-02-28T06:57:32.375Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T06:57:32.376Z] Message: "Paracetamol 2 please"
+[2026-02-28T06:57:32.377Z] Persisted session: undefined
+[2026-02-28T06:57:32.377Z] Starting new session
+[2026-02-28T06:57:32.378Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T06:57:32.379Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T06:57:32.380Z] Stage: initial
+[2026-02-28T06:57:32.380Z] Pending medicine: null
+[2026-02-28T06:57:32.381Z] Message: "Paracetamol 2 please"
+[2026-02-28T06:57:32.382Z] Is digits: false
+[2026-02-28T06:57:32.382Z] Condition match: false
+[2026-02-28T06:57:32.383Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T06:57:32.383Z] Message: "Paracetamol 2 please"
+[2026-02-28T06:57:32.384Z] Stage: initial
+[2026-02-28T06:57:32.384Z] Pending medicine: null
+[2026-02-28T06:57:33.148Z] Grok result: {"medicines":[{"name":"Paracetamol 2 please","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T06:57:33.149Z] === ORDER INTENT DETECTED ===
+[2026-02-28T06:57:33.151Z] Processing medicine: Paracetamol 2 please, quantity: 1
+[2026-02-28T06:58:04.625Z] === NEW REQUEST ===
+[2026-02-28T06:58:04.627Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T06:58:04.630Z] Message: "ambroxol syrup"
+[2026-02-28T06:58:04.633Z] Persisted session: undefined
+[2026-02-28T06:58:04.636Z] Starting new session
+[2026-02-28T06:58:04.644Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T06:58:04.648Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T06:58:04.650Z] Stage: initial
+[2026-02-28T06:58:04.656Z] Pending medicine: null
+[2026-02-28T06:58:04.661Z] Message: "ambroxol syrup"
+[2026-02-28T06:58:04.667Z] Is digits: false
+[2026-02-28T06:58:04.672Z] Condition match: false
+[2026-02-28T06:58:04.674Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T06:58:04.675Z] Message: "ambroxol syrup"
+[2026-02-28T06:58:04.677Z] Stage: initial
+[2026-02-28T06:58:04.678Z] Pending medicine: null
+[2026-02-28T06:58:05.604Z] Grok result: {"medicines":[{"name":"ambroxol syrup","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T06:58:05.606Z] === ORDER INTENT DETECTED ===
+[2026-02-28T06:58:05.608Z] Processing medicine: ambroxol syrup, quantity: 1
+[2026-02-28T06:58:05.614Z] Found medicine: Ambroxol Syrup
+[2026-02-28T06:58:05.619Z] Real-time stock update for Ambroxol Syrup: 950 -> 949 tablets (packets: 95 -> 94, individual: 9)
+[2026-02-28T06:58:05.881Z] === SENDING RESPONSE ===
+[2026-02-28T06:58:05.883Z] ✅ Ambroxol Syrup (1 tablets)
+📝 Everyday medicine used to treat common health issues and help you feel better quickly.
+💊 Price per tablet: ₹880.00
+📦 Quantity: 1
+💰 Total price: ₹880.00
+
+🎉 ✅ Ambroxol Syrup (1 tablets)
+💊 Price per tablet: ₹0.00
+📦 Quantity: 1
+💰 Total price: ₹0.00
+
+🎉 Order Placed Successfully!
+[2026-02-28T06:58:05.884Z] === END RESPONSE ===
+[2026-02-28T07:01:15.353Z] === NEW REQUEST ===
+[2026-02-28T07:01:15.354Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T07:01:15.358Z] Message: "Paracetamol 500 mg"
+[2026-02-28T07:01:15.360Z] Persisted session: undefined
+[2026-02-28T07:01:15.361Z] Starting new session
+[2026-02-28T07:01:15.364Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T07:01:15.373Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T07:01:15.379Z] Stage: initial
+[2026-02-28T07:01:15.381Z] Pending medicine: null
+[2026-02-28T07:01:15.382Z] Message: "Paracetamol 500 mg"
+[2026-02-28T07:01:15.385Z] Is digits: false
+[2026-02-28T07:01:15.390Z] Condition match: false
+[2026-02-28T07:01:15.392Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T07:01:15.395Z] Message: "Paracetamol 500 mg"
+[2026-02-28T07:01:15.396Z] Stage: initial
+[2026-02-28T07:01:15.398Z] Pending medicine: null
+[2026-02-28T07:01:16.356Z] Grok result: {"medicines":[{"name":"Paracetamol 500 mg","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T07:01:16.359Z] === ORDER INTENT DETECTED ===
+[2026-02-28T07:01:16.361Z] Processing medicine: Paracetamol 500 mg, quantity: 1
+[2026-02-28T07:01:56.678Z] === NEW REQUEST ===
+[2026-02-28T07:01:56.679Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T07:01:56.680Z] Message: "Mujhe combiflam tablet do"
+[2026-02-28T07:01:56.715Z] Persisted session: undefined
+[2026-02-28T07:01:56.716Z] Starting new session
+[2026-02-28T07:01:56.718Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T07:01:56.722Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T07:01:56.724Z] Stage: initial
+[2026-02-28T07:01:56.727Z] Pending medicine: null
+[2026-02-28T07:01:56.730Z] Message: "Mujhe combiflam tablet do"
+[2026-02-28T07:01:56.732Z] Is digits: false
+[2026-02-28T07:01:56.733Z] Condition match: false
+[2026-02-28T07:01:56.735Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T07:01:56.736Z] Message: "Mujhe combiflam tablet do"
+[2026-02-28T07:01:56.738Z] Stage: initial
+[2026-02-28T07:01:56.740Z] Pending medicine: null
+[2026-02-28T07:01:57.372Z] Grok result: {"medicines":[{"name":"Mujhe combiflam tablet do","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T07:01:57.374Z] === ORDER INTENT DETECTED ===
+[2026-02-28T07:01:57.375Z] Processing medicine: Mujhe combiflam tablet do, quantity: 1
+[2026-02-28T07:02:11.729Z] === NEW REQUEST ===
+[2026-02-28T07:02:11.731Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T07:02:11.734Z] Message: "combiflam tablet"
+[2026-02-28T07:02:11.738Z] Persisted session: undefined
+[2026-02-28T07:02:11.742Z] Starting new session
+[2026-02-28T07:02:11.747Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T07:02:11.750Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T07:02:11.752Z] Stage: initial
+[2026-02-28T07:02:11.754Z] Pending medicine: null
+[2026-02-28T07:02:11.756Z] Message: "combiflam tablet"
+[2026-02-28T07:02:11.758Z] Is digits: false
+[2026-02-28T07:02:11.763Z] Condition match: false
+[2026-02-28T07:02:11.765Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T07:02:11.766Z] Message: "combiflam tablet"
+[2026-02-28T07:02:11.769Z] Stage: initial
+[2026-02-28T07:02:11.770Z] Pending medicine: null
+[2026-02-28T07:02:12.547Z] Grok result: {"medicines":[{"name":"combiflam tablet","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T07:02:12.549Z] === ORDER INTENT DETECTED ===
+[2026-02-28T07:02:12.550Z] Processing medicine: combiflam tablet, quantity: 1
+[2026-02-28T07:02:12.679Z] Found medicine: Combiflam Tablets
+[2026-02-28T07:02:12.683Z] Real-time stock update for Combiflam Tablets: 1340 -> 1339 tablets (packets: 67 -> 66, individual: 19)
+[2026-02-28T07:02:12.697Z] === SENDING RESPONSE ===
+[2026-02-28T07:02:12.699Z] ✅ Combiflam Tablets (1 tablets)
+📝 Everyday medicine used to treat common health issues and help you feel better quickly.
+💊 Price per tablet: ₹315.00
+📦 Quantity: 1
+💰 Total price: ₹315.00
+
+🎉 ✅ Combiflam Tablets (1 tablets)
+💊 Price per tablet: ₹0.00
+📦 Quantity: 1
+💰 Total price: ₹0.00
+
+🎉 Order Placed Successfully!
+[2026-02-28T07:02:12.700Z] === END RESPONSE ===
+[2026-02-28T07:26:01.143Z] === NEW REQUEST ===
+[2026-02-28T07:26:01.146Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T07:26:01.148Z] Message: "combiflam tablet"
+[2026-02-28T07:26:01.153Z] Persisted session: undefined
+[2026-02-28T07:26:01.156Z] Starting new session
+[2026-02-28T07:26:01.161Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T07:26:01.162Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T07:26:01.164Z] Stage: initial
+[2026-02-28T07:26:01.173Z] Pending medicine: null
+[2026-02-28T07:26:01.176Z] Message: "combiflam tablet"
+[2026-02-28T07:26:01.178Z] Is digits: false
+[2026-02-28T07:26:01.179Z] Condition match: false
+[2026-02-28T07:26:01.180Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T07:26:01.181Z] Message: "combiflam tablet"
+[2026-02-28T07:26:01.184Z] Stage: initial
+[2026-02-28T07:26:01.186Z] Pending medicine: null
+[2026-02-28T07:26:02.110Z] Grok result: {"medicines":[{"name":"combiflam tablet","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T07:26:02.112Z] === ORDER INTENT DETECTED ===
+[2026-02-28T07:26:02.113Z] Processing medicine: combiflam tablet, quantity: 1
+[2026-02-28T07:26:02.127Z] Found medicine: Combiflam Tablets
+[2026-02-28T07:26:02.132Z] Real-time stock update for Combiflam Tablets: 1339 -> 1338 tablets (packets: 66 -> 66, individual: 18)
+[2026-02-28T07:26:02.170Z] === SENDING RESPONSE ===
+[2026-02-28T07:26:02.172Z] ✅ Combiflam Tablets (1 tablets)
+📝 Everyday medicine used to treat common health issues and help you feel better quickly.
+💊 Price per tablet: ₹315.00
+📦 Quantity: 1
+💰 Total price: ₹315.00
+
+🎉 Order Placed Successfully!
+[2026-02-28T07:26:02.174Z] === END RESPONSE ===
+[2026-02-28T07:32:13.845Z] === NEW REQUEST ===
+[2026-02-28T07:32:13.846Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T07:32:13.847Z] Message: "combiflam tablet"
+[2026-02-28T07:32:13.848Z] Persisted session: undefined
+[2026-02-28T07:32:13.849Z] Starting new session
+[2026-02-28T07:32:13.850Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T07:32:13.851Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T07:32:13.852Z] Stage: initial
+[2026-02-28T07:32:13.854Z] Pending medicine: null
+[2026-02-28T07:32:13.856Z] Message: "combiflam tablet"
+[2026-02-28T07:32:13.857Z] Is digits: false
+[2026-02-28T07:32:13.859Z] Condition match: false
+[2026-02-28T07:32:13.859Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T07:32:13.860Z] Message: "combiflam tablet"
+[2026-02-28T07:32:13.861Z] Stage: initial
+[2026-02-28T07:32:13.861Z] Pending medicine: null
+[2026-02-28T07:32:14.595Z] Grok result: {"medicines":[{"name":"combiflam tablet","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T07:32:14.596Z] === ORDER INTENT DETECTED ===
+[2026-02-28T07:32:14.598Z] Processing medicine: combiflam tablet, quantity: 1
+[2026-02-28T07:32:14.763Z] Found medicine: Combiflam Tablets
+[2026-02-28T07:32:14.773Z] Real-time stock update for Combiflam Tablets: 1338 -> 1337 tablets (packets: 66 -> 66, individual: 17)
+[2026-02-28T07:32:14.817Z] === SENDING RESPONSE ===
+[2026-02-28T07:32:14.821Z] ✅ Combiflam Tablets (1 tablets)
+📝 Everyday medicine used to treat common health issues and help you feel better quickly.
+💊 Price per tablet: ₹315.00
+📦 Quantity: 1
+💰 Total price: ₹315.00
+
+🎉 Order Placed Successfully!
+[2026-02-28T07:32:14.827Z] === END RESPONSE ===
+[2026-02-28T07:35:29.838Z] === NEW REQUEST ===
+[2026-02-28T07:35:29.841Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T07:35:29.843Z] Message: "give me combiflam tablet"
+[2026-02-28T07:35:29.845Z] Persisted session: undefined
+[2026-02-28T07:35:29.846Z] Starting new session
+[2026-02-28T07:35:29.848Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T07:35:29.854Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T07:35:29.857Z] Stage: initial
+[2026-02-28T07:35:29.860Z] Pending medicine: null
+[2026-02-28T07:35:29.862Z] Message: "give me combiflam tablet"
+[2026-02-28T07:35:29.864Z] Is digits: false
+[2026-02-28T07:35:29.868Z] Condition match: false
+[2026-02-28T07:35:29.871Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T07:35:29.873Z] Message: "give me combiflam tablet"
+[2026-02-28T07:35:29.875Z] Stage: initial
+[2026-02-28T07:35:29.877Z] Pending medicine: null
+[2026-02-28T07:35:30.907Z] Grok result: {"medicines":[{"name":"give me combiflam tablet","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T07:35:30.909Z] === ORDER INTENT DETECTED ===
+[2026-02-28T07:35:30.911Z] Processing medicine: give me combiflam tablet, quantity: 1
+[2026-02-28T08:47:26.653Z] === NEW REQUEST ===
+[2026-02-28T08:47:26.657Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T08:47:26.658Z] Message: "combiflam tablet"
+[2026-02-28T08:47:26.659Z] Persisted session: undefined
+[2026-02-28T08:47:26.660Z] Starting new session
+[2026-02-28T08:47:26.663Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T08:47:26.665Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T08:47:26.666Z] Stage: initial
+[2026-02-28T08:47:26.667Z] Pending medicine: null
+[2026-02-28T08:47:26.669Z] Message: "combiflam tablet"
+[2026-02-28T08:47:26.671Z] Is digits: false
+[2026-02-28T08:47:26.672Z] Condition match: false
+[2026-02-28T08:47:26.672Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T08:47:26.673Z] Message: "combiflam tablet"
+[2026-02-28T08:47:26.673Z] Stage: initial
+[2026-02-28T08:47:26.674Z] Pending medicine: null
+[2026-02-28T08:47:27.323Z] Grok result: {"medicines":[{"name":"combiflam tablet","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T08:47:27.324Z] === ORDER INTENT DETECTED ===
+[2026-02-28T08:47:27.324Z] Processing medicine: combiflam tablet, quantity: 1
+[2026-02-28T08:47:27.375Z] Found medicine: Combiflam Tablets
+[2026-02-28T08:47:27.378Z] Real-time stock update for Combiflam Tablets: 1337 -> 1336 tablets (packets: 66 -> 66, individual: 16)
+[2026-02-28T08:47:27.480Z] === SENDING RESPONSE ===
+[2026-02-28T08:47:27.481Z] ✅ Combiflam Tablets (1 tablets)
+📝 Everyday medicine used to treat common health issues and help you feel better quickly.
+💊 Price per tablet: ₹315.00
+📦 Quantity: 1
+💰 Total price: ₹315.00
+
+🎉 Order Placed Successfully!
+[2026-02-28T08:47:27.482Z] === END RESPONSE ===
+[2026-02-28T08:48:40.236Z] === NEW REQUEST ===
+[2026-02-28T08:48:40.238Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T08:48:40.239Z] Message: "tramadol capsules"
+[2026-02-28T08:48:40.241Z] Persisted session: undefined
+[2026-02-28T08:48:40.242Z] Starting new session
+[2026-02-28T08:48:40.246Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T08:48:40.249Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T08:48:40.251Z] Stage: initial
+[2026-02-28T08:48:40.254Z] Pending medicine: null
+[2026-02-28T08:48:40.255Z] Message: "tramadol capsules"
+[2026-02-28T08:48:40.256Z] Is digits: false
+[2026-02-28T08:48:40.258Z] Condition match: false
+[2026-02-28T08:48:40.260Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T08:48:40.261Z] Message: "tramadol capsules"
+[2026-02-28T08:48:40.262Z] Stage: initial
+[2026-02-28T08:48:40.263Z] Pending medicine: null
+[2026-02-28T08:48:40.948Z] Grok result: {"medicines":[{"name":"tramadol capsules","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T08:48:40.949Z] === ORDER INTENT DETECTED ===
+[2026-02-28T08:48:40.949Z] Processing medicine: tramadol capsules, quantity: 1
+[2026-02-28T08:48:40.950Z] Found medicine: Tramadol Capsules
+[2026-02-28T08:49:03.024Z] === NEW REQUEST ===
+[2026-02-28T08:49:03.025Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T08:49:03.026Z] Message: "yes"
+[2026-02-28T08:49:03.028Z] Persisted session: {"sessionState":{"medicines":[],"stage":"initial","pendingMedicine":null,"pendingPrescription":{"medicine_id":2635,"medicine_name":"Tramadol Capsules","quantity":1,"price_per_tablet":"12.00"},"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"idle","language":"en","targetName":null,"lastMissingName":null,"previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null},"stockAddFlow":{"stage":"idle","medicineName":null,"packets":null,"tabletsPerPacket":null,"packetPrice":null}},"expiresAt":1772303400000}
+[2026-02-28T08:49:03.031Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-28T08:49:03.033Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T08:49:03.037Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T08:49:03.042Z] Stage: initial
+[2026-02-28T08:49:03.045Z] Pending medicine: null
+[2026-02-28T08:49:03.048Z] Message: "yes"
+[2026-02-28T08:49:03.050Z] Is digits: false
+[2026-02-28T08:49:03.052Z] Condition match: false
+[2026-02-28T08:49:03.053Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T08:49:03.053Z] Message: "yes"
+[2026-02-28T08:49:03.054Z] Stage: initial
+[2026-02-28T08:49:03.054Z] Pending medicine: null
+[2026-02-28T08:49:03.055Z] === PRESCRIPTION YES RESPONSE DETECTED ===
+[2026-02-28T08:49:03.113Z] Real-time stock update for Tramadol Capsules: 260 -> 259 tablets (packets: 26 -> 25, individual: 9)
+[2026-02-28T08:49:03.136Z] === SENDING PRESCRIPTION CONFIRMED RESPONSE ===
+[2026-02-28T08:49:03.138Z] ✅ Tramadol Capsules (1 tablets)
+💊 Price per tablet: ₹12.00
+📦 Quantity: 1
+💰 Total price: ₹12.00
+
+🎉 Order Placed Successfully!
+
+⚕️ Prescription verified - Order completed safely
+[2026-02-28T08:49:03.143Z] === END RESPONSE ===

@@ -31,6 +31,8 @@ How can I assist you today?`,
     const [allMedicines, setAllMedicines] = useState([]);
     const [selectedTablets, setSelectedTablets] = useState({});
     const [isVoiceInput, setIsVoiceInput] = useState(false);
+    const [isListening, setIsListening] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false);
     const chatMessagesRef = useRef(null);
 
     const [userLanguage, setUserLanguage] = useState('en'); // 'en' | 'hi' | 'mr'
@@ -119,7 +121,7 @@ How can I assist you today? Would you like to re-order something from your previ
         return () => clearInterval(timer);
     }, []);
 
-    
+
     // Persist chat history on every change (for up to 24 hours, enforced on load)
     useEffect(() => {
         try {
@@ -205,20 +207,20 @@ How can I assist you today? Would you like to re-order something from your previ
     const processInput = (rawInput) => {
         // 1. Trim leading/trailing spaces
         let processed = rawInput.trim();
-        
+
         // 2. Normalize extra spaces between words (convert multiple spaces to single space)
         processed = processed.replace(/\s+/g, ' ');
-        
+
         // 3. Detect quantity pattern: "Medicine Name - 2"
         let quantity = 1;
         let medicineName = processed;
-        
+
         const quantityMatch = processed.match(/^(.+?)\s*-\s*(\d+)$/);
         if (quantityMatch) {
             medicineName = quantityMatch[1].trim();
             quantity = parseInt(quantityMatch[2], 10);
         }
-        
+
         // 4. Return processed input with quantity info
         return {
             originalInput: rawInput,
@@ -261,8 +263,8 @@ How can I assist you today? Would you like to re-order something from your previ
             const response = await fetch('http://localhost:5000/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    message: textToSearch, 
+                body: JSON.stringify({
+                    message: textToSearch,
                     history,
                     medicineName: inputAnalysis.medicineName,
                     quantity: inputAnalysis.quantity,
@@ -340,7 +342,7 @@ How can I assist you today? Would you like to re-order something from your previ
 
             // Show specific error information
             let errorContent = '❌ Network error while talking to the assistant. Please check your connection and try again.';
-            
+
             if (error.message.includes('Failed to fetch')) {
                 errorContent = '❌ Cannot connect to the backend server. Please make sure the backend is running on port 5000.';
             } else if (error.message.includes('CORS')) {
@@ -378,6 +380,16 @@ How can I assist you today? Would you like to re-order something from your previ
         const recognition = new SpeechRecognition();
         // Use last detected language for speech recognition where possible
         recognition.lang = userLanguage === 'hi' ? 'hi-IN' : userLanguage === 'mr' ? 'mr-IN' : 'en-US';
+
+        recognition.onstart = () => {
+            setIsListening(true);
+            setIsVoiceInput(true);
+        };
+
+        recognition.onend = () => {
+            setIsListening(false);
+        };
+
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
             setInput(transcript);
@@ -389,7 +401,24 @@ How can I assist you today? Would you like to re-order something from your previ
 
     const speakResponse = (text, langCode = 'en') => {
         const synth = window.speechSynthesis;
-        const utter = new SpeechSynthesisUtterance(text);
+
+        // Cancel any ongoing speech
+        synth.cancel();
+        setIsSpeaking(true);
+
+        // 1. Emoji & Symbol Filtering (Strict)
+        // Removes all emojis: 🎉✅❌⚠️⚕️💊💰📦📝🧾
+        // Removes symbols: ★☆♦♥♠♣•
+        const cleanText = text
+            .replace(/[🎉✅❌⚠️⚕️💊💰📦📝🧾]/g, '')
+            .replace(/[★☆♦♥♠♣]/g, '')
+            .replace(/[•]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        const utter = new SpeechSynthesisUtterance(cleanText);
+
+        // Set language
         if (langCode === 'hi') {
             utter.lang = 'hi-IN';
         } else if (langCode === 'mr') {
@@ -397,7 +426,78 @@ How can I assist you today? Would you like to re-order something from your previ
         } else {
             utter.lang = 'en-IN';
         }
+
+        // 2. Zira Voice Priority
+        const voices = synth.getVoices();
+        let selectedVoice = null;
+
+        // Specifically searches for "zira" in voice name first
+        selectedVoice = voices.find(voice =>
+            voice.name.toLowerCase().includes('zira')
+        );
+
+        // Falls back to female voices if Zira not available
+        if (!selectedVoice) {
+            if (langCode === 'hi') {
+                selectedVoice = voices.find(voice =>
+                    voice.lang.includes('hi') && (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman'))
+                ) || voices.find(voice => voice.lang.includes('hi'));
+            } else if (langCode === 'mr') {
+                selectedVoice = voices.find(voice =>
+                    voice.lang.includes('mr') && (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman'))
+                ) || voices.find(voice => voice.lang.includes('mr'));
+            } else {
+                selectedVoice = voices.find(voice =>
+                    voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman') || voice.name.toLowerCase().includes('samantha')
+                ) || voices.find(voice => voice.lang.includes('en'));
+            }
+        }
+
+        if (selectedVoice) {
+            utter.voice = selectedVoice;
+            // Console logging shows which voice is being used
+            console.log(`[PharmaAI Voice] Using: ${selectedVoice.name} (${selectedVoice.lang})`);
+        } else {
+            console.log('[PharmaAI Voice] Default system voice used (No Zira or Female voice found)');
+        }
+
+        // 3. Natural Speech Parameters
+        utter.rate = 1.0;   // normal speed, not robotic
+        utter.pitch = 1.0;  // natural tone
+        utter.volume = 0.9; // comfortable level
+
+        utter.onend = () => {
+            setIsSpeaking(false);
+        };
+
+        utter.onstart = () => {
+            console.log(`[PharmaAI Voice] Speaking: "${cleanText.substring(0, 50)}${cleanText.length > 50 ? '...' : ''}"`);
+        };
+
+        utter.onerror = (error) => {
+            console.error('[PharmaAI Voice] Speech error:', error);
+            setIsSpeaking(false);
+        };
+
         synth.speak(utter);
+    };
+
+    const stopVoiceInput = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.stop();
+            setIsListening(false);
+            setIsVoiceInput(false);
+        }
+    };
+
+    const toggleVoiceInput = () => {
+        if (isListening) {
+            stopVoiceInput();
+        } else {
+            startVoiceInput();
+        }
     };
 
     const handleKeyDown = (e) => {
@@ -458,7 +558,7 @@ How can I assist you today? Would you like to re-order something from your previ
                                 <p className="chat-bot-name">PharmaAI Assistant</p>
                                 <p className="chat-bot-status">
                                     <span className="chat-bot-status-dot"></span>
-                                    Online — Autonomous Mode
+                                    {isSpeaking ? 'Speaking...' : 'Online — Autonomous Mode'}
                                 </p>
                             </div>
                         </div>
@@ -466,8 +566,17 @@ How can I assist you today? Would you like to re-order something from your previ
                             <span className="lang-badge">
                                 🌐 English
                             </span>
-                            <button className="header-mic-btn">
+                            <button className={`header-mic-btn ${isListening ? 'listening' : ''}`} onClick={() => toggleVoiceInput()}>
                                 <Mic size={18} />
+                                {isListening && (
+                                    <div className="voice-wave">
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                    </div>
+                                )}
                             </button>
                         </div>
                     </div>
@@ -547,8 +656,17 @@ How can I assist you today? Would you like to re-order something from your previ
                             </div>
                         )}
                         <div className="chat-input-row">
-                            <button className="input-mic-btn" onClick={() => startVoiceInput()}>
+                            <button className={`input-mic-btn ${isListening ? 'listening' : ''}`} onClick={() => toggleVoiceInput()}>
                                 <Mic size={20} />
+                                {isListening && (
+                                    <div className="voice-wave">
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                    </div>
+                                )}
                             </button>
                             <div className="chat-input-box">
                                 <input

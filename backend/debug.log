@@ -2192,6 +2192,7 @@
 [2026-02-27T20:33:44.356Z] Message: "proceed"
 [2026-02-27T20:33:44.357Z] Is digits: false
 [2026-02-27T20:33:44.360Z] Condition match: false
+<<<<<<< Updated upstream
 [2026-02-27T21:05:57.975Z] === NEW REQUEST ===
 [2026-02-27T21:05:57.977Z] Session key: DEBUG_SESSION_KEY
 [2026-02-27T21:05:57.979Z] Message: "Aceclofenac Tabletten "
@@ -2690,3 +2691,984 @@
 [2026-02-28T02:48:07.016Z] Is digits: false
 [2026-02-28T02:48:07.019Z] Condition match: false
 [2026-02-28T02:48:07.082Z] Order confirmed: Aceclofenac Tabletten (4 tablets) - stock already deducted in real-time
+=======
+[2026-02-28T00:15:39.210Z] === NEW REQUEST ===
+[2026-02-28T00:15:39.212Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T00:15:39.226Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T00:15:39.243Z] Persisted session: undefined
+[2026-02-28T00:15:39.247Z] Starting new session
+[2026-02-28T00:15:39.252Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T00:15:39.257Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T00:15:39.258Z] Stage: initial
+[2026-02-28T00:15:39.268Z] Pending medicine: null
+[2026-02-28T00:15:39.273Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T00:15:39.280Z] Is digits: false
+[2026-02-28T00:15:39.288Z] Condition match: false
+[2026-02-28T00:15:39.319Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T00:15:39.337Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T00:15:39.343Z] Stage: initial
+[2026-02-28T00:15:39.344Z] Pending medicine: null
+[2026-02-28T00:15:40.271Z] Grok result: {"medicines":[{"name":"Aceclofenac Tabletten","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T00:15:40.284Z] Setting pending medicine to: {"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T00:15:46.352Z] === NEW REQUEST ===
+[2026-02-28T00:15:46.358Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T00:15:46.400Z] Message: "1"
+[2026-02-28T00:15:46.404Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":2633,"name":"Aceclofenac Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"idle","language":"en","targetName":null,"lastMissingName":null,"previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null}},"expiresAt":1772303400000}
+[2026-02-28T00:15:46.416Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-28T00:15:46.434Z] Top-of-handler state: stage=ask_quantity, pending={"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T00:15:46.468Z] Entering EARLY quantity branch with qty='1' for pending='{"id":2633,"name":"Aceclofenac Tabletten"}'
+[2026-02-28T00:15:46.508Z] DB match for pending: Aceclofenac Tabletten
+[2026-02-28T00:15:46.511Z] Real-time stock update for Aceclofenac Tabletten: 20 -> 19 tablets (packets: 2 -> 1)
+[2026-02-28T00:18:42.763Z] === NEW REQUEST ===
+[2026-02-28T00:18:42.790Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T00:18:42.796Z] Message: "Aceclofenac Tabletten"
+[2026-02-28T00:18:42.803Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":2633,"name":"Aceclofenac Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"idle","language":"en","targetName":null,"lastMissingName":null,"previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null}},"expiresAt":1772303400000}
+[2026-02-28T00:18:42.805Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-28T00:18:42.808Z] Top-of-handler state: stage=ask_quantity, pending={"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T00:18:42.815Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T00:18:42.817Z] Stage: ask_quantity
+[2026-02-28T00:18:42.817Z] Pending medicine: {"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T00:18:42.818Z] Message: "Aceclofenac Tabletten"
+[2026-02-28T00:18:42.825Z] Is digits: false
+[2026-02-28T00:18:42.840Z] Condition match: false
+[2026-02-28T00:18:42.844Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T00:18:42.853Z] Message: "Aceclofenac Tabletten"
+[2026-02-28T00:18:42.857Z] Stage: ask_quantity
+[2026-02-28T00:18:42.872Z] Pending medicine: {"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T00:18:43.486Z] Grok result: {"medicines":[{"name":"Aceclofenac Tabletten","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T00:18:43.495Z] Setting pending medicine to: {"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T00:22:33.301Z] === NEW REQUEST ===
+[2026-02-28T00:22:33.316Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T00:22:33.333Z] Message: "Aceclofenac Tabletten"
+[2026-02-28T00:22:33.345Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":2633,"name":"Aceclofenac Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"idle","language":"en","targetName":null,"lastMissingName":null,"previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null}},"expiresAt":1772303400000}
+[2026-02-28T00:22:33.351Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-28T00:22:33.354Z] Top-of-handler state: stage=ask_quantity, pending={"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T00:22:33.357Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T00:22:33.359Z] Stage: ask_quantity
+[2026-02-28T00:22:33.360Z] Pending medicine: {"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T00:22:33.361Z] Message: "Aceclofenac Tabletten"
+[2026-02-28T00:22:33.362Z] Is digits: false
+[2026-02-28T00:22:33.364Z] Condition match: false
+[2026-02-28T00:22:33.400Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T00:22:33.413Z] Message: "Aceclofenac Tabletten"
+[2026-02-28T00:22:33.423Z] Stage: ask_quantity
+[2026-02-28T00:22:33.425Z] Pending medicine: {"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T00:22:33.876Z] Grok result: {"medicines":[{"name":"Aceclofenac Tabletten","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T00:22:33.898Z] Setting pending medicine to: {"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T00:22:48.899Z] === NEW REQUEST ===
+[2026-02-28T00:22:48.900Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T00:22:48.901Z] Message: "1"
+[2026-02-28T00:22:48.907Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":2633,"name":"Aceclofenac Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"idle","language":"en","targetName":null,"lastMissingName":null,"previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null}},"expiresAt":1772303400000}
+[2026-02-28T00:22:48.909Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-28T00:22:48.939Z] Top-of-handler state: stage=ask_quantity, pending={"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T00:22:48.943Z] Entering EARLY quantity branch with qty='1' for pending='{"id":2633,"name":"Aceclofenac Tabletten"}'
+[2026-02-28T00:22:49.173Z] DB match for pending: Aceclofenac Tabletten
+[2026-02-28T00:22:49.178Z] Real-time stock update for Aceclofenac Tabletten: 20 -> 19 tablets (packets: 2 -> 1)
+[2026-02-28T00:26:43.714Z] === NEW REQUEST ===
+[2026-02-28T00:26:43.715Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T00:26:43.715Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T00:26:43.716Z] Persisted session: undefined
+[2026-02-28T00:26:43.717Z] Starting new session
+[2026-02-28T00:26:43.720Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T00:26:43.721Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T00:26:43.722Z] Stage: initial
+[2026-02-28T00:26:43.722Z] Pending medicine: null
+[2026-02-28T00:26:43.723Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T00:26:43.723Z] Is digits: false
+[2026-02-28T00:26:43.723Z] Condition match: false
+[2026-02-28T00:26:43.724Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T00:26:43.726Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T00:26:43.727Z] Stage: initial
+[2026-02-28T00:26:43.728Z] Pending medicine: null
+[2026-02-28T00:26:44.161Z] Grok result: {"medicines":[{"name":"Aceclofenac Tabletten","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T00:26:44.165Z] Setting pending medicine to: {"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T00:26:46.747Z] === NEW REQUEST ===
+[2026-02-28T00:26:46.748Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T00:26:46.748Z] Message: "1"
+[2026-02-28T00:26:46.750Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":2633,"name":"Aceclofenac Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"idle","language":"en","targetName":null,"lastMissingName":null,"previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null}},"expiresAt":1772303400000}
+[2026-02-28T00:26:46.751Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-28T00:26:46.754Z] Top-of-handler state: stage=ask_quantity, pending={"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T00:26:46.756Z] Entering EARLY quantity branch with qty='1' for pending='{"id":2633,"name":"Aceclofenac Tabletten"}'
+[2026-02-28T00:26:46.771Z] DB match for pending: Aceclofenac Tabletten
+[2026-02-28T00:26:46.776Z] Real-time stock update for Aceclofenac Tabletten: 20 -> 19 tablets (packets: 2 -> 1, individual: 9)
+[2026-02-28T00:26:46.809Z] EARLY ADD✅ Aceclofenac Tabletten x1 | Cart: ₹5.00
+[2026-02-28T00:32:52.011Z] === NEW REQUEST ===
+[2026-02-28T00:32:52.011Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T00:32:52.012Z] Message: "Hello"
+[2026-02-28T00:32:52.012Z] Persisted session: {"sessionState":{"medicines":[{"id":2633,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"5.00","total_price":5}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"idle","language":"en","targetName":null,"lastMissingName":null,"previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null}},"expiresAt":1772303400000}
+[2026-02-28T00:32:52.013Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-28T00:32:52.013Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T00:32:52.014Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T00:32:52.014Z] Stage: initial
+[2026-02-28T00:32:52.016Z] Pending medicine: null
+[2026-02-28T00:32:52.017Z] Message: "Hello"
+[2026-02-28T00:32:52.018Z] Is digits: false
+[2026-02-28T00:32:52.018Z] Condition match: false
+[2026-02-28T00:32:52.019Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T00:32:52.019Z] Message: "Hello"
+[2026-02-28T00:32:52.020Z] Stage: initial
+[2026-02-28T00:32:52.020Z] Pending medicine: null
+[2026-02-28T00:32:52.400Z] Grok result: {"medicines":[{"name":"Hello","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T00:34:05.636Z] === NEW REQUEST ===
+[2026-02-28T00:34:05.637Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T00:34:05.637Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T00:34:05.640Z] Persisted session: undefined
+[2026-02-28T00:34:05.641Z] Starting new session
+[2026-02-28T00:34:05.642Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T00:34:05.643Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T00:34:05.644Z] Stage: initial
+[2026-02-28T00:34:05.647Z] Pending medicine: null
+[2026-02-28T00:34:05.648Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T00:34:05.649Z] Is digits: false
+[2026-02-28T00:34:05.650Z] Condition match: false
+[2026-02-28T00:34:05.651Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T00:34:05.651Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T00:34:05.651Z] Stage: initial
+[2026-02-28T00:34:05.654Z] Pending medicine: null
+[2026-02-28T00:34:06.114Z] Grok result: {"medicines":[{"name":"Aceclofenac Tabletten","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T00:34:06.115Z] Setting pending medicine to: {"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T00:34:17.789Z] === NEW REQUEST ===
+[2026-02-28T00:34:17.790Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T00:34:17.791Z] Message: "1"
+[2026-02-28T00:34:17.793Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":2633,"name":"Aceclofenac Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"idle","language":"en","targetName":null,"lastMissingName":null,"previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null}},"expiresAt":1772303400000}
+[2026-02-28T00:34:17.795Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-28T00:34:17.796Z] Top-of-handler state: stage=ask_quantity, pending={"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T00:34:17.798Z] Entering EARLY quantity branch with qty='1' for pending='{"id":2633,"name":"Aceclofenac Tabletten"}'
+[2026-02-28T00:34:17.857Z] DB match for pending: Aceclofenac Tabletten
+[2026-02-28T00:34:17.858Z] Real-time stock update for Aceclofenac Tabletten: 10 -> 9 tablets (packets: 1 -> 0, individual: 9)
+[2026-02-28T00:34:17.865Z] EARLY ADD✅ Aceclofenac Tabletten x1 | Cart: ₹5.00
+[2026-02-28T00:38:06.811Z] === NEW REQUEST ===
+[2026-02-28T00:38:06.812Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T00:38:06.812Z] Message: "Hello"
+[2026-02-28T00:38:06.813Z] Persisted session: {"sessionState":{"medicines":[{"id":2633,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"5.00","total_price":5}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"idle","language":"en","targetName":null,"lastMissingName":null,"previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null}},"expiresAt":1772303400000}
+[2026-02-28T00:38:06.814Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-28T00:38:06.815Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T00:38:06.816Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T00:38:06.816Z] Stage: initial
+[2026-02-28T00:38:06.817Z] Pending medicine: null
+[2026-02-28T00:38:06.817Z] Message: "Hello"
+[2026-02-28T00:38:06.817Z] Is digits: false
+[2026-02-28T00:38:06.818Z] Condition match: false
+[2026-02-28T00:38:06.818Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T00:38:06.819Z] Message: "Hello"
+[2026-02-28T00:38:06.819Z] Stage: initial
+[2026-02-28T00:38:06.819Z] Pending medicine: null
+[2026-02-28T00:38:07.143Z] Grok result: {"medicines":[],"intent":"inquiry","action":"other","language":"en"}
+[2026-02-28T00:39:12.508Z] === NEW REQUEST ===
+[2026-02-28T00:39:12.508Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T00:39:12.508Z] Message: "I want Dolo 650"
+[2026-02-28T00:39:12.509Z] Persisted session: {"sessionState":{"medicines":[{"id":2633,"name":"Aceclofenac Tabletten","quantity":1,"price_per_tablet":"5.00","total_price":5}],"stage":"initial","pendingMedicine":null,"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"idle","language":"en","targetName":null,"lastMissingName":null,"previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null}},"expiresAt":1772303400000}
+[2026-02-28T00:39:12.509Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-28T00:39:12.510Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T00:39:12.510Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T00:39:12.510Z] Stage: initial
+[2026-02-28T00:39:12.511Z] Pending medicine: null
+[2026-02-28T00:39:12.511Z] Message: "I want Dolo 650"
+[2026-02-28T00:39:12.511Z] Is digits: false
+[2026-02-28T00:39:12.512Z] Condition match: false
+[2026-02-28T00:39:12.514Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T00:39:12.515Z] Message: "I want Dolo 650"
+[2026-02-28T00:39:12.515Z] Stage: initial
+[2026-02-28T00:39:12.516Z] Pending medicine: null
+[2026-02-28T00:39:12.929Z] Grok result: {"medicines":[{"name":"Dolo 650","quantity":null}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T00:39:12.970Z] Setting pending medicine to: {"id":2589,"name":"Dolo 650 mg Tabletten"}
+[2026-02-28T01:14:23.309Z] === NEW REQUEST ===
+[2026-02-28T01:14:23.311Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T01:14:23.313Z] Message: "Paracetamol apodiscounter 500 mg Tabletten "
+[2026-02-28T01:14:23.315Z] Persisted session: undefined
+[2026-02-28T01:14:23.315Z] Starting new session
+[2026-02-28T01:14:23.320Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T01:14:23.321Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T01:14:23.321Z] Stage: initial
+[2026-02-28T01:14:23.322Z] Pending medicine: null
+[2026-02-28T01:14:23.324Z] Message: "Paracetamol apodiscounter 500 mg Tabletten "
+[2026-02-28T01:14:23.325Z] Is digits: false
+[2026-02-28T01:14:23.327Z] Condition match: false
+[2026-02-28T01:14:23.328Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T01:14:23.329Z] Message: "Paracetamol apodiscounter 500 mg Tabletten "
+[2026-02-28T01:14:23.331Z] Stage: initial
+[2026-02-28T01:14:23.335Z] Pending medicine: null
+[2026-02-28T01:14:24.667Z] Grok result: {"medicines":[{"name":"Paracetamol apodiscounter 500 mg Tabletten","quantity":null}],"intent":"search","action":"check_stock","language":"de"}
+[2026-02-28T01:14:24.669Z] Setting pending medicine to: {"id":2519,"name":"Paracetamol apodiscounter 500 mg Tabletten"}
+[2026-02-28T01:15:30.017Z] === NEW REQUEST ===
+[2026-02-28T01:15:30.018Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T01:15:30.019Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T01:15:30.020Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":2519,"name":"Paracetamol apodiscounter 500 mg Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"idle","language":"en","targetName":null,"lastMissingName":null,"previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null}},"expiresAt":1772303400000}
+[2026-02-28T01:15:30.020Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-28T01:15:30.022Z] Top-of-handler state: stage=ask_quantity, pending={"id":2519,"name":"Paracetamol apodiscounter 500 mg Tabletten"}
+[2026-02-28T01:15:30.024Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T01:15:30.025Z] Stage: ask_quantity
+[2026-02-28T01:15:30.026Z] Pending medicine: {"id":2519,"name":"Paracetamol apodiscounter 500 mg Tabletten"}
+[2026-02-28T01:15:30.027Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T01:15:30.028Z] Is digits: false
+[2026-02-28T01:15:30.029Z] Condition match: false
+[2026-02-28T01:15:30.032Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T01:15:30.033Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T01:15:30.035Z] Stage: ask_quantity
+[2026-02-28T01:15:30.038Z] Pending medicine: {"id":2519,"name":"Paracetamol apodiscounter 500 mg Tabletten"}
+[2026-02-28T01:15:30.505Z] Grok result: {"medicines":[{"name":"Aceclofenac Tabletten","quantity":null}],"intent":"search","action":"check_stock","language":"en"}
+[2026-02-28T01:15:30.506Z] Setting pending medicine to: {"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T01:15:33.309Z] === NEW REQUEST ===
+[2026-02-28T01:15:33.309Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T01:15:33.310Z] Message: "1"
+[2026-02-28T01:15:33.311Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":2633,"name":"Aceclofenac Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"idle","language":"en","targetName":null,"lastMissingName":null,"previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null}},"expiresAt":1772303400000}
+[2026-02-28T01:15:33.312Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-28T01:15:33.313Z] Top-of-handler state: stage=ask_quantity, pending={"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T01:15:33.316Z] Entering EARLY quantity branch with qty='1' for pending='{"id":2633,"name":"Aceclofenac Tabletten"}'
+[2026-02-28T01:15:33.320Z] DB match for pending: Aceclofenac Tabletten
+[2026-02-28T01:40:41.558Z] === NEW REQUEST ===
+[2026-02-28T01:40:41.560Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T01:40:41.562Z] Message: "aaaaaa "
+[2026-02-28T01:40:41.564Z] Persisted session: {"sessionState":{"medicines":[],"stage":"ask_quantity","pendingMedicine":{"id":2633,"name":"Aceclofenac Tabletten"},"pendingPrescription":null,"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"idle","language":"en","targetName":null,"lastMissingName":null,"previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null}},"expiresAt":1772303400000}
+[2026-02-28T01:40:41.569Z] Loaded existing session - Stage: ask_quantity, Pending: [object Object]
+[2026-02-28T01:40:41.573Z] Top-of-handler state: stage=ask_quantity, pending={"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T01:40:41.576Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T01:40:41.578Z] Stage: ask_quantity
+[2026-02-28T01:40:41.580Z] Pending medicine: {"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T01:40:41.582Z] Message: "aaaaaa "
+[2026-02-28T01:40:41.586Z] Is digits: false
+[2026-02-28T01:40:41.588Z] Condition match: false
+[2026-02-28T01:40:41.590Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T01:40:41.592Z] Message: "aaaaaa "
+[2026-02-28T01:40:41.595Z] Stage: ask_quantity
+[2026-02-28T01:40:41.597Z] Pending medicine: {"id":2633,"name":"Aceclofenac Tabletten"}
+[2026-02-28T01:40:42.117Z] Grok result: {"medicines":[],"intent":"inquiry","action":"other","language":"en"}
+[2026-02-28T01:58:14.293Z] === NEW REQUEST ===
+[2026-02-28T01:58:14.294Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T01:58:14.295Z] Message: "Aceclofenac Tabletten"
+[2026-02-28T01:58:15.043Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Aceclofenac Tabletten",
+           "quantity": null
+       }
+   ],
+   "intent": "search",
+   "action": "check_stock",
+   "language": "de",
+   "thinking": "The user is searching for Aceclofenac Tabletten, which is a German term, so the language is detected as German. Since no quantity is mentioned and the user is inquiring about the medicine, the intent is 'search' and the action is 'check_stock'."
+}
+[2026-02-28T02:05:15.911Z] === NEW REQUEST ===
+[2026-02-28T02:05:15.912Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:05:15.913Z] Message: "Aceclofenac Tabletten"
+[2026-02-28T02:05:16.431Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Aceclofenac",
+           "quantity": null
+       }
+   ],
+   "intent": "search",
+   "action": "check_stock",
+   "language": "de",
+   "thinking": "The user is searching for Aceclofenac tablets, so the intent is search and the action is to check the stock. The language used is German."
+}
+[2026-02-28T02:06:07.579Z] === NEW REQUEST ===
+[2026-02-28T02:06:07.586Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:06:07.589Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T02:06:07.970Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Aceclofenac Tabletten",
+           "quantity": null
+       }
+   ],
+   "intent": "search",
+   "action": "check_stock",
+   "language": "en",
+   "thinking": "User is searching for Aceclofenac Tabletten, no quantity specified, assuming English language"
+}
+[2026-02-28T02:06:13.798Z] === NEW REQUEST ===
+[2026-02-28T02:06:13.804Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:06:13.812Z] Message: "1"
+[2026-02-28T02:06:30.096Z] === NEW REQUEST ===
+[2026-02-28T02:06:30.098Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:06:30.108Z] Message: "proceed"
+[2026-02-28T02:06:30.583Z] Grok result: {
+  "medicines": [],
+   "intent": "inquiry",
+   "action": "other",
+   "language": "en",
+   "thinking": "The input '1' and 'proceed' does not provide enough information to determine the medicines, intent, or action."
+}
+[2026-02-28T02:24:19.201Z] === NEW REQUEST ===
+[2026-02-28T02:24:19.202Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:24:19.203Z] Message: "proceed"
+[2026-02-28T02:24:19.661Z] Grok result: {
+  "medicines": [],
+   "intent": "inquiry",
+   "action": "other",
+   "language": "en",
+   "thinking": "The input '1' and 'proceed' does not contain any medicine name or quantity, hence no medicine is detected."
+}
+[2026-02-28T02:24:26.167Z] === NEW REQUEST ===
+[2026-02-28T02:24:26.172Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:24:26.181Z] Message: "aaaaaa "
+[2026-02-28T02:24:26.504Z] Grok result: {
+  "medicines": [],
+   "intent": "inquiry",
+   "action": "other",
+   "language": "en",
+   "thinking": "The input does not contain any recognizable medicine names or quantities."
+}
+[2026-02-28T02:26:00.530Z] === NEW REQUEST ===
+[2026-02-28T02:26:00.533Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:26:00.536Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T02:26:01.036Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Aceclofenac Tabletten",
+           "quantity": null
+       }
+   ],
+   "intent": "search",
+   "action": "check_stock",
+   "language": "en",
+   "thinking": "User has mentioned a medicine name without any quantity or specific action, assuming the user wants to search for the availability of the medicine."
+}
+[2026-02-28T02:26:05.135Z] === NEW REQUEST ===
+[2026-02-28T02:26:05.137Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:26:05.139Z] Message: "1"
+[2026-02-28T02:26:09.452Z] === NEW REQUEST ===
+[2026-02-28T02:26:09.455Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:26:09.458Z] Message: "proceed"
+[2026-02-28T02:26:10.003Z] Grok result: {
+  "medicines": [],
+   "intent": "inquiry",
+   "action": "other",
+   "language": "en",
+   "thinking": "The input '1' and 'proceed' does not provide any specific information about medicines or actions, so I'm treating it as an inquiry with no specific action."
+}
+[2026-02-28T02:36:38.298Z] === NEW REQUEST ===
+[2026-02-28T02:36:38.300Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:36:38.301Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T02:36:38.794Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Aceclofenac Tabletten",
+           "quantity": null
+       }
+   ],
+   "intent": "search",
+   "action": "check_stock",
+   "language": "de",
+   "thinking": "User is searching for Aceclofenac Tabletten, no quantity specified, language detected as German"
+}
+[2026-02-28T02:36:42.865Z] === NEW REQUEST ===
+[2026-02-28T02:36:42.867Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:36:42.868Z] Message: "2"
+[2026-02-28T02:36:51.292Z] === NEW REQUEST ===
+[2026-02-28T02:36:51.296Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:36:51.300Z] Message: "proceed"
+[2026-02-28T02:36:51.672Z] Grok result: {
+  "medicines": [],
+   "intent": "inquiry",
+   "action": "other",
+   "language": "en",
+   "thinking": "The input '2' and 'proceed' does not provide enough information to determine the intent or action. It seems like an incomplete or unclear request."
+}
+[2026-02-28T02:36:58.389Z] === NEW REQUEST ===
+[2026-02-28T02:36:58.394Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:36:58.397Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T02:36:58.789Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Aceclofenac Tabletten",
+           "quantity": null
+       }
+   ],
+   "intent": "inquiry",
+   "action": "other",
+   "language": "en",
+   "thinking": "User has mentioned a medicine name without any specific action or quantity, assuming it's an inquiry."
+}
+[2026-02-28T02:40:18.281Z] === NEW REQUEST ===
+[2026-02-28T02:40:18.284Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:40:18.286Z] Message: "ace"
+[2026-02-28T02:40:18.622Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Aceclofenac",
+           "quantity": null
+       }
+   ],
+   "intent": "search",
+   "action": "check_stock",
+   "language": "en",
+   "thinking": "User seems to be searching for a specific medicine, Aceclofenac, without mentioning any quantity."
+}
+[2026-02-28T02:40:21.917Z] === NEW REQUEST ===
+[2026-02-28T02:40:21.920Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:40:21.924Z] Message: "1"
+[2026-02-28T02:40:25.348Z] === NEW REQUEST ===
+[2026-02-28T02:40:25.351Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:40:25.358Z] Message: "y"
+[2026-02-28T02:40:25.674Z] Grok result: {
+  "medicines": [],
+   "intent": "inquiry",
+   "action": "other",
+   "language": "en",
+   "thinking": "User input is unclear, cannot determine specific medicine or action."
+}
+[2026-02-28T02:42:53.989Z] === NEW REQUEST ===
+[2026-02-28T02:42:53.991Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:42:53.992Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T02:42:54.743Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Aceclofenac Tabletten",
+           "quantity": null
+       }
+   ],
+   "intent": "search",
+   "action": "check_stock",
+   "language": "en",
+   "thinking": "User is searching for Aceclofenac Tabletten, no quantity specified, assuming English language"
+}
+[2026-02-28T02:42:59.185Z] === NEW REQUEST ===
+[2026-02-28T02:42:59.187Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:42:59.189Z] Message: "1"
+[2026-02-28T02:43:06.404Z] === NEW REQUEST ===
+[2026-02-28T02:43:06.406Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:43:06.413Z] Message: "proceed"
+[2026-02-28T02:43:14.425Z] === NEW REQUEST ===
+[2026-02-28T02:43:14.428Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:43:14.434Z] Message: "Y"
+[2026-02-28T02:49:28.217Z] === NEW REQUEST ===
+[2026-02-28T02:49:28.222Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:49:28.227Z] Message: "aaaaaa "
+[2026-02-28T02:49:28.573Z] Grok result: {
+  "medicines": [],
+   "intent": "inquiry",
+   "action": "other",
+   "language": "en",
+   "thinking": "The input does not contain any recognizable medicine names or quantities."
+}
+[2026-02-28T02:49:41.574Z] === NEW REQUEST ===
+[2026-02-28T02:49:41.579Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:49:41.582Z] Message: "aaaaaa "
+[2026-02-28T02:49:41.857Z] Grok result: {
+  "medicines": [],
+   "intent": "inquiry",
+   "action": "other",
+   "language": "en",
+   "thinking": "The input does not contain any recognizable medicine names or quantities."
+}
+[2026-02-28T02:49:47.492Z] === NEW REQUEST ===
+[2026-02-28T02:49:47.497Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:49:47.498Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T02:49:47.902Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Aceclofenac Tabletten",
+           "quantity": null
+       }
+   ],
+   "intent": "search",
+   "action": "check_stock",
+   "language": "en",
+   "thinking": "User has mentioned a medicine name without any quantity or specific action, assuming the user wants to search for the availability of the medicine."
+}
+[2026-02-28T02:49:52.597Z] === NEW REQUEST ===
+[2026-02-28T02:49:52.598Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:49:52.600Z] Message: "2"
+[2026-02-28T02:50:05.172Z] === NEW REQUEST ===
+[2026-02-28T02:50:05.175Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:50:05.179Z] Message: "proceed"
+[2026-02-28T02:50:24.819Z] === NEW REQUEST ===
+[2026-02-28T02:50:24.822Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:50:24.826Z] Message: "y"
+[2026-02-28T02:50:55.547Z] === NEW REQUEST ===
+[2026-02-28T02:50:55.548Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:50:55.551Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T02:50:55.907Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Aceclofenac Tabletten",
+           "quantity": null
+       }
+   ],
+   "intent": "inquiry",
+   "action": "other",
+   "language": "en",
+   "thinking": "User mentioned a medicine name without any context or quantity, assuming it's an inquiry"
+}
+[2026-02-28T02:51:04.711Z] === NEW REQUEST ===
+[2026-02-28T02:51:04.714Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:51:04.758Z] Message: "Aceclofenac Tabletten"
+[2026-02-28T02:51:05.119Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Aceclofenac Tabletten",
+           "quantity": null
+       }
+   ],
+   "intent": "search",
+   "action": "check_stock",
+   "language": "en",
+   "thinking": "User mentioned a medicine name, assuming they want to check its availability"
+}
+[2026-02-28T02:51:11.629Z] === NEW REQUEST ===
+[2026-02-28T02:51:11.635Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:51:11.638Z] Message: "4"
+[2026-02-28T02:51:16.807Z] === NEW REQUEST ===
+[2026-02-28T02:51:16.812Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:51:16.818Z] Message: "proceed"
+[2026-02-28T02:51:19.427Z] === NEW REQUEST ===
+[2026-02-28T02:51:19.429Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T02:51:19.431Z] Message: "y"
+>>>>>>> Stashed changes
+[2026-02-28T03:06:26.616Z] === NEW REQUEST ===
+[2026-02-28T03:06:26.618Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:06:26.620Z] Message: "aaaaaa "
+[2026-02-28T03:06:27.398Z] Grok result: {
+  "medicines": [],
+   "intent": "inquiry",
+   "action": "other",
+   "language": "en",
+   "thinking": "The input does not contain any recognizable medicine names or quantities, and does not indicate a specific intent or action."
+}
+[2026-02-28T03:07:02.364Z] === NEW REQUEST ===
+[2026-02-28T03:07:02.365Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:07:02.367Z] Message: "Albendazole Tabletten "
+[2026-02-28T03:07:02.725Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Albendazole",
+           "quantity": null
+       }
+   ],
+   "intent": "search",
+   "action": "check_stock",
+   "language": "de",
+   "thinking": "User is searching for Albendazole tablets, no quantity specified, language detected as German"
+}
+[2026-02-28T03:07:15.200Z] === NEW REQUEST ===
+[2026-02-28T03:07:15.201Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:07:15.203Z] Message: "500"
+[2026-02-28T03:07:23.044Z] === NEW REQUEST ===
+[2026-02-28T03:07:23.046Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:07:23.048Z] Message: "proceed"
+[2026-02-28T03:07:32.745Z] === NEW REQUEST ===
+[2026-02-28T03:07:32.745Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:07:32.746Z] Message: "y"
+[2026-02-28T03:08:34.853Z] === NEW REQUEST ===
+[2026-02-28T03:08:34.856Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:08:34.861Z] Message: "Heparin Injection -2"
+[2026-02-28T03:08:35.381Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Heparin Injection",
+           "quantity": 2
+       }
+   ],
+   "intent": "order",
+   "action": "order",
+   "language": "en",
+   "thinking": "User has specified a medicine with a quantity, indicating an order."
+}
+[2026-02-28T03:08:54.855Z] === NEW REQUEST ===
+[2026-02-28T03:08:54.857Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:08:54.859Z] Message: "Heparin Injection "
+[2026-02-28T03:08:55.209Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Heparin Injection",
+           "quantity": null
+       }
+   ],
+   "intent": "search",
+   "action": "check_stock",
+   "language": "en",
+   "thinking": "User is searching for Heparin Injection, no quantity specified."
+}
+[2026-02-28T03:10:21.426Z] === NEW REQUEST ===
+[2026-02-28T03:10:21.426Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:10:21.427Z] Message: "Aceclofenac Tabletten "
+[2026-02-28T03:10:21.808Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Aceclofenac",
+           "quantity": null
+       }
+   ],
+   "intent": "inquiry",
+   "action": "other",
+   "language": "en",
+   "thinking": "User mentioned a medicine name, but no clear intent or action is specified."
+}
+[2026-02-28T03:12:07.349Z] === NEW REQUEST ===
+[2026-02-28T03:12:07.349Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:12:07.350Z] Message: "Paracetamol apodiscounter 500 mg Tabletten -1"
+[2026-02-28T03:12:07.689Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Paracetamol",
+           "quantity": 500
+       }
+   ],
+   "intent": "order",
+   "action": "order",
+   "language": "de",
+   "thinking": "User is ordering Paracetamol with a specific quantity of 500mg"
+}
+[2026-02-28T03:12:12.612Z] === NEW REQUEST ===
+[2026-02-28T03:12:12.613Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:12:12.614Z] Message: "Paracetamol apodiscounter 500 mg Tabletten "
+[2026-02-28T03:12:12.961Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Paracetamol",
+           "quantity": 500
+       }
+   ],
+   "intent": "inquiry",
+   "action": "other",
+   "language": "de",
+   "thinking": "User mentioned a specific medicine with quantity, but no clear intent of ordering or searching. Language detected as German."
+}
+[2026-02-28T03:12:20.023Z] === NEW REQUEST ===
+[2026-02-28T03:12:20.024Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:12:20.024Z] Message: "Paracetamol apodiscounter 500 mg Tabletten"
+[2026-02-28T03:12:20.725Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Paracetamol",
+           "quantity": 500
+       }
+   ],
+   "intent": "search",
+   "action": "check_stock",
+   "language": "de",
+   "thinking": "User is searching for Paracetamol 500mg tablets, likely to check availability."
+}
+[2026-02-28T03:48:59.694Z] === NEW REQUEST ===
+[2026-02-28T03:48:59.697Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:48:59.698Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T03:49:00.155Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Albendazole Tabletten",
+           "quantity": 1
+       }
+   ],
+   "intent": "order",
+   "action": "order",
+   "language": "en",
+   "thinking": "The user has specified a medicine name and a quantity, indicating an order intent."
+}
+[2026-02-28T03:49:09.080Z] === NEW REQUEST ===
+[2026-02-28T03:49:09.080Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:49:09.081Z] Message: "Albendazole Tabletten - 2"
+[2026-02-28T03:49:09.449Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Albendazole Tabletten",
+           "quantity": 2
+       }
+   ],
+   "intent": "order",
+   "action": "order",
+   "language": "en",
+   "thinking": "The user has specified a medicine name and a quantity, indicating an order intent."
+}
+[2026-02-28T03:49:16.455Z] === NEW REQUEST ===
+[2026-02-28T03:49:16.456Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:49:16.456Z] Message: "Albendazole Tabletten-1"
+[2026-02-28T03:49:16.801Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Albendazole",
+           "quantity": 1
+       }
+   ],
+   "intent": "order",
+   "action": "order",
+   "language": "en",
+   "thinking": "The user has specified a medicine name and a quantity, indicating an order intent."
+}
+[2026-02-28T03:49:30.191Z] === NEW REQUEST ===
+[2026-02-28T03:49:30.192Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:49:30.192Z] Message: "Albendazole Tabletten -2"
+[2026-02-28T03:49:30.518Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Albendazole Tabletten",
+           "quantity": 2
+       }
+   ],
+   "intent": "order",
+   "action": "order",
+   "language": "en",
+   "thinking": "The user has specified a medicine name and a quantity, indicating an order intent."
+}
+[2026-02-28T03:50:22.722Z] === NEW REQUEST ===
+[2026-02-28T03:50:22.724Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:50:22.724Z] Message: "Albendazole Tabletten -2"
+[2026-02-28T03:50:23.188Z] Grok result: {
+  "medicines": [
+       {
+           "name": "Albendazole Tabletten",
+           "quantity": 2
+       }
+   ],
+   "intent": "order",
+   "action": "order",
+   "language": "en",
+   "thinking": "The user has specified a medicine name and a quantity, indicating an order intent."
+}
+[2026-02-28T03:57:30.121Z] === NEW REQUEST ===
+[2026-02-28T03:57:30.123Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:57:30.126Z] Message: "Albendazole Tabletten - 2"
+[2026-02-28T03:57:30.128Z] Persisted session: undefined
+[2026-02-28T03:57:30.129Z] Starting new session
+[2026-02-28T03:57:30.132Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T03:57:30.134Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T03:57:30.137Z] Stage: initial
+[2026-02-28T03:57:30.140Z] Pending medicine: null
+[2026-02-28T03:57:30.144Z] Message: "Albendazole Tabletten - 2"
+[2026-02-28T03:57:30.146Z] Is digits: false
+[2026-02-28T03:57:30.147Z] Condition match: false
+[2026-02-28T03:57:30.149Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T03:57:30.150Z] Message: "Albendazole Tabletten - 2"
+[2026-02-28T03:57:30.153Z] Stage: initial
+[2026-02-28T03:57:30.156Z] Pending medicine: null
+[2026-02-28T03:57:30.828Z] Grok result: {"medicines":[{"name":"Albendazole Tabletten","quantity":2}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T03:57:30.830Z] === ORDER INTENT DETECTED ===
+[2026-02-28T03:57:30.832Z] Processing medicine: Albendazole Tabletten, quantity: 2
+[2026-02-28T03:57:30.838Z] Found medicine: Albendazole Tabletten
+[2026-02-28T03:57:30.843Z] Real-time stock update for Albendazole Tabletten: 3000 -> 2998 tablets (packets: 60 -> 59, individual: 48)
+[2026-02-28T03:58:51.516Z] === NEW REQUEST ===
+[2026-02-28T03:58:51.518Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T03:58:51.525Z] Message: "Albendazole Tabletten -2"
+[2026-02-28T03:58:51.532Z] Persisted session: undefined
+[2026-02-28T03:58:51.538Z] Starting new session
+[2026-02-28T03:58:51.541Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T03:58:51.544Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T03:58:51.547Z] Stage: initial
+[2026-02-28T03:58:51.550Z] Pending medicine: null
+[2026-02-28T03:58:51.553Z] Message: "Albendazole Tabletten -2"
+[2026-02-28T03:58:51.554Z] Is digits: false
+[2026-02-28T03:58:51.556Z] Condition match: false
+[2026-02-28T03:58:51.557Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T03:58:51.559Z] Message: "Albendazole Tabletten -2"
+[2026-02-28T03:58:51.564Z] Stage: initial
+[2026-02-28T03:58:51.570Z] Pending medicine: null
+[2026-02-28T03:58:52.004Z] Grok result: {"medicines":[{"name":"Albendazole Tabletten","quantity":2}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T03:58:52.005Z] === ORDER INTENT DETECTED ===
+[2026-02-28T03:58:52.007Z] Processing medicine: Albendazole Tabletten, quantity: 2
+[2026-02-28T03:58:52.014Z] Found medicine: Albendazole Tabletten
+[2026-02-28T03:58:52.018Z] Real-time stock update for Albendazole Tabletten: 2950 -> 2948 tablets (packets: 59 -> 58, individual: 48)
+[2026-02-28T04:14:58.790Z] === NEW REQUEST ===
+[2026-02-28T04:14:58.792Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T04:14:58.800Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:14:58.802Z] Persisted session: undefined
+[2026-02-28T04:14:58.804Z] Starting new session
+[2026-02-28T04:14:58.805Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T04:14:58.808Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T04:14:58.815Z] Stage: initial
+[2026-02-28T04:14:58.818Z] Pending medicine: null
+[2026-02-28T04:14:58.820Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:14:58.823Z] Is digits: false
+[2026-02-28T04:14:58.825Z] Condition match: false
+[2026-02-28T04:14:58.828Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T04:14:58.832Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:14:58.834Z] Stage: initial
+[2026-02-28T04:14:58.835Z] Pending medicine: null
+[2026-02-28T04:14:59.481Z] Grok result: {"medicines":[{"name":"Albendazole Tabletten","quantity":1}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T04:14:59.483Z] === ORDER INTENT DETECTED ===
+[2026-02-28T04:14:59.484Z] Processing medicine: Albendazole Tabletten, quantity: 1
+[2026-02-28T04:14:59.490Z] Found medicine: Albendazole Tabletten
+[2026-02-28T04:14:59.497Z] Real-time stock update for Albendazole Tabletten: 2900 -> 2899 tablets (packets: 58 -> 57, individual: 49)
+[2026-02-28T04:19:22.115Z] === NEW REQUEST ===
+[2026-02-28T04:19:22.118Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T04:19:22.121Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:19:22.125Z] Persisted session: undefined
+[2026-02-28T04:19:22.127Z] Starting new session
+[2026-02-28T04:19:22.130Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T04:19:22.131Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T04:19:22.133Z] Stage: initial
+[2026-02-28T04:19:22.136Z] Pending medicine: null
+[2026-02-28T04:19:22.138Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:19:22.143Z] Is digits: false
+[2026-02-28T04:19:22.146Z] Condition match: false
+[2026-02-28T04:19:22.148Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T04:19:22.150Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:19:22.153Z] Stage: initial
+[2026-02-28T04:19:22.158Z] Pending medicine: null
+[2026-02-28T04:19:22.652Z] Grok result: {"medicines":[{"name":"Albendazole Tabletten","quantity":1}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T04:19:22.653Z] === ORDER INTENT DETECTED ===
+[2026-02-28T04:19:22.655Z] Processing medicine: Albendazole Tabletten, quantity: 1
+[2026-02-28T04:19:22.660Z] Found medicine: Albendazole Tabletten
+[2026-02-28T04:19:22.665Z] Real-time stock update for Albendazole Tabletten: 2850 -> 2849 tablets (packets: 57 -> 56, individual: 49)
+[2026-02-28T04:22:25.148Z] === NEW REQUEST ===
+[2026-02-28T04:22:25.152Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T04:22:25.158Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:22:25.160Z] Persisted session: undefined
+[2026-02-28T04:22:25.161Z] Starting new session
+[2026-02-28T04:22:25.163Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T04:22:25.165Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T04:22:25.173Z] Stage: initial
+[2026-02-28T04:22:25.175Z] Pending medicine: null
+[2026-02-28T04:22:25.176Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:22:25.179Z] Is digits: false
+[2026-02-28T04:22:25.180Z] Condition match: false
+[2026-02-28T04:22:25.182Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T04:22:25.185Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:22:25.190Z] Stage: initial
+[2026-02-28T04:22:25.192Z] Pending medicine: null
+[2026-02-28T04:22:25.776Z] Grok result: {"medicines":[{"name":"Albendazole Tabletten","quantity":1}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T04:22:25.778Z] === ORDER INTENT DETECTED ===
+[2026-02-28T04:22:25.779Z] Processing medicine: Albendazole Tabletten, quantity: 1
+[2026-02-28T04:22:25.786Z] Found medicine: Albendazole Tabletten
+[2026-02-28T04:22:25.790Z] Real-time stock update for Albendazole Tabletten: 2899 -> 2898 tablets (packets: 57 -> 57, individual: 48)
+[2026-02-28T04:22:53.957Z] === NEW REQUEST ===
+[2026-02-28T04:22:53.960Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T04:22:53.963Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:22:53.968Z] Persisted session: undefined
+[2026-02-28T04:22:53.972Z] Starting new session
+[2026-02-28T04:22:53.976Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T04:22:53.980Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T04:22:53.982Z] Stage: initial
+[2026-02-28T04:22:53.984Z] Pending medicine: null
+[2026-02-28T04:22:53.986Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:22:53.989Z] Is digits: false
+[2026-02-28T04:22:53.991Z] Condition match: false
+[2026-02-28T04:22:53.994Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T04:22:53.996Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:22:53.998Z] Stage: initial
+[2026-02-28T04:22:54.000Z] Pending medicine: null
+[2026-02-28T04:22:54.313Z] Grok result: {"medicines":[{"name":"Albendazole Tabletten","quantity":1}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T04:22:54.315Z] === ORDER INTENT DETECTED ===
+[2026-02-28T04:22:54.316Z] Processing medicine: Albendazole Tabletten, quantity: 1
+[2026-02-28T04:22:54.321Z] Found medicine: Albendazole Tabletten
+[2026-02-28T04:22:54.325Z] Real-time stock update for Albendazole Tabletten: 2898 -> 2897 tablets (packets: 57 -> 57, individual: 47)
+[2026-02-28T04:32:36.682Z] === NEW REQUEST ===
+[2026-02-28T04:32:36.713Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T04:32:36.715Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:32:36.717Z] Persisted session: undefined
+[2026-02-28T04:32:36.720Z] Starting new session
+[2026-02-28T04:32:36.723Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T04:32:36.726Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T04:32:36.732Z] Stage: initial
+[2026-02-28T04:32:36.738Z] Pending medicine: null
+[2026-02-28T04:32:36.740Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:32:36.742Z] Is digits: false
+[2026-02-28T04:32:36.745Z] Condition match: false
+[2026-02-28T04:32:36.751Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T04:32:36.753Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:32:36.754Z] Stage: initial
+[2026-02-28T04:32:36.756Z] Pending medicine: null
+[2026-02-28T04:32:37.700Z] Grok result: {"medicines":[{"name":"Albendazole Tabletten","quantity":1}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T04:32:37.702Z] === ORDER INTENT DETECTED ===
+[2026-02-28T04:32:37.704Z] Processing medicine: Albendazole Tabletten, quantity: 1
+[2026-02-28T04:32:37.712Z] Found medicine: Albendazole Tabletten
+[2026-02-28T04:32:37.724Z] Real-time stock update for Albendazole Tabletten: 2897 -> 2896 tablets (packets: 57 -> 57, individual: 46)
+[2026-02-28T04:43:24.327Z] === NEW REQUEST ===
+[2026-02-28T04:43:24.329Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T04:43:24.331Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:43:24.333Z] Persisted session: undefined
+[2026-02-28T04:43:24.338Z] Starting new session
+[2026-02-28T04:43:24.343Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T04:43:24.345Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T04:43:24.347Z] Stage: initial
+[2026-02-28T04:43:24.349Z] Pending medicine: null
+[2026-02-28T04:43:24.354Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:43:24.356Z] Is digits: false
+[2026-02-28T04:43:24.358Z] Condition match: false
+[2026-02-28T04:43:24.361Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T04:43:24.363Z] Message: "Albendazole Tabletten -1"
+[2026-02-28T04:43:24.364Z] Stage: initial
+[2026-02-28T04:43:24.372Z] Pending medicine: null
+[2026-02-28T04:43:25.262Z] Grok result: {"medicines":[{"name":"Albendazole Tabletten","quantity":1}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T04:43:25.264Z] === ORDER INTENT DETECTED ===
+[2026-02-28T04:43:25.266Z] Processing medicine: Albendazole Tabletten, quantity: 1
+[2026-02-28T04:43:25.275Z] Found medicine: Albendazole Tabletten
+[2026-02-28T04:43:25.279Z] Real-time stock update for Albendazole Tabletten: 2896 -> 2895 tablets (packets: 57 -> 57, individual: 45)
+[2026-02-28T04:43:25.310Z] === SENDING RESPONSE ===
+[2026-02-28T04:43:25.312Z] ✅ Albendazole Tabletten (1 tablets)
+📝 General tablets or capsules taken by mouth to treat specific symptoms and improve health.
+💊 Price per tablet: ₹15.20
+📦 Quantity: 1
+💰 Total price: ₹15.20
+
+🎉 Order Placed Successfully!
+[2026-02-28T04:43:25.313Z] === END RESPONSE ===
+[2026-02-28T04:44:31.559Z] === NEW REQUEST ===
+[2026-02-28T04:44:31.562Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T04:44:31.566Z] Message: "Aspirin 75 mg Tabletten -1"
+[2026-02-28T04:44:31.570Z] Persisted session: undefined
+[2026-02-28T04:44:31.572Z] Starting new session
+[2026-02-28T04:44:31.575Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T04:44:31.580Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T04:44:31.586Z] Stage: initial
+[2026-02-28T04:44:31.588Z] Pending medicine: null
+[2026-02-28T04:44:31.590Z] Message: "Aspirin 75 mg Tabletten -1"
+[2026-02-28T04:44:31.591Z] Is digits: false
+[2026-02-28T04:44:31.595Z] Condition match: false
+[2026-02-28T04:44:31.598Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T04:44:31.602Z] Message: "Aspirin 75 mg Tabletten -1"
+[2026-02-28T04:44:31.605Z] Stage: initial
+[2026-02-28T04:44:31.609Z] Pending medicine: null
+[2026-02-28T04:44:32.327Z] Grok result: {"medicines":[{"name":"Aspirin 75 mg Tabletten","quantity":1}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T04:44:32.328Z] === ORDER INTENT DETECTED ===
+[2026-02-28T04:44:32.329Z] Processing medicine: Aspirin 75 mg Tabletten, quantity: 1
+[2026-02-28T04:44:32.331Z] Found medicine: Aspirin 75 mg Tabletten
+[2026-02-28T04:44:32.333Z] Real-time stock update for Aspirin 75 mg Tabletten: 3990 -> 3989 tablets (packets: 133 -> 132, individual: 29)
+[2026-02-28T04:44:32.339Z] === SENDING RESPONSE ===
+[2026-02-28T04:44:32.340Z] ✅ Aspirin 75 mg Tabletten (1 tablets)
+📝 Effective for relieving headaches, body aches, and lowering fever. Good for daily pain management.
+💊 Price per tablet: ₹23.33
+📦 Quantity: 1
+💰 Total price: ₹23.33
+
+🎉 Order Placed Successfully!
+[2026-02-28T04:44:32.341Z] === END RESPONSE ===
+[2026-02-28T05:05:40.561Z] === NEW REQUEST ===
+[2026-02-28T05:05:40.565Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T05:05:40.568Z] Message: "Aspirin 75 mg Tabletten -1"
+[2026-02-28T05:05:40.572Z] Persisted session: undefined
+[2026-02-28T05:05:40.573Z] Starting new session
+[2026-02-28T05:05:40.575Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T05:05:40.577Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T05:05:40.578Z] Stage: initial
+[2026-02-28T05:05:40.582Z] Pending medicine: null
+[2026-02-28T05:05:40.585Z] Message: "Aspirin 75 mg Tabletten -1"
+[2026-02-28T05:05:40.588Z] Is digits: false
+[2026-02-28T05:05:40.590Z] Condition match: false
+[2026-02-28T05:05:40.591Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T05:05:40.592Z] Message: "Aspirin 75 mg Tabletten -1"
+[2026-02-28T05:05:40.594Z] Stage: initial
+[2026-02-28T05:05:40.595Z] Pending medicine: null
+[2026-02-28T05:05:41.457Z] Grok result: {"medicines":[{"name":"Aspirin 75 mg Tabletten","quantity":1}],"intent":"order","action":"order","language":"en"}
+[2026-02-28T05:05:41.459Z] === ORDER INTENT DETECTED ===
+[2026-02-28T05:05:41.460Z] Processing medicine: Aspirin 75 mg Tabletten, quantity: 1
+[2026-02-28T05:05:41.468Z] Found medicine: Aspirin 75 mg Tabletten
+[2026-02-28T05:06:05.572Z] === NEW REQUEST ===
+[2026-02-28T05:06:05.574Z] Session key: DEBUG_SESSION_KEY
+[2026-02-28T05:06:05.576Z] Message: "Yes"
+[2026-02-28T05:06:05.579Z] Persisted session: {"sessionState":{"medicines":[],"stage":"initial","pendingMedicine":null,"pendingPrescription":{"medicine_id":2535,"medicine_name":"Aspirin 75 mg Tabletten","quantity":1,"price_per_tablet":"23.33"},"customer":{"name":null,"age":null,"mobile":null},"stockFlow":{"stage":"idle","language":"en","targetName":null,"lastMissingName":null,"previousConfig":null,"tempPackets":null,"tempTabsPerPacket":null,"tempPacketPrice":null},"stockAddFlow":{"stage":"idle","medicineName":null,"packets":null,"tabletsPerPacket":null,"packetPrice":null}},"expiresAt":1772303400000}
+[2026-02-28T05:06:05.583Z] Loaded existing session - Stage: initial, Pending: null
+[2026-02-28T05:06:05.584Z] Top-of-handler state: stage=initial, pending=null
+[2026-02-28T05:06:05.586Z] === CHECKING QUANTITY RESPONSE ===
+[2026-02-28T05:06:05.587Z] Stage: initial
+[2026-02-28T05:06:05.589Z] Pending medicine: null
+[2026-02-28T05:06:05.590Z] Message: "Yes"
+[2026-02-28T05:06:05.591Z] Is digits: false
+[2026-02-28T05:06:05.592Z] Condition match: false
+[2026-02-28T05:06:05.593Z] === GROK AI MESSAGE PROCESSING ===
+[2026-02-28T05:06:05.594Z] Message: "Yes"
+[2026-02-28T05:06:05.598Z] Stage: initial
+[2026-02-28T05:06:05.602Z] Pending medicine: null
+[2026-02-28T05:06:05.604Z] === PRESCRIPTION YES RESPONSE DETECTED ===
+[2026-02-28T05:06:05.608Z] Real-time stock update for Aspirin 75 mg Tabletten: 3989 -> 3988 tablets (packets: 132 -> 132, individual: 28)
+[2026-02-28T05:06:05.638Z] === SENDING PRESCRIPTION CONFIRMED RESPONSE ===
+[2026-02-28T05:06:05.639Z] ✅ Aspirin 75 mg Tabletten (1 tablets)
+💊 Price per tablet: ₹23.33
+📦 Quantity: 1
+💰 Total price: ₹23.33
+
+🎉 Order Placed Successfully!
+
+⚕️ Prescription verified - Order completed safely
+[2026-02-28T05:06:05.640Z] === END RESPONSE ===

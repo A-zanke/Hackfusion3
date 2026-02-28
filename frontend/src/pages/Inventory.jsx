@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
+import { io } from 'socket.io-client';
 import { Search, Plus, Package, ChevronDown, Filter, Trash2, CheckSquare, Square } from 'lucide-react';
 import StatusBadge from '../ui/StatusBadge';
 import AddStockModal from '../components/AddStockModal';
@@ -57,11 +58,32 @@ const Inventory = () => {
     useEffect(() => {
         fetchMedicines(false);  // initial load — show spinner
         const interval = setInterval(() => fetchMedicines(true), 60000); // background silent refresh
+        
+        // Initialize WebSocket connection
+        const socket = io('http://localhost:5000');
+        
+        // Listen for inventory updates
+        socket.on('inventoryUpdated', (data) => {
+            console.log('Inventory updated via WebSocket:', data);
+            fetchMedicines(true); // silent refresh
+            showToast(`✅ ${data.medicine?.name || 'Medicine'} added to inventory. Total stock: ${data.totalStock || 0} tablets`, 'success');
+        });
+        
+        // Handle connection events
+        socket.on('connect', () => {
+            console.log('Connected to WebSocket server');
+        });
+        
+        socket.on('disconnect', () => {
+            console.log('Disconnected from WebSocket server');
+        });
+        
         return () => {
             clearInterval(interval);
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+            socket.disconnect();
         };
-    }, [fetchMedicines]);
+    }, [fetchMedicines, showToast]);
 
     // Called by AddStockModal after successful add
     const handleStockAdded = useCallback(() => {

@@ -148,7 +148,7 @@ function detectLanguage(message) {
 async function processWithGrok(message) {
   try {
     const response = await grokApi.post('/chat/completions', {
-      model: "grok-2-1212",  // Use correct Grok model name
+      model: "grok-2-latest",  // Use correct Grok model name
       messages: [
         {
           role: "system",

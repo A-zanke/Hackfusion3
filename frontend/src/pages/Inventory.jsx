@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Search, Plus, Package, ChevronDown, Filter, Trash2, CheckSquare, Square } from 'lucide-react';
 import StatusBadge from '../ui/StatusBadge';
 import AddStockModal from '../components/AddStockModal';
@@ -9,6 +10,8 @@ import '../App.css';
 const API_BASE = 'http://localhost:5000/api';
 
 const Inventory = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
     const [medicines, setMedicines] = useState([]);
     const [loading, setLoading] = useState(true);      // true only on FIRST load
     const [searchTerm, setSearchTerm] = useState('');
@@ -41,46 +44,102 @@ const Inventory = () => {
     }, []);
 
     // Silent background refresh — does NOT trigger full-page loader
-    const fetchMedicines = useCallback(async (silent = false) => {
+    const fetchMedicines = useCallback(async (silent = false, filterType = null) => {
         try {
+            console.log('Fetching medicines with filter:', filterType || 'all');
             if (!silent) setLoading(true);
-            const res = await axios.get(`${API_BASE}/medicines`);
+            
+            // Use the new inventory API with filtering
+            let url = `${API_BASE}/inventory`;
+            if (filterType) {
+                url += `?filter=${filterType}`;
+            }
+            
+            console.log('API call to:', url);
+            const res = await axios.get(url);
+            console.log('API response:', res.data);
             setMedicines(res.data);
         } catch (err) {
             console.error("Error fetching medicines:", err);
+            console.error("Error details:", err.response?.data || err.message);
         } finally {
             if (!silent) setLoading(false);
             isFirstLoad.current = false;
         }
     }, []);
 
+    // Get filter from URL on component mount
     useEffect(() => {
-        fetchMedicines(false);  // initial load — show spinner
-        const interval = setInterval(() => fetchMedicines(true), 60000); // background silent refresh
+        console.log('=== INVENTORY COMPONENT MOUNTED ===');
+        console.log('Current location:', location.search);
+        console.log('Current filter state:', filter);
+        
+        const urlParams = new URLSearchParams(location.search);
+        const urlFilter = urlParams.get('filter');
+        
+        console.log('URL filter found:', urlFilter);
+        
+        if (urlFilter && ['expired', 'expiring', 'lowstock'].includes(urlFilter)) {
+            console.log('Setting filter from URL:', urlFilter);
+            setFilter(urlFilter);
+            fetchMedicines(false, urlFilter);
+        } else {
+            console.log('No valid filter in URL, fetching all medicines');
+            fetchMedicines(false);
+        }
+        
+        const interval = setInterval(() => fetchMedicines(true, filter), 60000); // background silent refresh
         return () => {
             clearInterval(interval);
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
         };
-    }, [fetchMedicines]);
+    }, [fetchMedicines, filter, location.search]);
+
+    // Update filter when changed
+    useEffect(() => {
+        const urlParams = new URLSearchParams(location.search);
+        const currentFilter = urlParams.get('filter');
+        
+        console.log('Filter changed to:', filter, 'Current URL filter:', currentFilter);
+        
+        if (filter !== currentFilter) {
+            // Update URL without page reload using React Router
+            const newUrl = filter ? `/inventory?filter=${filter}` : '/inventory';
+            console.log('Navigating to:', newUrl);
+            navigate(newUrl, { replace: true });
+            
+            // Fetch medicines with new filter
+            fetchMedicines(false, filter);
+        }
+    }, [filter, fetchMedicines, navigate, location.search]);
 
     // Called by AddStockModal after successful add
     const handleStockAdded = useCallback(() => {
-        fetchMedicines(true);   // silent refresh, no spinner
+        fetchMedicines(true, filter);   // silent refresh, no spinner
         showToast('Stock added successfully!', 'success');
-    }, [fetchMedicines, showToast]);
+        
+        // Trigger dashboard stats refresh (event-based approach)
+        window.dispatchEvent(new CustomEvent('refreshDashboardStats'));
+    }, [fetchMedicines, showToast, filter]);
 
     // Called by EditMedicineModal after successful update
     const handleMedicineUpdated = useCallback(() => {
-        fetchMedicines(true);   // silent refresh, no spinner
+        fetchMedicines(true, filter);   // silent refresh, no spinner
         showToast('✅ Medicine updated successfully!', 'success');
-    }, [fetchMedicines, showToast]);
+        
+        // Trigger dashboard stats refresh
+        window.dispatchEvent(new CustomEvent('refreshDashboardStats'));
+    }, [fetchMedicines, showToast, filter]);
 
     const handleSoftDelete = async (ids) => {
         if (!window.confirm(`Move ${ids.length} item(s) to bin?`)) return;
         try {
             await axios.post(`${API_BASE}/medicines/soft-delete`, { ids });
             setSelectedIds([]);
-            fetchMedicines();
+            fetchMedicines(true, filter);
+            
+            // Trigger dashboard stats refresh
+            window.dispatchEvent(new CustomEvent('refreshDashboardStats'));
         } catch (err) {
             console.error("Error moving to bin:", err);
         }
@@ -98,9 +157,12 @@ const Inventory = () => {
         if (!window.confirm(`Are you sure you want to delete "${medicine.name}"?`)) return;
         try {
             await axios.post(`${API_BASE}/medicines/soft-delete`, { ids: [medicine.id] });
-            fetchMedicines(true);
+            fetchMedicines(true, filter);
             showToast('🗑️ Medicine deleted successfully!', 'success');
             setActiveDropdown(null);
+            
+            // Trigger dashboard stats refresh
+            window.dispatchEvent(new CustomEvent('refreshDashboardStats'));
         } catch (err) {
             console.error("Error deleting medicine:", err);
             showToast('❌ Failed to delete medicine', 'error');
@@ -300,8 +362,9 @@ const Inventory = () => {
                 <div className="inv-filters">
                     {[
                         { key: 'all', label: 'All' },
-                        { key: 'low', label: '⚠ Low Stock' },
-                        { key: 'expiring', label: '⏳ Expiring' },
+                        { key: 'lowstock', label: '⚠ Low Stock' },
+                        { key: 'expiring', label: '⏳ Expiring This Month' },
+                        { key: 'expired', label: '❌ Expired' },
                     ].map(f => (
                         <button
                             key={f.key}

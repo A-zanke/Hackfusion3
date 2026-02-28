@@ -41,6 +41,38 @@
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
 }
 
+.premium-card.clickable-card {
+    cursor: pointer;
+    position: relative;
+    pointer-events: auto !important;
+    z-index: 10;
+}
+
+.premium-card.clickable-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    border-color: #3b82f6;
+}
+
+.premium-card.clickable-card:active {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.premium-card.clickable-card:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+.premium-card.clickable-card * {
+    pointer-events: none;
+}
+
+.premium-card.clickable-card .premium-card-title,
+.premium-card.clickable-card .premium-card-subtitle {
+    pointer-events: auto;
+}
+
 .premium-card-header {
     display: flex;
     justify-content: space-between;

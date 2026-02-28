@@ -10,7 +10,10 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  credentials: true
+}));
 app.use(morgan('dev'));
 app.use(express.json());
 
@@ -883,7 +886,7 @@ app.get('/api/recommendations', async (req, res) => {
 });
 
 // Enhanced AI Chat endpoint for order processing - COMPLETELY FREE, NO APIs
-const { enhancedChatHandler } = require('./enhanced-chat');
+const { simpleChatHandler } = require('./simple-chat');
 
 app.post('/chat', (req, res) => {
     console.log('=== CHAT ENDPOINT HIT ===');
@@ -891,7 +894,7 @@ app.post('/chat', (req, res) => {
     console.log('Request headers:', req.headers);
     fs.writeFileSync('test.log', `Chat endpoint hit at ${new Date().toISOString()}\n`);
     try {
-        enhancedChatHandler(req, res);
+        simpleChatHandler(req, res);
     } catch (error) {
         console.error('Error in chat handler:', error);
         res.status(500).json({ error: 'Internal server error' });

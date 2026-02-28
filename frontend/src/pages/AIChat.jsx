@@ -38,6 +38,18 @@ How can I assist you today?`,
     const [currentTime, setCurrentTime] = useState(new Date());
     const navigate = useNavigate();
 
+    // Function to refresh medicines data
+    const refreshMedicines = async () => {
+        try {
+            const res = await fetch('http://localhost:5000/api/medicines');
+            const data = await res.json();
+            setAllMedicines(data);
+            console.log('Medicines data refreshed after stock change');
+        } catch (e) {
+            console.error("Failed to refresh medicines", e);
+        }
+    };
+
     useEffect(() => {
         const timer = setInterval(() => {
             setCurrentTime(new Date());
@@ -60,28 +72,17 @@ How can I assist you today?`,
             console.error('Failed to restore chat history', e);
         }
 
+        // Fetch medicines on component mount
         const fetchMeds = async () => {
             try {
                 const res = await fetch('http://localhost:5000/api/medicines');
                 const data = await res.json();
                 setAllMedicines(data);
             } catch (e) {
-                console.error("Failed to fetch medicines for autocomplete", e);
+                console.error("Failed to fetch medicines", e);
             }
         };
         fetchMeds();
-
-        // Function to refresh medicines data
-        const refreshMedicines = async () => {
-            try {
-                const res = await fetch('http://localhost:5000/api/medicines');
-                const data = await res.json();
-                setAllMedicines(data);
-                console.log('Medicines data refreshed after stock change');
-            } catch (e) {
-                console.error("Failed to refresh medicines", e);
-            }
-        };
 
         // Check login session
         const userStr = localStorage.getItem('user');
@@ -291,11 +292,22 @@ How can I assist you today? Would you like to re-order something from your previ
 
         } catch (error) {
             console.error("AI Chat Error:", error);
+            console.error("Error details:", error.message, error.stack);
 
-            // Only show a generic error if the request truly failed (network / unexpected error)
+            // Show specific error information
+            let errorContent = '❌ Network error while talking to the assistant. Please check your connection and try again.';
+            
+            if (error.message.includes('Failed to fetch')) {
+                errorContent = '❌ Cannot connect to the backend server. Please make sure the backend is running on port 5000.';
+            } else if (error.message.includes('CORS')) {
+                errorContent = '❌ CORS error. Please check backend configuration.';
+            } else if (error.message) {
+                errorContent = `❌ Error: ${error.message}`;
+            }
+
             const errorMsg = {
                 role: 'assistant',
-                content: '❌ Network error while talking to the assistant. Please check your connection and try again.',
+                content: errorContent,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 isError: true
             };

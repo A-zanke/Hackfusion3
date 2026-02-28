@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
-import { io } from 'socket.io-client';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Search, Plus, Package, ChevronDown, Filter, Trash2, CheckSquare, Square } from 'lucide-react';
 import StatusBadge from '../ui/StatusBadge';
 import AddStockModal from '../components/AddStockModal';
@@ -36,6 +36,12 @@ const Inventory = () => {
         prescriptionRequired: '',
         lowStockRange: ''
     });
+
+    // Utility helpers for safe rendering
+    const safeToFixed = (val, digits = 2) => {
+        const n = Number(val);
+        return Number.isFinite(n) ? n.toFixed(digits) : '0.00';
+    };
 
     const showToast = useCallback((text, type = 'success') => {
         if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -73,30 +79,11 @@ const Inventory = () => {
         fetchMedicines(false);  // initial load — show spinner
         const interval = setInterval(() => fetchMedicines(true), 60000); // background silent refresh
         
-        // Initialize WebSocket connection
-        const socket = io('http://localhost:5000');
-        
-        // Listen for inventory updates
-        socket.on('inventoryUpdated', (data) => {
-            console.log('Inventory updated via WebSocket:', data);
-            fetchMedicines(true); // silent refresh
-            showToast(`✅ ${data.medicine?.name || 'Medicine'} added to inventory. Total stock: ${data.totalStock || 0} tablets`, 'success');
-        });
-        
-        // Handle connection events
-        socket.on('connect', () => {
-            console.log('Connected to WebSocket server');
-        });
-        
-        socket.on('disconnect', () => {
-            console.log('Disconnected from WebSocket server');
-        });
-        
+                
         return () => {
             clearInterval(interval);
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-            socket.disconnect();
-        };
+         };
     }, [fetchMedicines, showToast]);
 
     // Called by AddStockModal after successful add
@@ -186,7 +173,9 @@ const Inventory = () => {
 
     const getDaysToExpiry = (date) => {
         if (!date) return null;
-        return Math.ceil((new Date(date) - new Date()) / (1000 * 60 * 60 * 24));
+        const d = new Date(date);
+        if (isNaN(d)) return null;
+        return Math.ceil((d - new Date()) / (1000 * 60 * 60 * 24));
     };
 
     const formatExpiryDisplay = (days) => {
@@ -222,30 +211,37 @@ const Inventory = () => {
     };
 
     const filtered = medicines.filter(med => {
-        // Multi-field search
-        const s = searchTerm.toLowerCase();
+        // Multi-field search with safety
+        const s = (searchTerm || '').toString().toLowerCase();
+        const name = (med.name || '').toString().toLowerCase();
+        const pid = (med.product_id_str || '').toString().toLowerCase();
+        const category = (med.category || '').toString().toLowerCase();
+        const brand = (med.brand || '').toString().toLowerCase();
+        const description = (med.description || '').toString().toLowerCase();
+        const totalTabs = Number(med.total_tablets) || 0;
+
         const matchesSearch =
-            med.name.toLowerCase().includes(s) ||
-            (med.product_id_str && med.product_id_str.toLowerCase().includes(s)) ||
-            (med.category && med.category.toLowerCase().includes(s)) ||
-            (med.brand && med.brand.toLowerCase().includes(s)) ||
-            (med.description && med.description.toLowerCase().includes(s));
+            name.includes(s) ||
+            pid.includes(s) ||
+            category.includes(s) ||
+            brand.includes(s) ||
+            description.includes(s);
 
         // Advanced filters
-        const matchesBrand = !advFilters.brand || (med.brand && med.brand.toLowerCase().includes(advFilters.brand.toLowerCase()));
-        const matchesCat = !advFilters.category || (med.category && med.category.toLowerCase().includes(advFilters.category.toLowerCase()));
-        const matchesID = !advFilters.productId || (med.product_id_str && med.product_id_str.toLowerCase().includes(advFilters.productId.toLowerCase()));
+        const matchesBrand = !advFilters.brand || brand.includes((advFilters.brand || '').toLowerCase());
+        const matchesCat = !advFilters.category || category.includes((advFilters.category || '').toLowerCase());
+        const matchesID = !advFilters.productId || pid.includes((advFilters.productId || '').toLowerCase());
         const matchesPrescription = !advFilters.prescriptionRequired ||
             (advFilters.prescriptionRequired === 'required' && med.prescription_required) ||
             (advFilters.prescriptionRequired === 'not-required' && !med.prescription_required) ||
-            (advFilters.prescriptionRequired === 'below-30' && med.total_tablets < 30);
+            (advFilters.prescriptionRequired === 'below-30' && totalTabs < 30);
 
         // Low stock range filter
         let matchesLowStockRange = true;
         if (advFilters.lowStockRange) {
             const threshold = parseInt(advFilters.lowStockRange);
             if (!isNaN(threshold)) {
-                matchesLowStockRange = med.total_tablets < threshold;
+                matchesLowStockRange = totalTabs < threshold;
             }
         }
 
@@ -262,7 +258,7 @@ const Inventory = () => {
 
         const matchesAdvanced = matchesBrand && matchesCat && matchesID && matchesExpiry && matchesPrescription && matchesLowStockRange;
 
-        if (filter === 'low') return matchesSearch && matchesAdvanced && med.total_tablets < 200;
+        if (filter === 'low') return matchesSearch && matchesAdvanced && totalTabs < 200;
         if (filter === 'expiring') {
             const days = getDaysToExpiry(med.expiry_date);
             return matchesSearch && matchesAdvanced && days !== null && days <= 30;
@@ -522,7 +518,9 @@ const Inventory = () => {
                         </thead>
                         <tbody>
                             {filtered.map((med, index) => {
-                                const isLowStock = med.total_tablets < med.low_stock_threshold;
+                                const totalTabsRow = Number(med.total_tablets) || 0;
+                                const lowThresh = Number(med.low_stock_threshold) || 0;
+                                const isLowStock = totalTabsRow < lowThresh;
                                 const daysToExpiry = getDaysToExpiry(med.expiry_date);
                                 const isNearExpiry = daysToExpiry !== null && daysToExpiry <= 60;
 
@@ -558,8 +556,8 @@ const Inventory = () => {
                                         </td>
                                         <td className="inv-col-center inv-col-number">{med.stock_packets}</td>
                                         <td className="inv-col-center inv-col-number">{med.tablets_per_packet}</td>
-                                        <td className="inv-col-center inv-col-bold">{med.total_tablets}</td>
-                                        <td className="inv-col-center inv-col-price">₹{Number(med.price_per_tablet).toFixed(2)}</td>
+                                        <td className="inv-col-center inv-col-bold">{totalTabsRow}</td>
+                                        <td className="inv-col-center inv-col-price">₹{safeToFixed(med.price_per_tablet, 2)}</td>
                                         <td className="inv-col-center">
                                             <StatusBadge variant={isLowStock ? 'low' : 'stable'} />
                                         </td>

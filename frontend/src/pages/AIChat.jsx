@@ -119,6 +119,7 @@ How can I assist you today? Would you like to re-order something from your previ
         return () => clearInterval(timer);
     }, []);
 
+    
     // Persist chat history on every change (for up to 24 hours, enforced on load)
     useEffect(() => {
         try {
@@ -201,14 +202,51 @@ How can I assist you today? Would you like to re-order something from your previ
         setSuggestions([]);
     };
 
+    const processInput = (rawInput) => {
+        // 1. Trim leading/trailing spaces
+        let processed = rawInput.trim();
+        
+        // 2. Normalize extra spaces between words (convert multiple spaces to single space)
+        processed = processed.replace(/\s+/g, ' ');
+        
+        // 3. Detect quantity pattern: "Medicine Name - 2"
+        let quantity = 1;
+        let medicineName = processed;
+        
+        const quantityMatch = processed.match(/^(.+?)\s*-\s*(\d+)$/);
+        if (quantityMatch) {
+            medicineName = quantityMatch[1].trim();
+            quantity = parseInt(quantityMatch[2], 10);
+        }
+        
+        // 4. Return processed input with quantity info
+        return {
+            originalInput: rawInput,
+            processedInput: processed,
+            medicineName: medicineName,
+            quantity: quantity,
+            hasQuantity: quantityMatch !== null
+        };
+    };
+
     const handleSend = async (overrideInput = null, voiceTrigger = false) => {
-        const textToSearch = overrideInput || input;
-        if (!textToSearch.trim()) return;
+        const rawInput = overrideInput || input;
+        if (!rawInput.trim()) return;
+
+        // Process the input according to requirements
+        const inputAnalysis = processInput(rawInput);
+        const textToSearch = inputAnalysis.processedInput;
 
         const detectedLang = detectLanguageClient(textToSearch);
         setUserLanguage(detectedLang);
 
-        const userMsg = { role: 'user', content: textToSearch, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+        // Create user message with quantity info if detected
+        let displayContent = textToSearch;
+        if (inputAnalysis.hasQuantity) {
+            displayContent = `${inputAnalysis.medicineName} (${inputAnalysis.quantity} tablets)`;
+        }
+
+        const userMsg = { role: 'user', content: displayContent, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
         setMessages(prev => [...prev, userMsg]);
         setInput('');
         setSuggestions([]);
@@ -223,7 +261,13 @@ How can I assist you today? Would you like to re-order something from your previ
             const response = await fetch('http://localhost:5000/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: textToSearch, history })
+                body: JSON.stringify({ 
+                    message: textToSearch, 
+                    history,
+                    medicineName: inputAnalysis.medicineName,
+                    quantity: inputAnalysis.quantity,
+                    hasQuantity: inputAnalysis.hasQuantity
+                })
             });
 
             let data;
@@ -525,7 +569,7 @@ How can I assist you today? Would you like to re-order something from your previ
                                 </button>
                             </div>
                         </div>
-                        
+
                         {showTabletSelector && (
                             <div className="tablet-selector">
                                 <div className="tablet-selector-header">

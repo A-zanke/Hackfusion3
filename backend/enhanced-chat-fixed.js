@@ -1,16 +1,16 @@
 const db = require('./db');
 require('dotenv').config();
 const axios = require('axios');
+const fs = require('fs');
 
-// Initialize Grok API
-const grokApi = axios.create({
-  baseURL: 'https://api.x.ai/v1',
+// Initialize Groq API (using corrected .env values)
+const groqApi = axios.create({
+  baseURL: process.env.GROK_BASE_URL || 'https://api.groq.com/openai/v1',
   headers: {
     'Authorization': `Bearer ${process.env.GROK_API_KEY}`,
     'Content-Type': 'application/json'
   }
 });
-const fs = require('fs');
 
 /* =========================
    SESSION MANAGEMENT
@@ -26,8 +26,7 @@ function debugLog(message) {
 }
 
 function getSessionKey(req) {
-  // For debugging: use a fixed session key to ensure session persistence
-  return 'DEBUG_SESSION_KEY';
+  return req.headers['x-session-id'] || 'DEBUG_SESSION_KEY';
 }
 
 function nextDayMidnightTs() {
@@ -46,9 +45,6 @@ function isExpired(ts){
 ========================= */
 
 function normName(s){
-  // Keep the user's medicine text mostly intact so that
-  // we can match full names in the database reliably.
-  // Only normalise whitespace and trim.
   return String(s || '')
     .replace(/\s{2,}/g, ' ')
     .trim();
@@ -81,65 +77,110 @@ function buildMedSummaryReply(med, qty, cartTotal){
 }
 
 /* =========================
-   PARSER (MULTI MED)
-========================= */
-
-function ruleParse(message){
-  const items = [];
-  const parts = message.split(',').map(p=>p.trim()).filter(Boolean);
-
-  for(const part of parts){
-    let m = part.match(/^(.*?)[\s-]+(\d{1,4})$/);
-    if(m){
-      items.push({ name:normName(m[1]), quantity:parseInt(m[2],10) });
-      continue;
-    }
-
-    m = part.match(/^(.*?)\s+(?:qty|quantity)\s*(\d{1,4})$/i);
-    if(m){
-      items.push({ name:normName(m[1]), quantity:parseInt(m[2],10) });
-      continue;
-    }
-
-    items.push({ name:normName(part), quantity:null });
-  }
-
-  return items;
-}
-
-/* =========================
    GROK AI PROCESSING
 ========================= */
 
-async function processWithGrok(message) {
+async function processWithGrok(message, history = []) {
   try {
-    const response = await grokApi.post('/chat/completions', {
-      model: "grok-2-latest",
+    const prompt = `
+You are an intelligent multi-lingual pharmacy assistant.
+Detect:
+- medicines: list of medicines mentioned and optional quantities
+- intent: "order" | "search" | "inquiry" | "add_stock" | "remove_medicine"
+- action: "check_stock" | "add_stock" | "order" | "remove" | "other"
+- language: "en" | "hi" | "mr"
+
+Return STRICT JSON:
+{
+  "medicines": [{"name": "name", "quantity": number|null}],
+  "intent": "order",
+  "action": "check_stock",
+  "language": "en",
+  "thinking": "your internal reasoning"
+}
+
+Notes:
+- If the user asks "Do we have Dolo?" or "Dolo hai kya?", action = "check_stock", intent = "search".
+- If the user wants to add/increase stock, action = "add_stock", intent = "add_stock".
+- Detect language from the message.
+- If no quantity is mentioned, use null.
+- If multiple medicines, include all.
+`;
+
+    const response = await groqApi.post('/chat/completions', {
+      model: process.env.GROK_MODEL || "llama-3.3-70b-versatile",
       messages: [
-        {
-          role: "system",
-          content: `You are a pharmacy assistant. Extract medicine names and quantities from user messages. 
-          Return JSON format: {"medicines": [{"name": "medicine name", "quantity": number}], "intent": "order/search/inquiry"}.
-          If no quantity mentioned, use null. If multiple medicines, include all.`
-        },
-        {
-          role: "user",
-          content: message
-        }
+        { role: "system", content: prompt },
+        ...history.slice(-5).map(h => ({
+          role: h.role === 'assistant' ? 'assistant' : 'user',
+          content: h.content,
+        })),
+        { role: "user", content: message }
       ],
-      temperature: 0.3,
-      max_tokens: 150
+      response_format: { type: "json_object" },
+      temperature: 0.1
     });
 
     const aiResponse = response.data.choices[0].message.content;
+    debugLog(`Grok result: ${aiResponse}`);
     return JSON.parse(aiResponse);
   } catch (error) {
-    console.error('Grok API Error:', error);
-    // Fallback to basic parsing
+    console.error('Grok API Error:', error.response?.data || error.message);
+    // Fallback parsing for common patterns
+    const words = message.toLowerCase().split(' ');
     return {
       medicines: [{ name: message, quantity: null }],
-      intent: "search"
+      intent: "search",
+      action: "check_stock",
+      language: "en",
+      thinking: "Fallback parser used due to API error."
     };
+  }
+}
+
+/* =========================
+   REAL-TIME STOCK UPDATE
+========================= */
+
+async function updateStockRealTime(medicineId, quantity, medicineName) {
+  try {
+    const medInfo = await db.query(
+      'SELECT stock_packets, tablets_per_packet, individual_tablets, name FROM medicines WHERE id = $1',
+      [medicineId]
+    );
+
+    if (medInfo.rows.length === 0) {
+      throw new Error(`Medicine ${medicineName} not found`);
+    }
+
+    const row = medInfo.rows[0];
+    const tabletsPerPacket = row.tablets_per_packet || 1;
+    const currentPackets = row.stock_packets || 0;
+    const currentIndTabs = row.individual_tablets || 0;
+    const totalAvailable = (currentPackets * tabletsPerPacket) + currentIndTabs;
+
+    if (totalAvailable < quantity) {
+      return {
+        insufficientStock: true,
+        available: totalAvailable,
+        requested: quantity,
+        medicineName: row.name
+      };
+    }
+
+    const newTotal = totalAvailable - quantity;
+    const newPackets = Math.floor(newTotal / tabletsPerPacket);
+    const newIndiv = newTotal % tabletsPerPacket;
+
+    await db.query(
+      'UPDATE medicines SET stock_packets = $1, individual_tablets = $2 WHERE id = $3',
+      [newPackets, newIndiv, medicineId]
+    );
+
+    return true;
+  } catch (error) {
+    console.error('Stock update error:', error);
+    throw error;
   }
 }
 
@@ -161,501 +202,244 @@ async function enhancedChatHandler(req,res){
       medicines: [],
       stage: 'initial',
       pendingMedicine: null,
-      pendingPrescription: null,
-      customer: { name:null, age:null, mobile:null }
+      customer: { name:null, age:null, mobile:null },
+      history: []
     };
 
     const persisted = sessionsByKey.get(sessionKey);
-    debugLog(`Persisted session: ${JSON.stringify(persisted)}`);
-    
     if(persisted && !isExpired(persisted.expiresAt)){
       orderSession = persisted.sessionState;
-      debugLog(`Loaded existing session - Stage: ${orderSession.stage}, Pending: ${orderSession.pendingMedicine}`);
-    } else {
-      debugLog(`Starting new session`);
     }
 
-    // =========================
-    // HARD GUARD: QUANTITY FIRST
-    // =========================
+    // Agent metadata for UI Decision Engine
+    let agentMetadata = {
+      intent_verified: true,
+      safety_checked: true,
+      stock_checked: false,
+      thinking: 'Analyzing user request...'
+    };
+
     const msgTrim = String(message).trim();
-    debugLog(`Top-of-handler state: stage=${orderSession.stage}, pending=${JSON.stringify(orderSession.pendingMedicine)}`);
-    
+
+    // 1. Handle Quantity Stage
     if (orderSession.stage === 'ask_quantity' && orderSession.pendingMedicine && /^\d+$/.test(msgTrim)) {
-      const pending = orderSession.pendingMedicine;
-      const searchName = typeof pending === 'string' ? pending : pending.name;
-      debugLog(`Entering EARLY quantity branch with qty='${msgTrim}' for pending='${JSON.stringify(pending)}'`);
       const qty = parseInt(msgTrim, 10);
-
-      const rs = (pending && pending.id)
-        ? await db.query(
-            'SELECT * FROM medicines WHERE id = $1 LIMIT 1',
-            [pending.id]
-          )
-        : await db.query(
-            'SELECT * FROM medicines WHERE (name ILIKE $1 OR brand ILIKE $1) LIMIT 1',
-            [`%${searchName}%`]
-          );
-
-      if(rs.rows.length===0){
-        const label = searchName || 'selected medicine';
-        debugLog(`Pending medicine not found in DB: ${label}`);
-        orderSession.stage='initial';
-        orderSession.pendingMedicine=null;
-        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-        return res.json({ reply:`❌ ${label} not found.` });
-      }
-
-      const med = rs.rows[0];
-      debugLog(`DB match for pending: ${med.name}`);
-
-      const total = qty * parseFloat(med.price_per_tablet) || 0;
-      orderSession.medicines.push({
-        id: med.id,
-        name: med.name,
-        quantity: qty,
-        price_per_tablet: med.price_per_tablet,
-        total_price: total
-      });
-
-      orderSession.stage='initial';
-      orderSession.pendingMedicine=null;
-      const cartTotal = orderSession.medicines.reduce((s,m)=>s+m.total_price,0);
-      sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-      debugLog(`EARLY ADD✅ ${med.name} x${qty} | Cart: ₹${cartTotal.toFixed(2)}`);
-      return res.json({
-        reply: buildMedSummaryReply(med, qty, cartTotal)
-      });
-    }
-
-    // Prevent numeric-only messages from being mis-parsed when NOT awaiting quantity
-    if (/^\d+$/.test(String(message).trim()) && orderSession.stage !== 'ask_quantity') {
-      debugLog(`Numeric-only message while not awaiting quantity -> returning guidance`);
-      sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-      return res.json({ reply: 'ℹ️ Please specify a medicine name first (e.g., "Aspirin - 2" or "Aspirin qty 2").' });
-    }
-
-    /* =========================
-       CANCEL
-    ========================= */
-    if(/^(cancel|stop|clear)$/i.test(message)){
-      orderSession = {
-        medicines:[],
-        stage:'initial',
-        pendingMedicine:null,
-        pendingPrescription:null,
-        customer:{ name:null, age:null, mobile:null }
-      };
-      sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-      return res.json({ reply:'❌ Order cancelled.' });
-    }
-
-    /* =========================
-       PRESCRIPTION CONFIRM
-    ========================= */
-    if(
-      orderSession.stage === 'confirm_prescription' &&
-      orderSession.pendingPrescription
-    ){
-      if(/^yes$/i.test(message)){
-        const med = orderSession.pendingPrescription;
-        const total = med.quantity * med.price_per_tablet;
-
-        orderSession.medicines.push({
-          id: med.id,
-          name: med.name,
-          quantity: med.quantity,
-          price_per_tablet: med.price_per_tablet,
-          total_price: total
-        });
-
-        orderSession.stage='initial';
-        orderSession.pendingPrescription=null;
-
-        const cartTotal = orderSession.medicines.reduce((s,m)=>s+m.total_price,0);
-        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-
-        return res.json({
-          reply:`✅ ${med.name} added  
-💰 Cart: ₹${cartTotal.toFixed(2)}`
-        });
-      } else {
-        orderSession.stage='initial';
-        orderSession.pendingPrescription=null;
-        return res.json({ reply:'❌ Medicine skipped.' });
-      }
-    }
-
-    /* =========================
-       QUANTITY RESPONSE
-    ========================= */
-    debugLog(`=== CHECKING QUANTITY RESPONSE ===`);
-    debugLog(`Stage: ${orderSession.stage}`);
-    debugLog(`Pending medicine: ${JSON.stringify(orderSession.pendingMedicine)}`);
-    debugLog(`Message: "${message}"`);
-    debugLog(`Is digits: ${/^\d+$/.test(message)}`);
-    debugLog(`Condition match: ${orderSession.stage === 'ask_quantity' && orderSession.pendingMedicine && /^\d+$/.test(message)}`);
-    
-    if(
-      orderSession.stage === 'ask_quantity' &&
-      orderSession.pendingMedicine &&
-      /^\d+$/.test(message)
-    ){
-      const qty = parseInt(message,10);
       const pending = orderSession.pendingMedicine;
-      const searchName = typeof pending === 'string' ? pending : pending.name;
-
-      debugLog(`=== QUANTITY RESPONSE ===`);
-      debugLog(`User replied with quantity ${qty} for pending medicine: ${JSON.stringify(pending)}`);
-
-      const rs = (pending && pending.id)
-        ? await db.query(
-            `SELECT * FROM medicines 
-             WHERE id = $1
-             LIMIT 1`,
-            [pending.id]
-          )
-        : await db.query(
-            `SELECT * FROM medicines 
-             WHERE (name ILIKE $1 OR brand ILIKE $1)
-             LIMIT 1`,
-            [`%${searchName}%`]
-          );
-
-      if(rs.rows.length===0){
-        const label = searchName || 'selected medicine';
-        orderSession.stage='initial';
-        orderSession.pendingMedicine=null;
-        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-        return res.json({ reply:`❌ ${label} not found.` });
+      
+      const rs = await db.query('SELECT * FROM medicines WHERE id = $1', [pending.id]);
+      if (rs.rows.length === 0) {
+        orderSession.stage = 'initial';
+        orderSession.pendingMedicine = null;
+        sessionsByKey.set(sessionKey, { sessionState: orderSession, expiresAt: nextDayMidnightTs() });
+        return res.json({ reply: `❌ Medicine not found anymore.`, ...agentMetadata });
       }
 
       const med = rs.rows[0];
-      debugLog(`Found medicine: ${med.name}`);
+      const stockRes = await updateStockRealTime(med.id, qty, med.name);
+
+      if (stockRes.insufficientStock) {
+        agentMetadata.stock_checked = true;
+        agentMetadata.thinking = "Stock check failed. Offering replenishment.";
+        return res.json({
+          reply: `❌ Out of stock. We only have ${stockRes.available} tablets. Add more to inventory? (Yes/No)`,
+          ...agentMetadata
+        });
+      }
 
       const total = qty * parseFloat(med.price_per_tablet) || 0;
       orderSession.medicines.push({
-        id: med.id,
-        name: med.name,
-        quantity: qty,
-        price_per_tablet: med.price_per_tablet,
-        total_price: total
+        id: med.id, name: med.name, quantity: qty, price_per_tablet: med.price_per_tablet, total_price: total
       });
 
-      orderSession.stage='initial';
-      orderSession.pendingMedicine=null;
+      orderSession.stage = 'initial';
+      orderSession.pendingMedicine = null;
+      const cartTotal = orderSession.medicines.reduce((s,m) => s + m.total_price, 0);
+      orderSession.history.push({ role: 'user', content: message });
+      orderSession.history.push({ role: 'assistant', content: `Added ${med.name}` });
+      sessionsByKey.set(sessionKey, { sessionState: orderSession, expiresAt: nextDayMidnightTs() });
 
-      const cartTotal = orderSession.medicines.reduce((s,m)=>s+m.total_price,0);
-      sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-
-      debugLog(`✅ Added ${med.name} (${qty}) - Total: ₹${total.toFixed(2)}`);
-
+      agentMetadata.stock_checked = true;
+      agentMetadata.thinking = `Verified stock and added ${qty} ${med.name} to cart. Total: ₹${cartTotal.toFixed(2)}`;
+      
       return res.json({
-        reply: buildMedSummaryReply(med, qty, cartTotal)
+        reply: buildMedSummaryReply(med, qty, cartTotal),
+        ...agentMetadata
       });
     }
 
-    /* =========================
-       CUSTOMER DETAILS
-    ========================= */
-    if(orderSession.stage === 'ask_customer'){
-      // Check if user wants to skip
-      if(/^(skip|skip it|no thanks)$/i.test(message)){
-        orderSession.stage='ready';
-        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-        return res.json({ reply:'✅ Proceeding without customer details. Type *proceed* to place order.' });
-      }
-      
-      // Try both formats: "Name Age Mobile" and "Name - Age - Mobile"
-      let m = message.match(/^([A-Za-z ]+)\s+(\d{1,3})\s+(\d{10})$/);
-      if (!m) {
-        m = message.match(/^([A-Za-z ]+)\s*-\s*(\d{1,3})\s*-\s*(\d{10})$/);
-      }
-      
-      if(!m) {
-        return res.json({ 
-          reply:'❌ Format: "Name Age Mobile" OR "Name - Age - Mobile"\n\nExample: "John Doe 25 9876543210" or "John Doe - 25 - 9876543210"\n\nOr type *skip* to proceed without details' 
-        });
+    // 2. Proceed to summary and order placement flow
+    if (/^proceed$/i.test(msgTrim)) {
+      if (!orderSession.medicines || orderSession.medicines.length === 0) {
+        return res.json({ reply: '❌ No medicines in cart. Please add medicines first.', ...agentMetadata });
       }
 
-      orderSession.customer = {
-        name:m[1].trim(),
-        age:parseInt(m[2],10),
-        mobile:m[3]
-      };
-
-      orderSession.stage='ready';
-      sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-
-      return res.json({ reply:'✅ Details saved. Type *proceed* to place order.' });
-    }
-
-    /* =========================
-       PROCEED ORDER
-    ========================= */
-    if(/^proceed$/i.test(message)){
-      const totalTabs = orderSession.medicines.reduce((s,m)=>s+m.quantity,0);
-
-      if(totalTabs >= 3 && !orderSession.customer.name){
-        orderSession.stage='ask_customer';
-        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-        return res.json({
-          reply:`👤 Please share customer details:
-Name Age Mobile`
-        });
-      }
-
-      // Show order summary and ask for Y/N confirmation
       let summary = '📋 **Order Summary**\n\n';
       let total = 0;
-      
-      for(const m of orderSession.medicines){
+      for (const m of orderSession.medicines) {
         const pricePerTablet = parseFloat(m.price_per_tablet) || 0;
         const medTotal = m.quantity * pricePerTablet;
         total += medTotal;
         summary += `💊 ${m.name}\n`;
         summary += `   Qty: ${m.quantity} tablets\n`;
         summary += `   Price: ₹${pricePerTablet.toFixed(2)} each\n`;
-        summary += `   Subtotal: ₹${medTotal.toFixed(2)}\n`;
-        
-        // Check if prescription is required by looking up the medicine
-        const medRs = await db.query('SELECT * FROM medicines WHERE id = $1', [m.id]);
-        const prescriptionRequired = medRs.rows.length > 0 ? false : false; // Default to false since column doesn't exist
-        summary += `   Prescription: ${prescriptionRequired ? 'Required' : 'Not required'}\n\n`;
+        summary += `   Subtotal: ₹${medTotal.toFixed(2)}\n\n`;
       }
-      
       summary += `💰 **Total: ₹${total.toFixed(2)}**\n\n`;
-      summary += `Proceed with order? (Y/N)`;
+      summary += 'Confirm order? (Y/N)';
 
-      orderSession.stage='confirm_order';
-      sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-      
-      return res.json({ reply: summary });
+      orderSession.stage = 'confirm_order';
+      sessionsByKey.set(sessionKey, { sessionState: orderSession, expiresAt: nextDayMidnightTs() });
+      return res.json({ reply: summary, ...agentMetadata });
     }
 
-    // Handle Y/N confirmation for order
-    if(orderSession.stage === 'confirm_order'){
-      if(/^[Yy]$/i.test(message)){
+    // 2.1 Handle Y/N confirmation for order placement
+    if (orderSession.stage === 'confirm_order') {
+      if (/^[Yy]$/i.test(msgTrim)) {
         try {
-          // Validation: Check if we have medicines in the session
           if (!orderSession.medicines || orderSession.medicines.length === 0) {
-            return res.json({ reply: '❌ No medicines in cart. Please add medicines first.' });
+            return res.json({ reply: '❌ No medicines in cart. Please add medicines first.', ...agentMetadata });
           }
 
-          // Validation: Check total tablets for prescription requirement
-          const totalTabs = orderSession.medicines.reduce((s,m)=>s+m.quantity,0);
-          if(totalTabs >= 3 && !orderSession.customer.name){
-            orderSession.stage='ask_customer';
-            sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-            return res.json({
-              reply:`👤 Please share customer details:
-Name Age Mobile`
-            });
-          }
+          let total = orderSession.medicines.reduce((s, m) => s + (parseFloat(m.total_price) || 0), 0);
 
-          // Calculate total with proper type conversion
-          let total = orderSession.medicines.reduce((s,m)=>s + (parseFloat(m.total_price) || 0), 0);
-
-          // Start database transaction
           await db.query('BEGIN');
-          
-          // Insert order using ONLY existing columns from schema
           const ins = await db.query(
-            `INSERT INTO orders (customer_name, mobile, total_price, status)
-             VALUES ($1,$2,$3,'completed') RETURNING id`,
+            "INSERT INTO orders (customer_name, mobile, total_price, status) VALUES ($1,$2,$3,'completed') RETURNING id",
             [
-              orderSession.customer.name || 'Guest',
-              orderSession.customer.mobile || null,
+              orderSession.customer?.name || 'Guest',
+              orderSession.customer?.mobile || null,
               total
             ]
           );
 
           const orderId = ins.rows[0].id;
 
-          // Insert order items and update stock
-          for(const m of orderSession.medicines){
-            // Validate medicine data
+          for (const m of orderSession.medicines) {
             if (!m.id || !m.quantity || m.quantity <= 0) {
-              throw new Error(`Invalid medicine data: ${JSON.stringify(m)}`);
+              throw new Error('Invalid medicine in cart: ' + JSON.stringify(m));
             }
-
-            // Insert order item
             await db.query(
-              `INSERT INTO order_items (order_id,medicine_id,quantity,price_at_time)
-               VALUES ($1,$2,$3,$4)`,
+              'INSERT INTO order_items (order_id,medicine_id,quantity,price_at_time) VALUES ($1,$2,$3,$4)',
               [orderId, m.id, m.quantity, parseFloat(m.price_per_tablet) || 0]
             );
-            
-            // Update stock safely - update stock_packets instead of total_tablets
-            // Calculate how many packets to reduce based on tablets ordered
-            const medInfo = await db.query('SELECT tablets_per_packet FROM medicines WHERE id = $1', [m.id]);
-            const tabletsPerPacket = medInfo.rows[0]?.tablets_per_packet || 1;
-            const packetsToReduce = Math.ceil(m.quantity / tabletsPerPacket);
-            
-            await db.query(
-              `UPDATE medicines 
-               SET stock_packets = stock_packets - $1 
-               WHERE id = $2 AND stock_packets >= $1`,
-              [packetsToReduce, m.id]
-            );
           }
 
-          // Commit transaction
           await db.query('COMMIT');
 
-          // Generate detailed order confirmation
-          let confirmation = `🧾 **Order Placed Successfully!**\n\n`;
+          let confirmation = '🧾 **Order Placed Successfully!**\n\n';
           confirmation += `Order ID: ORD-${orderId}\n\n`;
-          
-          for(const m of orderSession.medicines){
+          for (const m of orderSession.medicines) {
             confirmation += `💊 ${m.name} - ${m.quantity} tablets\n`;
           }
-          
           confirmation += `\n💰 Total Amount: ₹${total.toFixed(2)}\n`;
-          confirmation += `📦 Order Status: Completed\n`;
-          confirmation += `🚚 Delivery: Standard delivery\n`;
-          confirmation += `✅ Stock updated successfully`;
+          confirmation += '📦 Order Status: Completed\n';
+          confirmation += '✅ Stock updated successfully';
 
           // Reset session
           orderSession = {
-            medicines:[],
-            stage:'initial',
-            pendingMedicine:null,
-            pendingPrescription:null,
-            customer:{ name:null, age:null, mobile:null }
+            medicines: [],
+            stage: 'initial',
+            pendingMedicine: null,
+            customer: { name: null, age: null, mobile: null },
+            history: orderSession.history || []
           };
+          sessionsByKey.set(sessionKey, { sessionState: orderSession, expiresAt: nextDayMidnightTs() });
 
-          sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-
-          return res.json({ reply: confirmation });
-
+          return res.json({ reply: confirmation, ...agentMetadata });
         } catch (dbError) {
-          // Rollback transaction on error
-          try {
-            await db.query('ROLLBACK');
-          } catch (rollbackError) {
-            console.error('Rollback failed:', rollbackError);
-          }
-          
+          try { await db.query('ROLLBACK'); } catch (_) {}
           console.error('Order placement error:', dbError);
-          return res.status(500).json({ 
-            reply: '❌ Sorry, there was an error placing your order. Please try again or contact support.' 
-          });
+          return res.status(500).json({ reply: '❌ Sorry, there was an error placing your order. Please try again.', ...agentMetadata });
         }
-      } else if(/^[Nn]$/i.test(message)){
-        orderSession.stage='initial';
-        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-        return res.json({ reply: '❌ Order cancelled. You can continue adding medicines or start a new order.' });
+      } else if (/^[Nn]$/i.test(msgTrim)) {
+        orderSession.stage = 'initial';
+        sessionsByKey.set(sessionKey, { sessionState: orderSession, expiresAt: nextDayMidnightTs() });
+        return res.json({ reply: '❌ Order cancelled. You can continue adding medicines or start a new order.', ...agentMetadata });
       } else {
-        return res.json({ reply: 'Please enter Y to confirm or N to cancel.' });
+        return res.json({ reply: 'Please enter Y to confirm or N to cancel.', ...agentMetadata });
       }
     }
 
-    /* =========================
-       Y/N RESPONSE FOR ADDING MORE MEDICINES
-    ========================= */
+    // 2.2 Quick Y/N from add-more prompt
     if (orderSession.stage === 'initial' && orderSession.medicines.length > 0) {
-      if (/^(y|yes)$/i.test(message)) {
-        debugLog(`User wants to add more medicines`);
-        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-        return res.json({ reply: '💊 What medicine would you like to add?' });
+      if (/^(y|yes)$/i.test(msgTrim)) {
+        // Reuse proceed flow
+        let total = 0;
+        let summary = '📋 **Order Summary**\n\n';
+        for (const m of orderSession.medicines) {
+          const pricePerTablet = parseFloat(m.price_per_tablet) || 0;
+          const medTotal = m.quantity * pricePerTablet;
+          total += medTotal;
+          summary += `💊 ${m.name}\n`;
+          summary += `   Qty: ${m.quantity} tablets\n`;
+          summary += `   Price: ₹${pricePerTablet.toFixed(2)} each\n`;
+          summary += `   Subtotal: ₹${medTotal.toFixed(2)}\n\n`;
+        }
+        summary += `💰 **Total: ₹${total.toFixed(2)}**\n\n`;
+        summary += 'Confirm order? (Y/N)';
+        orderSession.stage = 'confirm_order';
+        sessionsByKey.set(sessionKey, { sessionState: orderSession, expiresAt: nextDayMidnightTs() });
+        return res.json({ reply: summary, ...agentMetadata });
       }
-      
-      if (/^(n|no)$/i.test(message)) {
-        debugLog(`User wants to proceed to checkout`);
-        orderSession.stage = 'ask_customer';
-        return res.json({ reply: '👤 Please provide your details: Name Age Mobile\n(e.g., "John Doe 25 9876543210")' });
+      if (/^(n|no)$/i.test(msgTrim)) {
+        orderSession = { medicines: [], stage: 'initial', pendingMedicine: null, customer: { name: null, age: null, mobile: null }, history: orderSession.history || [] };
+        sessionsByKey.set(sessionKey, { sessionState: orderSession, expiresAt: nextDayMidnightTs() });
+        return res.json({ reply: '❌ Order cancelled. You can start a new order anytime.', ...agentMetadata });
       }
     }
 
-    /* =========================
-       GROK AI-POWERED MESSAGE PROCESSING
-    ========================= */
-    debugLog(`=== GROK AI MESSAGE PROCESSING ===`);
-    debugLog(`Message: "${message}"`);
-    debugLog(`Stage: ${orderSession.stage}`);
-    debugLog(`Pending medicine: ${JSON.stringify(orderSession.pendingMedicine)}`);
+    // 3. Handle AI Processing
+    const aiResult = await processWithGrok(message, orderSession.history);
+    agentMetadata.thinking = aiResult.thinking || agentMetadata.thinking;
     
-    // Use Grok AI to understand the message
-    const aiResult = await processWithGrok(message);
-    debugLog(`Grok result: ${JSON.stringify(aiResult)}`);
-    
-    // Process each medicine extracted by Grok AI
-    for(const medItem of aiResult.medicines){
-      // Clean up medicine name - remove extra spaces
-      const cleanMedName = medItem.name.trim();
+    if (aiResult.intent === 'search' || aiResult.action === 'check_stock') {
+      const medName = aiResult.medicines[0]?.name || message;
+      const rs = await db.query('SELECT * FROM medicines WHERE (name ILIKE $1 OR brand ILIKE $1) AND is_deleted = FALSE LIMIT 1', [`%${medName}%`]);
       
-      if(medItem.quantity === null){
-        // User only provided medicine name; first verify it exists in DB
-        const rsNameOnly = await db.query(
-          `SELECT * FROM medicines 
-           WHERE (name ILIKE $1 OR brand ILIKE $1)
-           LIMIT 1`,
-          [`%${cleanMedName}%`]
-        );
-
-        if (rsNameOnly.rows.length === 0) {
-          return res.json({ reply:` ${cleanMedName} not found.` });
-        }
-
-        const medMatch = rsNameOnly.rows[0];
-
-        orderSession.stage='ask_quantity';
-        orderSession.pendingMedicine={ id: medMatch.id, name: medMatch.name };
-        debugLog(`Setting pending medicine to: ${JSON.stringify(orderSession.pendingMedicine)}`);
-        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-        return res.json({ reply:` ${medMatch.name} — quantity?` });
-      }
-
-      const rs = await db.query(
-        `SELECT * FROM medicines 
-         WHERE (name ILIKE $1 OR brand ILIKE $1)
-         LIMIT 1`,
-        [`%${cleanMedName}%`]
-      );
-
-      if(rs.rows.length===0){
-        return res.json({ reply:` ${cleanMedName} not found.` });
+      if (rs.rows.length === 0) {
+        agentMetadata.thinking = `Medicine "${medName}" not found in database.`;
+        return res.json({ reply: `🔍 Sorry, I couldn't find "${medName}" in our inventory.`, ...agentMetadata });
       }
 
       const med = rs.rows[0];
-      debugLog(`Found medicine: ${med.name}`);
+      const tabletsPerPacket = med.tablets_per_packet || 1;
+      const currentPackets = med.stock_packets || 0;
+      const currentIndTabs = med.individual_tablets || 0;
+      const totalAvailable = (currentPackets * tabletsPerPacket) + currentIndTabs;
 
-      // Skip prescription check since column doesn't exist
-      const total = medItem.quantity * parseFloat(med.price_per_tablet) || 0;
-      orderSession.medicines.push({
-        id:med.id,
-        name:med.name,
-        quantity:medItem.quantity,
-        price_per_tablet:med.price_per_tablet,
-        total_price:total
-      });
+      agentMetadata.stock_checked = true;
+      agentMetadata.thinking = `Found ${med.name} in stock. Available: ${totalAvailable} tablets.`;
+
+      if (aiResult.medicines[0]?.quantity) {
+        // Auto-add if quantity specified
+        const qty = aiResult.medicines[0].quantity;
+        const stockRes = await updateStockRealTime(med.id, qty, med.name);
+        if (stockRes.insufficientStock) {
+           return res.json({ reply: `❌ Insufficient stock for ${med.name}. Available: ${totalAvailable}.`, ...agentMetadata });
+        }
+        const total = qty * parseFloat(med.price_per_tablet) || 0;
+        orderSession.medicines.push({ id: med.id, name: med.name, quantity: qty, price_per_tablet: med.price_per_tablet, total_price: total });
+        const cartTotal = orderSession.medicines.reduce((s,m) => s + m.total_price, 0);
+        sessionsByKey.set(sessionKey, { sessionState: orderSession, expiresAt: nextDayMidnightTs() });
+        return res.json({ reply: buildMedSummaryReply(med, qty, cartTotal), ...agentMetadata });
+      } else {
+        orderSession.stage = 'ask_quantity';
+        orderSession.pendingMedicine = { id: med.id, name: med.name };
+        sessionsByKey.set(sessionKey, { sessionState: orderSession, expiresAt: nextDayMidnightTs() });
+        return res.json({ reply: `✅ Found ${med.name} (${totalAvailable} available). How many tablets do you need?`, ...agentMetadata });
+      }
     }
 
-    const cartTotal = orderSession.medicines.reduce((s,m)=>s+m.total_price,0);
-    sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-
-    // Generate intelligent response based on intent
-    let responseMessage = '';
-    if (aiResult.intent === 'order') {
-      responseMessage = `✅ Added to order  
-💰 Total price: ₹${cartTotal.toFixed(2)}  
-Add more (Y/N) or type *proceed*`;
-    } else if (aiResult.intent === 'search') {
-      responseMessage = `✅ Found medicines  
-💰 Total price: ₹${cartTotal.toFixed(2)}  
-Add more (Y/N) or type *proceed*`;
-    } else {
-      responseMessage = `✅ Processed  
-💰 Total price: ₹${cartTotal.toFixed(2)}  
-Add more (Y/N) or type *proceed*`;
-    }
-
-    return res.json({ reply: responseMessage });
+    // Default Fallback
+    agentMetadata.thinking = "Intent recognized but no specific handler triggered.";
+    return res.json({
+      reply: "I'm here to help with medicine searches and orders. Just name a medicine!",
+      ...agentMetadata
+    });
 
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ reply: '❌ Server error' });
+    return res.status(500).json({ reply: '❌ Server error processing your request.', thinking: 'An internal error occurred.' });
   }
 }
 

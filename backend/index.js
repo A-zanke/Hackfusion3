@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const fs = require('fs');
 const db = require('./db');
+const { Server } = require('socket.io');
 require('dotenv').config();
 
 const app = express();
@@ -16,6 +17,35 @@ app.use(cors({
 }));
 app.use(morgan('dev'));
 app.use(express.json());
+
+// Create HTTP server
+const server = app.listen(PORT, () => {
+    console.log('Server is running on port ' + PORT);
+});
+
+// Initialize Socket.IO
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+
+// Store socket connections
+const connectedSockets = new Set();
+
+io.on('connection', (socket) => {
+    console.log('User connected:', socket.id);
+    connectedSockets.add(socket);
+    
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+        connectedSockets.delete(socket);
+    });
+});
+
+// Export io for use in other modules
+module.exports = { io, connectedSockets };
 
 // Initialize database tables on startup
 async function initializeDatabase() {
@@ -614,18 +644,14 @@ app.post('/api/orders', async (req, res) => {
                 [orderId, item.medicine_id, item.quantity, med.rows[0].price_per_tablet]
             );
 
-            // Reduce stock
-            // Note: DB formula handles total_tablets, we need to update stock_packets
-            // For simplicity, let's assume we reduce from total_tablets (which is generated). 
-            // In a real system, you'd calculate how many packets to open.
-            // For now, let's just decrement stock_packets by a fraction or handle tablets separately.
-            // Since total_tablets is GENERATED, we update stock_packets.
+            // Reduce stock - update stock_packets and individual_tablets, trigger will update total_tablets
             const tabletsLeft = med.rows[0].total_tablets - item.quantity;
             const newPackets = Math.floor(tabletsLeft / med.rows[0].tablets_per_packet);
+            const newIndividual = tabletsLeft % med.rows[0].tablets_per_packet;
 
             await db.query(
-                'UPDATE medicines SET stock_packets = $1 WHERE id = $2',
-                [newPackets, item.medicine_id]
+                'UPDATE medicines SET stock_packets = $1, individual_tablets = $2 WHERE id = $3',
+                [newPackets, newIndividual, item.medicine_id]
             );
         }
 
@@ -886,15 +912,15 @@ app.get('/api/recommendations', async (req, res) => {
 });
 
 // Enhanced AI Chat endpoint for order processing - COMPLETELY FREE, NO APIs
-const { simpleChatHandler } = require('./simple-chat');
+const { enhancedChatHandler } = require('./enhanced-chat');
 
-app.post('/chat', (req, res) => {
+app.post('/chat', async (req, res) => {
     console.log('=== CHAT ENDPOINT HIT ===');
     console.log('Request body:', req.body);
     console.log('Request headers:', req.headers);
     fs.writeFileSync('test.log', `Chat endpoint hit at ${new Date().toISOString()}\n`);
     try {
-        simpleChatHandler(req, res);
+        await enhancedChatHandler(req, res);
     } catch (error) {
         console.error('Error in chat handler:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -1162,9 +1188,7 @@ app.get('/', (req, res) => {
     res.json({ message: 'PharmaBuddy Backend is running with Database connection' });
 });
 
-app.listen(PORT, () => {
-    console.log('Server is running on port ' + PORT);
-});
+// Server and Socket.IO already initialized above
 
 
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { io } from 'socket.io-client';
 import { Search, Plus, Package, ChevronDown, Filter, Trash2, CheckSquare, Square } from 'lucide-react';
 import StatusBadge from '../ui/StatusBadge';
 import AddStockModal from '../components/AddStockModal';
@@ -70,48 +70,34 @@ const Inventory = () => {
 
     // Get filter from URL on component mount
     useEffect(() => {
-        console.log('=== INVENTORY COMPONENT MOUNTED ===');
-        console.log('Current location:', location.search);
-        console.log('Current filter state:', filter);
+        fetchMedicines(false);  // initial load — show spinner
+        const interval = setInterval(() => fetchMedicines(true), 60000); // background silent refresh
         
-        const urlParams = new URLSearchParams(location.search);
-        const urlFilter = urlParams.get('filter');
+        // Initialize WebSocket connection
+        const socket = io('http://localhost:5000');
         
-        console.log('URL filter found:', urlFilter);
+        // Listen for inventory updates
+        socket.on('inventoryUpdated', (data) => {
+            console.log('Inventory updated via WebSocket:', data);
+            fetchMedicines(true); // silent refresh
+            showToast(`✅ ${data.medicine?.name || 'Medicine'} added to inventory. Total stock: ${data.totalStock || 0} tablets`, 'success');
+        });
         
-        if (urlFilter && ['expired', 'expiring', 'lowstock'].includes(urlFilter)) {
-            console.log('Setting filter from URL:', urlFilter);
-            setFilter(urlFilter);
-            fetchMedicines(false, urlFilter);
-        } else {
-            console.log('No valid filter in URL, fetching all medicines');
-            fetchMedicines(false);
-        }
+        // Handle connection events
+        socket.on('connect', () => {
+            console.log('Connected to WebSocket server');
+        });
         
-        const interval = setInterval(() => fetchMedicines(true, filter), 60000); // background silent refresh
+        socket.on('disconnect', () => {
+            console.log('Disconnected from WebSocket server');
+        });
+        
         return () => {
             clearInterval(interval);
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+            socket.disconnect();
         };
-    }, [fetchMedicines, filter, location.search]);
-
-    // Update filter when changed
-    useEffect(() => {
-        const urlParams = new URLSearchParams(location.search);
-        const currentFilter = urlParams.get('filter');
-        
-        console.log('Filter changed to:', filter, 'Current URL filter:', currentFilter);
-        
-        if (filter !== currentFilter) {
-            // Update URL without page reload using React Router
-            const newUrl = filter ? `/inventory?filter=${filter}` : '/inventory';
-            console.log('Navigating to:', newUrl);
-            navigate(newUrl, { replace: true });
-            
-            // Fetch medicines with new filter
-            fetchMedicines(false, filter);
-        }
-    }, [filter, fetchMedicines, navigate, location.search]);
+    }, [fetchMedicines, showToast]);
 
     // Called by AddStockModal after successful add
     const handleStockAdded = useCallback(() => {

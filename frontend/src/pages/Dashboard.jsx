@@ -20,6 +20,7 @@ import StatsModal from '../ui/StatsModal';
 const API_BASE = 'http://localhost:5000/api';
 
 const Dashboard = () => {
+    console.log('=== Dashboard Component Rendering ===');
     const navigate = useNavigate();
     const [medicines, setMedicines] = useState([]);
     const [alerts, setAlerts] = useState([]);
@@ -39,7 +40,13 @@ const Dashboard = () => {
         expired: 0,
         expiring: 0,
         lowStock: 0,
-        totalInventory: 0
+        totalInventory: 0,
+        allSales: [],
+        todaySales: [],
+        allOrders: [],
+        repeatCustomers: [],
+        fastMoving: [],
+        nearExpiry: []
     });
     const [showExpiredModal, setShowExpiredModal] = useState(false);
     const [expiredMedicines, setExpiredMedicines] = useState([]);
@@ -50,27 +57,40 @@ const Dashboard = () => {
             try {
                 console.log('=== DASHBOARD DATA FETCH START ===');
                 console.log('Current dashboardStats state:', dashboardStats);
-                
-                // Fetch dashboard stats
-                console.log('Fetching dashboard stats...');
-                const statsRes = await axios.get(`${API_BASE}/dashboard-stats`);
-                console.log('Dashboard stats response:', statsRes.data);
-                console.log('Setting dashboardStats to:', statsRes.data);
-                setDashboardStats(statsRes.data);
-                
-                // Verify the state was set correctly
-                setTimeout(() => {
-                    console.log('DashboardStats after set timeout:', dashboardStats);
-                }, 100);
 
-                const medRes = await axios.get(`${API_BASE}/medicines`);
-                const alertRes = await axios.get(`${API_BASE}/alerts`);
-                const statRes = await axios.get(`${API_BASE}/dashboard/stats`);
-                const orderRes = await axios.get(`${API_BASE}/orders/recent`);
-                setMedicines(medRes.data);
-                setAlerts(alertRes.data);
-                setRecentOrders(orderRes.data);
-                
+                // Fetch both summary counts and detailed stats together to avoid partial state
+                console.log('Fetching dashboard stats and details...');
+                const [statsRes, detailsRes, medRes, alertRes, orderRes] = await Promise.all([
+                    axios.get(`${API_BASE}/dashboard-stats`),
+                    axios.get(`${API_BASE}/dashboard/stats`),
+                    axios.get(`${API_BASE}/medicines`),
+                    axios.get(`${API_BASE}/alerts`),
+                    axios.get(`${API_BASE}/orders/recent`)
+                ]);
+
+                const counts = statsRes?.data || {};
+                const details = detailsRes?.data || {};
+
+                const merged = {
+                    expired: counts.expired ?? 0,
+                    expiring: counts.expiring ?? 0,
+                    lowStock: counts.lowStock ?? 0,
+                    totalInventory: counts.totalInventory ?? 0,
+                    allSales: details.allSales ?? [],
+                    todaySales: details.todaySales ?? [],
+                    allOrders: details.allOrders ?? [],
+                    repeatCustomers: details.repeatCustomers ?? [],
+                    fastMoving: details.fastMoving ?? [],
+                    nearExpiry: details.nearExpiry ?? []
+                };
+
+                console.log('Setting merged dashboardStats:', merged);
+                setDashboardStats(merged);
+
+                setMedicines(medRes.data || []);
+                setAlerts(alertRes.data || []);
+                setRecentOrders(orderRes.data || []);
+
                 console.log('=== DASHBOARD DATA FETCH END ===');
             } catch (err) {
                 console.error("Error fetching data:", err);
@@ -81,16 +101,16 @@ const Dashboard = () => {
 
         // Initial fetch
         fetchData();
-        
+
         // Set up interval for periodic updates
         const interval = setInterval(fetchData, 30000);
-        
+
         // Listen for custom refresh events
         const handleRefreshEvent = () => {
             fetchData();
         };
         window.addEventListener('refreshDashboardStats', handleRefreshEvent);
-        
+
         // Cleanup
         return () => {
             clearInterval(interval);
@@ -112,7 +132,7 @@ const Dashboard = () => {
         console.log('=== DASHBOARD CARD CLICKED ===');
         console.log('Filter type:', filterType);
         console.log('Current dashboard stats:', dashboardStats);
-        
+
         if (filterType === 'expired') {
             // Show expired medicines in modal instead of navigating
             console.log('Showing expired medicines modal');
@@ -123,7 +143,7 @@ const Dashboard = () => {
             console.log('Navigating to:', `/inventory?filter=${filterType}`);
             navigate(`/inventory?filter=${filterType}`);
         }
-        
+
         console.log('=== END CLICK HANDLER ===');
     };
 
@@ -143,6 +163,7 @@ const Dashboard = () => {
     };
 
     if (loading) {
+        console.log('=== Dashboard Loading State ===');
         return (
             <div style={{ height: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 'bold', color: '#10b981' }}>
@@ -152,9 +173,16 @@ const Dashboard = () => {
         );
     }
 
+    console.log('=== Dashboard Rendering Content ===');
+
     return (
-        <div className="premium-dashboard-container">
-            <div className="premium-dashboard-grid">
+        <div className="premium-dashboard-container" style={{
+            padding: '20px',
+            backgroundColor: '#f8fafc',
+            minHeight: '100vh',
+            display: 'block'
+        }}>
+            <div className="premium-dashboard-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
 
                 {/* 1. Today's Sales */}
                 <div className="premium-card" style={{ cursor: 'pointer' }} onClick={() => setModalConfig({ type: 'sales', title: "Sales Details", data: dashboardStats.allSales })}>
@@ -185,8 +213,8 @@ const Dashboard = () => {
                 </div>
 
                 {/* 3. Low Stock Items */}
-                <div 
-                    className="premium-card clickable-card" 
+                <div
+                    className="premium-card clickable-card"
                     onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -216,8 +244,8 @@ const Dashboard = () => {
                 </div>
 
                 {/* 4. Expiring Items */}
-                <div 
-                    className="premium-card clickable-card" 
+                <div
+                    className="premium-card clickable-card"
                     onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -247,8 +275,8 @@ const Dashboard = () => {
                 </div>
 
                 {/* 5. Expired Items */}
-                <div 
-                    className="premium-card clickable-card" 
+                <div
+                    className="premium-card clickable-card"
                     onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -425,7 +453,7 @@ const Dashboard = () => {
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                             <h2 style={{ margin: 0, color: '#ef4444' }}>Expired Medicines ({dashboardStats.expired})</h2>
-                            <button 
+                            <button
                                 onClick={() => setShowExpiredModal(false)}
                                 style={{
                                     background: 'none',
@@ -489,7 +517,7 @@ const Dashboard = () => {
                         )}
 
                         <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                            <button 
+                            <button
                                 onClick={() => setShowExpiredModal(false)}
                                 style={{
                                     backgroundColor: '#3b82f6',

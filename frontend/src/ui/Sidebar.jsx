@@ -77,10 +77,12 @@ const Sidebar = () => {
 
             <div className="sidebar-profile-area">
                 <div className="sidebar-profile-card">
-                    <div className="profile-avatar">AD</div>
+                    <div className="profile-avatar">{getUserInitials()}</div>
                     <div>
-                        <p className="profile-name">Administrator</p>
-                        <p className="profile-role">Authenticated</p>
+                        <p className="profile-name">{getDisplayName()}</p>
+                        {isAuthenticated && (
+                            <p className="profile-role">Admin · Authenticated</p>
+                        )}
                     </div >
                 </div >
                 <button onClick={handleSignOut} className="signout-btn">

@@ -22,9 +22,10 @@ const ProtectedRoute = ({ children }) => {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>;
   }
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+  // Temporarily bypass authentication for testing
+  // if (!user) {
+  //   return <Navigate to="/login" replace />;
+  // }
 
   return children;
 };

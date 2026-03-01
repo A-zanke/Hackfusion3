@@ -27,11 +27,333 @@ const fs = require('fs');
 
 const sessionsByKey = new Map();
 
+// Multilingual Medicine Name Mappings
+const medicineTranslations = {
+  // English to Hindi/Marathi mappings
+  'paracetamol': {
+    'hindi': ['पॅरासिटामॉल', 'पैरासिटामोल', 'पॅरासिटामोल'],
+    'marathi': ['पॅरासिटामॉल', 'परसिटामोल', 'पॅरासिटामोल']
+  },
+  'acetaminophen': {
+    'hindi': ['एसिटामिनोफेन', 'एसिटामिनोफेन'],
+    'marathi': ['एसिटामिनोफेन', 'एसेटामिनोफेन']
+  },
+  'aspirin': {
+    'hindi': ['एस्पिरिन', 'ऐस्पिरिन'],
+    'marathi': ['एस्पिरिन', 'ऐस्पिरिन']
+  },
+  'ibuprofen': {
+    'hindi': ['इबुप्रोफेन', 'इबुप्रोफेन'],
+    'marathi': ['इबुप्रोफेन', 'इबुप्रोफेन']
+  },
+  'crocin': {
+    'hindi': ['क्रोसिन', 'क्रोसीन'],
+    'marathi': ['क्रोसिन', 'क्रोसीन']
+  },
+  'dolo': {
+    'hindi': ['डोलो', 'डोलो'],
+    'marathi': ['डोलो', 'डोलो']
+  },
+  'combiflam': {
+    'hindi': ['कॉम्बिफ्लॅम', 'कॉम्बिफ्लाम'],
+    'marathi': ['कॉम्बिफ्लॅम', 'कॉम्बिफ्लाम']
+  },
+  'vicks': {
+    'hindi': ['विक्स', 'विक्स'],
+    'marathi': ['विक्स', 'विक्स']
+  },
+  'dettol': {
+    'hindi': ['डेटॉल', 'डेटोल'],
+    'marathi': ['डेटॉल', 'डेटोल']
+  },
+  'volini': {
+    'hindi': ['वोलिनी', 'वोलिनी'],
+    'marathi': ['वोलिनी', 'वोलिनी']
+  },
+  'moov': {
+    'hindi': ['मूव', 'मूव'],
+    'marathi': ['मूव', 'मूव']
+  },
+  'betadine': {
+    'hindi': ['बेटाडाइन', 'बेटाडाइन'],
+    'marathi': ['बेटाडाइन', 'बेटाडाइन']
+  },
+  'ors': {
+    'hindi': ['ओआरएस', 'ओ आर एस'],
+    'marathi': ['ओआरएस', 'ओ आर एस']
+  },
+  'glucose': {
+    'hindi': ['ग्लूकोज', 'ग्लुकोज'],
+    'marathi': ['ग्लूकोज', 'ग्लुकोज']
+  },
+  'zinc': {
+    'hindi': ['जिंक', 'जिंक'],
+    'marathi': ['जिंक', 'जिंक']
+  },
+  'vitamin': {
+    'hindi': ['विटामिन', 'विटामीन'],
+    'marathi': ['विटामिन', 'विटामीन']
+  },
+  'calcium': {
+    'hindi': ['कैल्शियम', 'कॅल्शियम'],
+    'marathi': ['कॅल्शियम', 'कॅल्शियम']
+  },
+  'iron': {
+    'hindi': ['आयरन', 'आयरन'],
+    'marathi': ['आयरन', 'आयरन']
+  },
+  'cough': {
+    'hindi': ['खांसी', 'खांसी'],
+    'marathi': ['खोकला', 'खोकला']
+  },
+  'cold': {
+    'hindi': ['जुकाम', 'जुकाम'],
+    'marathi': ['जुकाम', 'जुकाम']
+  },
+  'fever': {
+    'hindi': ['बुखार', 'बुखार'],
+    'marathi': ['ज्वर', 'ज्वर']
+  },
+  'headache': {
+    'hindi': ['सिरदर्द', 'सिर दर्द'],
+    'marathi': ['डोकेदुखी', 'डोके दुखी']
+  },
+  'bodyache': {
+    'hindi': ['शरीर दर्द', 'बदन दर्द'],
+    'marathi': ['शरीर दुखी', 'बदन दुखी']
+  },
+  'stomach': {
+    'hindi': ['पेट', 'पेट दर्द'],
+    'marathi': ['पोट', 'पोट दुखी']
+  },
+  'pain': {
+    'hindi': ['दर्द', 'दर्द'],
+    'marathi': ['दुखी', 'दुखी']
+  }
+};
+
+// Common medical terms in regional languages
+const medicalTerms = {
+  'hindi': {
+    'medicine': ['दवा', 'दवाई', 'औषधि'],
+    'tablet': ['गोली', 'टैबलेट', 'पिल'],
+    'capsule': ['कैप्सूल', 'कैप्सूल'],
+    'syrup': ['सिरप', 'सिरप'],
+    'ointment': ['मलहम', 'ऑइंटमेंट'],
+    'injection': ['इंजेक्शन', 'इंजेक्शन'],
+    'need': ['चाहिए', 'पाहिजे', 'देना'],
+    'want': ['चाहिए', 'पाहिजे', 'चाहता हूं'],
+    'give': ['दे', 'दीजिए', 'देना'],
+    'please': ['कृपया', 'जरा', 'मेहरबानी']
+  },
+  'marathi': {
+    'medicine': ['औषध', 'औषधि', 'दवा'],
+    'tablet': ['गोळी', 'टॅबलेट', 'पिल'],
+    'capsule': ['कॅप्सूल', 'कॅप्सूल'],
+    'syrup': ['सिरप', 'सिरप'],
+    'ointment': ['मलहम', 'ऑइंटमेंट'],
+    'injection': ['इंजेक्शन', 'इंजेक्शन'],
+    'need': ['पाहिजे', 'हवी', 'लागेल'],
+    'want': ['पाहिजे', 'हवे', 'लागेल'],
+    'give': ['दे', 'द्या', 'देणे'],
+    'please': ['कृपया', 'करून घ्या', 'महेरबानी']
+  }
+};
+
 function debugLog(message) {
   const timestamp = new Date().toISOString();
   const logMessage = `[${timestamp}] ${message}\n`;
   fs.appendFileSync('debug.log', logMessage);
   console.log(message);
+}
+
+// Parse regional/multilingual number words to digits
+function parseRegionalNumber(input) {
+  if (!input) return null;
+  const cleaned = String(input).trim().toLowerCase();
+  
+  // 1. Try to extract the first sequence of digits (e.g., "2 tablets", "3 qty")
+  const digitMatch = cleaned.match(/^(\d+)/);
+  if (digitMatch) return parseInt(digitMatch[1], 10);
+  
+  const numberMap = {
+    // English
+    'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+    'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+    'eleven': 11, 'twelve': 12, 'fifteen': 15, 'twenty': 20,
+    'twenty-five': 25, 'twenty five': 25, 'thirty': 30, 'fifty': 50, 'hundred': 100,
+    // Hindi
+    'ek': 1, 'do': 2, 'teen': 3, 'char': 4, 'paanch': 5, 'panch': 5,
+    'chhe': 6, 'cheh': 6, 'saat': 7, 'sat': 7, 'aath': 8, 'ath': 8,
+    'nau': 9, 'das': 10, 'daha': 10, 'gyarah': 11, 'barah': 12,
+    'pandrah': 15, 'bees': 20, 'pachees': 25, 'tees': 30, 'pachaas': 50, 'sau': 100,
+    // Marathi
+    'don': 2, 'tin': 3, 'chaar': 4, 'paach': 5, 'saha': 6,
+    'aath': 8, 'nav': 9, 'dahaa': 10,
+    // Common transliterations
+    'yek': 1, 'doh': 2, 'theen': 3, 'pach': 5, 'dha': 10
+  };
+  
+  // 2. Check if the first word or compound word is a number word
+  const words = cleaned.split(/\s+/);
+  if (words.length > 0) {
+    const firstWord = words[0];
+    if (numberMap[firstWord] !== undefined) return numberMap[firstWord];
+    
+    // Check for compound words (e.g., "twenty five")
+    if (words.length > 1) {
+      const compound = words[0] + ' ' + words[1];
+      if (numberMap[compound] !== undefined) return numberMap[compound];
+      
+      const hyphenated = words[0] + '-' + words[1];
+      if (numberMap[hyphenated] !== undefined) return numberMap[hyphenated];
+    }
+  }
+  
+  return null;
+}
+
+// Multilingual Medicine Matching Functions
+
+
+function normalizeMedicineName(medicineName, language = 'english') {
+  if (!medicineName) return '';
+  
+  let normalizedName = medicineName.toLowerCase().trim();
+  
+  // Remove common medical terms and quantity indicators
+  const termsToRemove = [
+    'tablet', 'tablets', 'tab', 'tabs',
+    'capsule', 'capsules', 'cap',
+    'syrup', 'syrups',
+    'mg', 'ml', 'g', 'gm',
+    'required', 'need', 'want', 'give', 'please'
+  ];
+  
+  // Add language-specific terms to remove
+  if (language === 'hindi') {
+    termsToRemove.push(
+      ...medicalTerms.hindi.medicine,
+      ...medicalTerms.hindi.tablet,
+      ...medicalTerms.hindi.capsule,
+      ...medicalTerms.hindi.syrup,
+      ...medicalTerms.hindi.need,
+      ...medicalTerms.hindi.want,
+      ...medicalTerms.hindi.give,
+      ...medicalTerms.hindi.please
+    );
+  } else if (language === 'marathi') {
+    termsToRemove.push(
+      ...medicalTerms.marathi.medicine,
+      ...medicalTerms.marathi.tablet,
+      ...medicalTerms.marathi.capsule,
+      ...medicalTerms.marathi.syrup,
+      ...medicalTerms.marathi.need,
+      ...medicalTerms.marathi.want,
+      ...medicalTerms.marathi.give,
+      ...medicalTerms.marathi.please
+    );
+  }
+  
+  // Remove terms and clean up
+  termsToRemove.forEach(term => {
+    const regex = new RegExp(term, 'gi');
+    normalizedName = normalizedName.replace(regex, '').trim();
+  });
+  
+  // Remove extra spaces and special characters
+  normalizedName = normalizedName.replace(/\s+/g, ' ').replace(/[^\w\s]/g, '').trim();
+  
+  return normalizedName;
+}
+
+function findEnglishMedicineName(regionalName, language) {
+  if (!regionalName || language === 'english') return regionalName;
+  
+  const normalizedName = normalizeMedicineName(regionalName, language);
+  
+  // Search in translations
+  for (const [englishName, translations] of Object.entries(medicineTranslations)) {
+    if (translations[language]) {
+      for (const translation of translations[language]) {
+        if (translation.toLowerCase().includes(normalizedName) || 
+            normalizedName.includes(translation.toLowerCase())) {
+          return englishName;
+        }
+      }
+    }
+  }
+  
+  // If no direct translation found, try fuzzy matching
+  for (const [englishName, translations] of Object.entries(medicineTranslations)) {
+    if (translations[language]) {
+      for (const translation of translations[language]) {
+        const similarity = calculateStringSimilarity(normalizedName, translation.toLowerCase());
+        if (similarity > 0.7) { // 70% similarity threshold
+          return englishName;
+        }
+      }
+    }
+  }
+  
+  return regionalName; // Return original if no match found
+}
+
+function calculateStringSimilarity(str1, str2) {
+  const longer = str1.length > str2.length ? str1 : str2;
+  const shorter = str1.length > str2.length ? str2 : str1;
+  
+  if (longer.length === 0) return 1.0;
+  
+  const editDistance = levenshteinDistance(longer, shorter);
+  return (longer.length - editDistance) / longer.length;
+}
+
+function levenshteinDistance(str1, str2) {
+  const matrix = [];
+  
+  for (let i = 0; i <= str2.length; i++) {
+    matrix[i] = [i];
+  }
+  
+  for (let j = 0; j <= str1.length; j++) {
+    matrix[0][j] = j;
+  }
+  
+  for (let i = 1; i <= str2.length; i++) {
+    for (let j = 1; j <= str1.length; j++) {
+      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  
+  return matrix[str2.length][str1.length];
+}
+
+function enhanceMedicineSearch(searchName, language = 'english') {
+  // If it's English, return as-is
+  if (language === 'english') {
+    return searchName;
+  }
+  
+  // Try to find English equivalent
+  const englishName = findEnglishMedicineName(searchName, language);
+  
+  // If different from original, return the English name
+  if (englishName !== searchName) {
+    debugLog(`Multilingual match: "${searchName}" (${language}) → "${englishName}" (English)`);
+    return englishName;
+  }
+  
+  // If no match found, return original
+  return searchName;
 }
 
 function getSessionKey(req) {
@@ -63,17 +385,33 @@ function normName(s){
     .trim();
 }
 
+// Safely parse potential JSON from an AI response by removing code fences
+// and extracting the first JSON object if extra text is present.
+function safeParseAiJson(text) {
+  if (!text) return null;
+  let cleaned = String(text).trim();
+  // Strip Markdown code fences if present
+  cleaned = cleaned.replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
+  // Try direct parse first
+  try { return JSON.parse(cleaned); } catch (e) {}
+  // Fallback: extract first {...} block
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start !== -1 && end !== -1 && end > start) {
+    const slice = cleaned.slice(start, end + 1);
+    try { return JSON.parse(slice); } catch (e) {}
+  }
+  return null;
+}
+
 function buildMedSummaryReply(med, qty, cartTotal, prescriptionRequired = false) {
   const lines = [];
-  lines.push('✅ ' + med.name + ' (' + qty + ' tablets)');
-
-  if (med.description) {
-    lines.push('📝 ' + med.description);
-  }
+  lines.push('✅ ' + med.name + ' added to cart');
+  lines.push('💊 Quantity: ' + qty + ' tablets');
 
   const pricePerTablet = parseFloat(med.price_per_tablet);
   if (!isNaN(pricePerTablet)) {
-    lines.push('💊 Price per tablet: ₹' + pricePerTablet.toFixed(2));
+    lines.push('💰 Price per tablet: ₹' + pricePerTablet.toFixed(2));
     const lineTotal = qty * pricePerTablet;
     lines.push('💰 Line total: ₹' + lineTotal.toFixed(2));
   }
@@ -84,14 +422,13 @@ function buildMedSummaryReply(med, qty, cartTotal, prescriptionRequired = false)
 
   if (typeof cartTotal === 'number') {
     lines.push('');
-    lines.push('🛒 Total price: ₹' + cartTotal.toFixed(2));
+    lines.push('🛒 Cart total: ₹' + cartTotal.toFixed(2));
   }
 
-  // Only show "Add more medicines" if this is not the final medicine in cart
-  // For prescription medicines, we'll handle the flow differently
   if (!prescriptionRequired) {
     lines.push('');
-    lines.push('Add more medicines? (Y/N)');
+    lines.push('Would you like to add more medicines or proceed to checkout?');
+    lines.push('Say Yes to proceed or add another medicine name');
   }
 
   return lines.join('\n');
@@ -159,6 +496,19 @@ function getMultilingualResponse(messageKey, language, medicineName = null, quan
    LANGUAGE & INTENT HELPERS
 ========================= */
 
+// Helper function to normalize language codes
+function normalizeLanguageCode(lang) {
+  const normalizationMap = {
+    'en': 'english',
+    'hi': 'hindi',
+    'mr': 'marathi',
+    'english': 'english',
+    'hindi': 'hindi',
+    'marathi': 'marathi'
+  };
+  return normalizationMap[lang] || 'english';
+}
+
 function detectLanguage(message) {
   const text = String(message || '').trim();
   // Basic Devanagari check
@@ -166,18 +516,20 @@ function detectLanguage(message) {
   const lower = text.toLowerCase();
 
   if (hasDevanagari) {
-    if (lower.includes('आहे') || lower.includes('का')) return 'mr';
+    // More specific Marathi detection
+    if (lower.includes('आहे') || lower.includes('काय') || lower.includes('मला') || lower.includes('मी') || lower.includes('तर') || lower.includes('नाही')) return 'mr';
     return 'hi';
   }
 
   // Roman-script Hindi / Marathi heuristics
-  if (lower.includes('hai kya') || lower.includes('kya hai') || lower.includes('dawa') || lower.includes('karna hai')) {
+  if (lower.includes('hai kya') || lower.includes('kya hai') || lower.includes('dawa') || lower.includes('karna hai') || lower.includes('ke liye') || lower.includes('ko dekhna hai')) {
     return 'hi';
   }
-  if (lower.includes('aahe ka') || lower.includes('ahe ka') || lower.includes('ka na')) {
+  if (lower.includes('aahe ka') || lower.includes('ahe ka') || lower.includes('ka na') || lower.includes('mi') || lower.includes('mala')) {
     return 'mr';
   }
 
+  // For English or unknown languages
   return 'en';
 }
 
@@ -257,8 +609,12 @@ Notes:
       max_tokens: 150
     });
 
-    const aiResponse = response.data.choices[0].message.content;
-    const parsed = JSON.parse(aiResponse);
+    const aiResponse = response.data.choices[0].message.content || '';
+    // Attempt robust parsing of AI output
+    const parsed = safeParseAiJson(aiResponse);
+    if (!parsed) {
+      throw new Error('AI JSON parse failed');
+    }
     // Ensure defaults
     if (!parsed.language) parsed.language = detectLanguage(message);
     if (!parsed.action) parsed.action = parsed.intent || 'order';
@@ -269,6 +625,17 @@ Notes:
     // Fallback to basic parsing if Grok fails
     const items = [];
     const parts = message.split(',').map(p=>p.trim()).filter(Boolean);
+
+    // Marathi/Hindi filler words to strip for better medicine name extraction
+    const fillerWords = [
+      'mala', 'mla', 'paije', 'pahije', 'pahile', 'havi', 'havey',
+      'chahiye', 'chaiye', 'dena', 'dijiye', 'de', 'dya', 'dena',
+      'lena', 'leni', 'mangta', 'mangto', 'mangte',
+      'i', 'want', 'need', 'give', 'me', 'please', 'the',
+      'ek', 'tablet', 'tablets', 'tab', 'tabs',
+      'capsule', 'capsules', 'cap', 'caps',
+      'medicine', 'dawa', 'dawai', 'aushadh', 'goli', 'goliyan'
+    ];
 
     for(const part of parts){
       let m = part.match(/^(.*?)[\s-]+(\d{1,4})$/);
@@ -283,7 +650,18 @@ Notes:
         continue;
       }
 
-      items.push({ name:normName(part), quantity:null });
+      // Strip filler words from the part to extract medicine name
+      let cleanPart = part.toLowerCase();
+      for (const filler of fillerWords) {
+        cleanPart = cleanPart.replace(new RegExp('\\b' + filler + '\\b', 'gi'), '').trim();
+      }
+      // Normalize spaces
+      cleanPart = cleanPart.replace(/\s+/g, ' ').trim();
+      
+      // Use cleaned part if it has meaningful content, otherwise use original
+      const finalName = cleanPart.length > 1 ? cleanPart : part;
+
+      items.push({ name:normName(finalName), quantity:null });
     }
 
     return {
@@ -398,7 +776,7 @@ async function addStockByConfig(medicineName, packetsToAdd, tabletsPerPacket, pa
 
 async function enhancedChatHandler(req,res){
   try{
-    const { message } = req.body;
+    const { message, customer_name: reqCustomerName } = req.body;
     if(!message) return res.status(400).json({ error:'Message required' });
 
     // Initialize agent metadata
@@ -493,11 +871,20 @@ async function enhancedChatHandler(req,res){
     // =========================
     debugLog(`Top-of-handler state: stage=${orderSession.stage}, pending=${JSON.stringify(orderSession.pendingMedicine)}`);
     
-    if (orderSession.stage === 'ask_quantity' && orderSession.pendingMedicine && /^\d+$/.test(msgTrim)) {
+    const parsedQtyEarly = parseRegionalNumber(msgTrim);
+    if (orderSession.stage === 'ask_quantity' && orderSession.pendingMedicine && parsedQtyEarly !== null) {
       const pending = orderSession.pendingMedicine;
-      const searchName = typeof pending === 'string' ? pending : pending.name;
+      let searchName = typeof pending === 'string' ? pending : pending.name;
       debugLog(`Entering EARLY quantity branch with qty='${msgTrim}' for pending='${JSON.stringify(pending)}'`);
-      const qty = parseInt(msgTrim, 10);
+      const qty = parsedQtyEarly;
+      
+      // Apply multilingual matching to pending medicine name if needed
+      const detectedLanguage = detectLanguage(searchName);
+      const enhancedSearchName = enhanceMedicineSearch(searchName, normalizeLanguageCode(detectedLanguage));
+      if (enhancedSearchName !== searchName) {
+        searchName = enhancedSearchName;
+        debugLog(`Enhanced pending medicine search: "${typeof pending === 'string' ? pending : pending.name}" → "${searchName}"`);
+      }
 
       const rs = (pending && pending.id)
         ? await db.query(
@@ -851,14 +1238,23 @@ async function enhancedChatHandler(req,res){
     debugLog(`Is digits: ${/^\d+$/.test(message)}`);
     debugLog(`Condition match: ${orderSession.stage === 'ask_quantity' && orderSession.pendingMedicine && /^\d+$/.test(message)}`);
     
+    const parsedQtyMain = parseRegionalNumber(message);
     if(
       orderSession.stage === 'ask_quantity' &&
       orderSession.pendingMedicine &&
-      /^\d+$/.test(message)
+      parsedQtyMain !== null
     ){
-      const qty = parseInt(message,10);
+      const qty = parsedQtyMain;
       const pending = orderSession.pendingMedicine;
-      const searchName = typeof pending === 'string' ? pending : pending.name;
+      let searchName = typeof pending === 'string' ? pending : pending.name;
+      
+      // Apply multilingual matching to pending medicine name if needed
+      const detectedLanguage = detectLanguage(searchName);
+      const enhancedSearchName = enhanceMedicineSearch(searchName, normalizeLanguageCode(detectedLanguage));
+      if (enhancedSearchName !== searchName) {
+        searchName = enhancedSearchName;
+        debugLog(`Enhanced pending medicine search (section 2): "${typeof pending === 'string' ? pending : pending.name}" → "${searchName}"`);
+      }
 
       debugLog(`=== QUANTITY RESPONSE ===`);
       debugLog(`User replied with quantity ${qty} for pending medicine: ${JSON.stringify(pending)}`);
@@ -1077,55 +1473,18 @@ async function enhancedChatHandler(req,res){
     }
 
     /* =========================
-       CUSTOMER DETAILS
+       CUSTOMER DETAILS (auto-filled from login)
     ========================= */
-    if(orderSession.stage === 'ask_customer'){
-      // Check if user wants to skip
-      if(/^(skip|skip it|no thanks)$/i.test(message)){
-        orderSession.stage='ready';
-        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-        return res.json({ reply:'✅ Proceeding without customer details. Type *proceed* to place order.' });
-      }
-      
-      // Try both formats: "Name Age Mobile" and "Name - Age - Mobile"
-      let m = message.match(/^([A-Za-z ]+)\s+(\d{1,3})\s+(\d{10})$/);
-      if (!m) {
-        m = message.match(/^([A-Za-z ]+)\s*-\s*(\d{1,3})\s*-\s*(\d{10})$/);
-      }
-      
-      if(!m) {
-        return res.json({ 
-          reply:'❌ Format: "Name Age Mobile" OR "Name - Age - Mobile"\n\nExample: "John Doe 25 9876543210" or "John Doe - 25 - 9876543210"\n\nOr type *skip* to proceed without details' 
-        });
-      }
-
-      orderSession.customer = {
-        name:m[1].trim(),
-        age:parseInt(m[2],10),
-        mobile:m[3]
-      };
-
-      orderSession.stage='ready';
-      sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-
-      return res.json({ reply:'✅ Details saved. Type *proceed* to place order.' });
+    // Customer name is auto-filled from the logged-in user (passed via reqCustomerName)
+    if (reqCustomerName && !orderSession.customer.name) {
+      orderSession.customer.name = reqCustomerName;
     }
 
     /* =========================
        PROCEED ORDER
     ========================= */
     if(/^proceed$/i.test(message)){
-      const totalTabs = orderSession.medicines.reduce((s,m)=>s+m.quantity,0);
-
-      if(totalTabs >= 3 && !orderSession.customer.name){
-        orderSession.stage='ask_customer';
-        sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-        return res.json({
-          reply: "👤 Please share customer details:\nName Age Mobile"
-        });
-      }
-
-      // Show order summary and ask for Y/N confirmation
+      // Show order summary and ask for Y/N confirmation (no customer details needed)
       let summary = '📋 **Order Summary**\n\n';
       let total = 0;
       
@@ -1150,10 +1509,10 @@ async function enhancedChatHandler(req,res){
       summary += "💰 **Total: ₹" + total.toFixed(2) + "**\n\n";
       if (anyPrescriptionRequired) {
         summary += "⚕️ One or more medicines require a valid prescription.\n";
-        summary += "Do you confirm that you have a valid prescription for the required items? (Y/N)\n\n";
+        summary += "Do you confirm that you have a valid prescription? Say Yes or No\n\n";
         summary += "Then we will proceed to place the order.";
       } else {
-        summary += "Proceed with order? (Y/N)";
+        summary += "Shall we place the order? Say Yes or No";
       }
 
       orderSession.stage='confirm_order';
@@ -1164,21 +1523,11 @@ async function enhancedChatHandler(req,res){
 
     // Handle Y/N confirmation for order
     if(orderSession.stage === 'confirm_order'){
-      if(/^[Yy]$/i.test(message)){
+      if(/^(y|yes|haan|ha|ho)$/i.test(message)){
         try {
           // Validation: Check if we have medicines in the session
           if (!orderSession.medicines || orderSession.medicines.length === 0) {
             return res.json({ reply: '❌ No medicines in cart. Please add medicines first.' });
-          }
-
-          // Validation: Check total tablets for prescription requirement
-          const totalTabs = orderSession.medicines.reduce((s,m)=>s+m.quantity,0);
-          if(totalTabs >= 3 && !orderSession.customer.name){
-            orderSession.stage='ask_customer';
-            sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
-            return res.json({
-              reply: "👤 Please share customer details:\nName Age Mobile"
-            });
           }
 
           // Calculate total with proper type conversion
@@ -1187,11 +1536,12 @@ async function enhancedChatHandler(req,res){
           // Start database transaction
           await db.query('BEGIN');
           
-          // Insert order using ONLY existing columns from schema
+          // Insert order using logged-in user name (no manual entry needed)
+          const customerName = orderSession.customer.name || reqCustomerName || 'Guest';
           const ins = await db.query(
             'INSERT INTO orders (customer_name, mobile, total_price, status) VALUES ($1,$2,$3,\'completed\') RETURNING id',
             [
-              orderSession.customer.name || 'Guest',
+              customerName,
               orderSession.customer.mobile || null,
               total
             ]
@@ -1218,9 +1568,13 @@ async function enhancedChatHandler(req,res){
           // Commit transaction
           await db.query('COMMIT');
 
+          // Generate UPI payment link for QR code
+          const paymentLink = `upi://pay?pa=pharmabuddy@razorpay&pn=PharmaBuddy&am=${total.toFixed(2)}&tr=${orderId}&cu=INR`;
+
           // Generate detailed order confirmation
           let confirmation = "🧾 **Order Placed Successfully!**\n\n";
-          confirmation += "Order ID: ORD-" + orderId + "\n\n";
+          confirmation += "Order ID: ORD-" + orderId + "\n";
+          confirmation += "Customer: " + customerName + "\n\n";
           
           for(const m of orderSession.medicines){
             confirmation += "💊 " + m.name + " - " + m.quantity + " tablets\n";
@@ -1228,10 +1582,10 @@ async function enhancedChatHandler(req,res){
           
           confirmation += "\n💰 Total Amount: ₹" + total.toFixed(2) + "\n";
           confirmation += "📦 Order Status: Completed\n";
-          confirmation += "🚚 Delivery: Standard delivery\n";
           confirmation += "✅ Stock updated successfully";
 
           // Reset session
+          const orderMedicines = [...orderSession.medicines];
           orderSession = {
             medicines:[],
             stage:'initial',
@@ -1242,7 +1596,19 @@ async function enhancedChatHandler(req,res){
 
           sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
 
-          return res.json({ reply: confirmation });
+          return res.json({ 
+            reply: confirmation,
+            orderPlaced: true,
+            orderData: {
+              orderId: orderId,
+              orderIdStr: 'ORD-' + orderId,
+              customerName: customerName,
+              items: orderMedicines,
+              total: total,
+              paymentLink: paymentLink,
+              status: 'completed'
+            }
+          });
 
         } catch (dbError) {
           // Rollback transaction on error
@@ -1257,12 +1623,12 @@ async function enhancedChatHandler(req,res){
             reply: '❌ Sorry, there was an error placing your order. Please try again or contact support.' 
           });
         }
-      } else if(/^[Nn]$/i.test(message)){
+      } else if(/^(n|no|nahi|na)$/i.test(message)){
         orderSession.stage='initial';
         sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
         return res.json({ reply: '❌ Order cancelled. You can continue adding medicines or start a new order.' });
       } else {
-        return res.json({ reply: 'Please enter Y to confirm or N to cancel.' });
+        return res.json({ reply: 'Please say Yes to confirm or No to cancel.' });
       }
     }
 
@@ -1397,7 +1763,7 @@ async function enhancedChatHandler(req,res){
        'N' cancels the current cart.
     ========================= */
     if (orderSession.stage === 'initial' && orderSession.medicines.length > 0) {
-      if (/^(y|yes)$/i.test(message)) {
+      if (/^(y|yes|haan|ha|ho|proceed)$/i.test(message)) {
         debugLog('User chose to proceed directly with current cart (Y)');
         // Reuse the proceed logic: build summary and set stage=confirm_order
         let summary = "📋 **Order Summary**\n\n";
@@ -1422,10 +1788,10 @@ async function enhancedChatHandler(req,res){
         summary += '💰 **Total: ₹' + total.toFixed(2) + '**\n\n';
         if (anyPrescriptionRequired) {
           summary += '⚕️ One or more medicines require a valid prescription.\n';
-          summary += 'Do you confirm that you have a valid prescription for the required items? (Y/N)\n\n';
+          summary += 'Do you confirm that you have a valid prescription? Say Yes or No\n\n';
           summary += 'Then we will proceed to place the order.';
         } else {
-          summary += 'Confirm order? (Y/N)';
+          summary += 'Shall we place the order? Say Yes or No';
         }
 
         orderSession.stage = 'confirm_order';
@@ -1434,7 +1800,7 @@ async function enhancedChatHandler(req,res){
         return res.json({ reply: summary });
       }
       
-      if (/^(n|no)$/i.test(message)) {
+      if (/^(n|no|nahi|na)$/i.test(message)) {
         debugLog('User cancelled current cart (N) before checkout');
         orderSession = {
           medicines: [],
@@ -1514,7 +1880,7 @@ async function enhancedChatHandler(req,res){
         sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
         
         return res.json({ 
-          reply: getMultilingualResponse('prescription_cancelled', aiResult.language || detectLanguage(message)),
+          reply: getMultilingualResponse('prescription_cancelled', normalizeLanguageCode(aiResult.language || detectLanguage(message))),
           intent_verified: agentMetadata.intent_verified,
           safety_checked: agentMetadata.safety_checked,
           stock_checked: agentMetadata.stock_checked,
@@ -1551,10 +1917,56 @@ async function enhancedChatHandler(req,res){
       
       // Process each medicine from Grok
       for (const medItem of aiResult.medicines) {
-        const cleanMedName = medItem.name.trim();
-        const quantity = medItem.quantity || 1; // Default to 1 if no quantity
+        let cleanMedName = medItem.name.trim();
+        const quantity = (medItem.quantity === null || typeof medItem.quantity === 'undefined') ? null : Number(medItem.quantity);
         
         debugLog(`Processing medicine: ${cleanMedName}, quantity: ${quantity}`);
+        
+        // Detect language and enhance medicine name matching
+        const detectedLanguage = aiResult.language || detectLanguage(cleanMedName);
+        debugLog(`Detected language: ${detectedLanguage} for medicine: ${cleanMedName}`);
+        
+        // Apply multilingual matching
+        const enhancedMedName = enhanceMedicineSearch(cleanMedName, normalizeLanguageCode(detectedLanguage));
+        debugLog(`Enhanced medicine name: "${cleanMedName}" → "${enhancedMedName}"`);
+        
+        // Use enhanced name for database search
+        const searchName = enhancedMedName || cleanMedName;
+        
+        // If quantity is missing, prompt for it instead of defaulting to 1
+        if (quantity === null) {
+          const rsNameOnly = await db.query(
+            'SELECT * FROM medicines WHERE (name ILIKE $1 OR brand ILIKE $1) AND is_deleted = FALSE LIMIT 1',
+            ['%' + searchName + '%']
+          );
+
+          if (rsNameOnly.rows.length === 0) {
+            agentMetadata.thinking = '❌ Safety Agent: Medicine "' + cleanMedName + '" not found in database';
+            return res.status(200).json({ 
+              reply: '❌ Medicine "' + cleanMedName + '" not found in database.',
+              intent_verified: agentMetadata.intent_verified,
+              safety_checked: false,
+              stock_checked: agentMetadata.stock_checked,
+              thinking: agentMetadata.thinking
+            });
+          }
+
+          const medMatch = rsNameOnly.rows[0];
+          orderSession.stage = 'ask_quantity';
+          orderSession.pendingMedicine = { id: medMatch.id, name: medMatch.name };
+          sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
+
+          agentMetadata.safety_checked = true;
+          agentMetadata.thinking = '✅ Intent Agent: Medicine intent verified\n✅ Safety Agent: "' + medMatch.name + '" is safe and available\n📊 Stock Agent: Awaiting quantity to check stock...';
+
+          return res.json({ 
+            reply: '💊 ' + medMatch.name + ' — How many tablets do you need?',
+            intent_verified: agentMetadata.intent_verified,
+            safety_checked: agentMetadata.safety_checked,
+            stock_checked: agentMetadata.stock_checked,
+            thinking: agentMetadata.thinking
+          });
+        }
         
         // Validate medicine exists in database
         const rs = await db.query(
@@ -1562,7 +1974,7 @@ async function enhancedChatHandler(req,res){
           'WHERE (name ILIKE $1 OR brand ILIKE $1) ' +
           'AND is_deleted = FALSE ' +
           'LIMIT 1',
-          ['%' + cleanMedName + '%']
+          ['%' + searchName + '%']
         );
         
         if (rs.rows.length === 0) {
@@ -1604,7 +2016,7 @@ async function enhancedChatHandler(req,res){
           }
           
           // Low stock (available > 0 but < requested): existing behavior
-          const stockMsg = getMultilingualResponse('out_of_stock', aiResult.language || detectLanguage(message), med.name, totalAvailableTablets);
+          const stockMsg = getMultilingualResponse('out_of_stock', normalizeLanguageCode(aiResult.language || detectLanguage(message)), med.name, totalAvailableTablets);
           agentMetadata.thinking = '❌ Stock Agent: Insufficient stock for ' + med.name;
           
           return res.status(200).json({
@@ -1634,7 +2046,7 @@ async function enhancedChatHandler(req,res){
           };
           sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
           
-          const prescriptionMsg = getMultilingualResponse('prescription_required', aiResult.language || detectLanguage(message), med.name);
+          const prescriptionMsg = getMultilingualResponse('prescription_required', normalizeLanguageCode(aiResult.language || detectLanguage(message)), med.name);
           
           return res.status(200).json({
             reply: prescriptionMsg,
@@ -1690,7 +2102,18 @@ async function enhancedChatHandler(req,res){
     // Process each medicine extracted by Grok AI (fallback for non-order intents)
     for(const medItem of aiResult.medicines){
       // Clean up medicine name - remove extra spaces
-      const cleanMedName = medItem.name.trim();
+      let cleanMedName = medItem.name.trim();
+      
+      // Detect language and enhance medicine name matching
+      const detectedLanguage = aiResult.language || detectLanguage(cleanMedName);
+      debugLog(`Fallback processing - Detected language: ${detectedLanguage} for medicine: ${cleanMedName}`);
+      
+      // Apply multilingual matching
+      const enhancedMedName = enhanceMedicineSearch(cleanMedName, normalizeLanguageCode(detectedLanguage));
+      debugLog(`Fallback enhanced medicine name: "${cleanMedName}" → "${enhancedMedName}"`);
+      
+      // Use enhanced name for database search
+      const searchName = enhancedMedName || cleanMedName;
       
       if(medItem.quantity === null){
         // User only provided medicine name; first verify it exists in active DB
@@ -1699,7 +2122,7 @@ async function enhancedChatHandler(req,res){
           'WHERE (name ILIKE $1 OR brand ILIKE $1) ' +
           'AND is_deleted = FALSE ' +
           'LIMIT 1',
-          ['%' + cleanMedName + '%']
+          ['%' + searchName + '%']
         );
 
         if (rsNameOnly.rows.length === 0) {
@@ -1709,7 +2132,7 @@ async function enhancedChatHandler(req,res){
             'WHERE LOWER(name) = LOWER($1) ' +
             'ORDER BY created_at DESC ' +
             'LIMIT 1',
-            [cleanMedName]
+            [searchName]
           );
 
           stockFlow.language = aiResult.language || stockFlow.language || detectedLang;
@@ -1727,9 +2150,7 @@ async function enhancedChatHandler(req,res){
             sessionsByKey.set(sessionKey,{ sessionState:orderSession, expiresAt:nextDayMidnightTs() });
 
             const reply = 'I found previous stock details for ' + cleanMedName + ':\n' +
-'• Packets: ' + stockFlow.previousConfig.stock_packets + '\n' +
-'• Tablets per packet: ' + stockFlow.previousConfig.tablets_per_packet + '\n' +
-'• Price per packet: ₹' + stockFlow.previousConfig.price_per_packet.toFixed(2) + '\n\n' +
+'• Price: ₹' + stockFlow.previousConfig.price_per_packet.toFixed(2) + '\n\n' +
 'Would you like to add stock using the same configuration? (Y/N)';
 
             return res.json({ reply });
@@ -1754,7 +2175,7 @@ async function enhancedChatHandler(req,res){
         agentMetadata.thinking = '✅ Intent Agent: Medicine intent verified\n✅ Safety Agent: "' + medMatch.name + '" is safe and available\n📊 Stock Agent: Checking stock levels...';
         
         return res.json({ 
-          reply: ' ' + medMatch.name + ' — quantity?',
+          reply: '💊 ' + medMatch.name + ' — How many tablets do you need?',
           intent_verified: agentMetadata.intent_verified,
           safety_checked: agentMetadata.safety_checked,
           stock_checked: agentMetadata.stock_checked,
@@ -1766,7 +2187,7 @@ async function enhancedChatHandler(req,res){
         'SELECT * FROM medicines ' +
         'WHERE (name ILIKE $1 OR brand ILIKE $1) ' +
         'LIMIT 1',
-        ['%' + cleanMedName + '%']
+        ['%' + searchName + '%']
       );
 
       if(rs.rows.length===0){

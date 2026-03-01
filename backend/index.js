@@ -5,10 +5,18 @@ const morgan = require('morgan');
 const fs = require('fs');
 const db = require('./db');
 const { Server } = require('socket.io');
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Initialize Razorpay (Demo Mode)
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy_key',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummy_secret'
+});
 
 app.use(helmet());
 app.use(cors({
@@ -63,15 +71,12 @@ async function initializeDatabase() {
         `);
         console.log('✅ Users table initialized');
 
-        // Add customer_age column to orders table if it doesn't exist
+        // Add role column to users table if it doesn't exist
         try {
-            await db.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_age INTEGER');
-            await db.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE');
-            await db.query('ALTER TABLE medicines ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE');
-            await db.query('ALTER TABLE medicines ADD COLUMN IF NOT EXISTS individual_tablets INTEGER DEFAULT 0');
-            console.log('✅ Database columns updated');
+            await db.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT \'client\'');
+            console.log('✅ Role column added to users table');
         } catch (alterError) {
-            console.log('Columns may already exist:', alterError.message);
+            console.log('Role column may already exist:', alterError.message);
         }
 
     } catch (error) {
@@ -85,11 +90,16 @@ initializeDatabase();
 // Authentication endpoints
 app.post('/api/auth/signup', async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password, role } = req.body;
 
         // Validate input
-        if (!username || !email || !password) {
-            return res.status(400).json({ error: 'All fields are required' });
+        if (!username || !email || !password || !role) {
+            return res.status(400).json({ error: 'All fields including role are required' });
+        }
+
+        // Validate role
+        if (!['admin', 'client'].includes(role)) {
+            return res.status(400).json({ error: 'Invalid role. Must be admin or client' });
         }
 
         // Check if user already exists
@@ -102,21 +112,37 @@ app.post('/api/auth/signup', async (req, res) => {
             return res.status(400).json({ error: 'User with this email or username already exists' });
         }
 
+        // If role is admin, check if admin already exists
+        if (role === 'admin') {
+            const existingAdmin = await db.query('SELECT id FROM users WHERE role = $1', ['admin']);
+            if (existingAdmin.rows.length > 0) {
+                return res.status(400).json({ error: 'Admin account already exists. Only one admin is allowed.' });
+            }
+        }
+
         // Hash password
         const bcrypt = require('bcrypt');
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const saltRounds = 10;
+        const password_hash = await bcrypt.hash(password, saltRounds);
 
         // Create user
         const result = await db.query(
-            'INSERT INTO users (username, email, password_hash, created_at) VALUES ($1, $2, $3, NOW()) RETURNING id, username, email',
-            [username, email, hashedPassword]
+            'INSERT INTO users (username, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, username, email, role',
+            [username, email, password_hash, role]
         );
 
         const user = result.rows[0];
-        res.json({
+
+        res.status(201).json({
             message: 'User created successfully',
-            user: { id: user.id, username: user.username, email: user.email }
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role
+            }
         });
+
     } catch (error) {
         console.error('Signup error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -134,7 +160,7 @@ app.post('/api/auth/login', async (req, res) => {
 
         // Find user
         const result = await db.query(
-            'SELECT id, username, email, password_hash FROM users WHERE email = $1',
+            'SELECT id, username, email, password_hash, role FROM users WHERE email = $1',
             [email]
         );
 
@@ -154,7 +180,12 @@ app.post('/api/auth/login', async (req, res) => {
 
         res.json({
             message: 'Login successful',
-            user: { id: user.id, username: user.username, email: user.email }
+            user: { 
+                id: user.id, 
+                username: user.username, 
+                email: user.email,
+                role: user.role
+            }
         });
     } catch (error) {
         console.error('Login error:', error);
@@ -469,7 +500,9 @@ app.get('/api/medicines/search', async (req, res) => {
         }
 
         const searchQuery = `
-            SELECT id, name, brand, price_per_tablet, description
+            SELECT id, name, brand, price_per_tablet, description, 
+                   stock_packets, tablets_per_packet, individual_tablets,
+                   (stock_packets * tablets_per_packet + individual_tablets) as total_tablets
             FROM medicines 
             WHERE is_deleted = FALSE 
             AND (
@@ -491,8 +524,12 @@ app.get('/api/medicines/search', async (req, res) => {
             id: med.id,
             name: med.name,
             brand: med.brand,
-            price: med.price_per_tablet,
-            description: med.description
+            price_per_tablet: med.price_per_tablet,
+            description: med.description,
+            stock_packets: med.stock_packets,
+            tablets_per_packet: med.tablets_per_packet,
+            individual_tablets: med.individual_tablets,
+            total_tablets: med.total_tablets
         }));
 
         res.json(medicines);
@@ -502,7 +539,130 @@ app.get('/api/medicines/search', async (req, res) => {
     }
 });
 
-// Get single medicine with full pricing from DB
+// Chat Sessions API
+app.get('/api/chat/sessions/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        const query = `
+            SELECT id, title, messages, created_at, updated_at
+            FROM chat_sessions 
+            WHERE user_id = $1 
+            ORDER BY updated_at DESC
+        `;
+        
+        const result = await db.query(query, [userId]);
+        
+        const sessions = result.rows.map(session => ({
+            id: session.id,
+            title: session.title,
+            messages: session.messages,
+            createdAt: session.created_at,
+            updatedAt: session.updated_at
+        }));
+        
+        res.json(sessions);
+    } catch (error) {
+        console.error('Error fetching chat sessions:', error);
+        res.status(500).json({ error: 'Failed to fetch chat sessions' });
+    }
+});
+
+app.post('/api/chat/sessions', async (req, res) => {
+    try {
+        const { id, title, messages, createdAt, updatedAt, userId } = req.body;
+        
+        const query = `
+            INSERT INTO chat_sessions (id, title, messages, created_at, updated_at, user_id)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (id) DO UPDATE SET
+                title = EXCLUDED.title,
+                messages = EXCLUDED.messages,
+                updated_at = EXCLUDED.updated_at
+            RETURNING id
+        `;
+        
+        await db.query(query, [id, title, JSON.stringify(messages), createdAt, updatedAt, userId]);
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error saving chat session:', error);
+        res.status(500).json({ error: 'Failed to save chat session' });
+    }
+});
+
+app.delete('/api/chat/sessions/:sessionId', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        
+        const query = 'DELETE FROM chat_sessions WHERE id = $1';
+        await db.query(query, [sessionId]);
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting chat session:', error);
+        res.status(500).json({ error: 'Failed to delete chat session' });
+    }
+});
+
+// User Orders API
+app.get('/api/orders/user/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        const query = `
+            SELECT o.id, o.total_price, o.status, o.created_at,
+                   COALESCE(
+                       json_agg(
+                           json_build_object(
+                               'name', m.name,
+                               'quantity', oi.quantity,
+                               'price', oi.price_at_time
+                           )
+                       ) FILTER (WHERE oi.id IS NOT NULL), '[]'
+                   ) as items
+            FROM orders o
+            LEFT JOIN order_items oi ON o.id = oi.order_id
+            LEFT JOIN medicines m ON oi.medicine_id = m.id
+            WHERE o.customer_name = (SELECT username FROM users WHERE id = $1 LIMIT 1)
+               OR o.mobile = '1234567890'
+            GROUP BY o.id, o.total_price, o.status, o.created_at
+            ORDER BY o.created_at DESC
+            LIMIT 10
+        `;
+        
+        const result = await db.query(query, [userId]);
+        
+        const orders = result.rows.map(order => ({
+            id: order.id,
+            total_price: order.total_price,
+            status: order.status,
+            created_at: order.created_at,
+            items: order.items || []
+        }));
+        
+        res.json(orders);
+    } catch (error) {
+        console.error('Error fetching user orders:', error);
+        res.status(500).json({ error: 'Failed to fetch user orders' });
+    }
+});
+
+// Create chat_sessions table if not exists
+db.query(`
+    CREATE TABLE IF NOT EXISTS chat_sessions (
+        id VARCHAR(255) PRIMARY KEY,
+        title VARCHAR(500) NOT NULL,
+        messages JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
+    )
+`).then(() => {
+    console.log('✅ Chat sessions table initialized');
+}).catch(error => {
+    console.log('Chat sessions table may already exist:', error.message);
+});
 app.get('/api/medicines/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -895,6 +1055,169 @@ app.get('/api/customers/orders', async (req, res) => {
     }
 });
 
+// Get ALL orders with medicine details (for Previous Orders panel)
+app.get('/api/orders/all', async (req, res) => {
+    try {
+        const { search } = req.query;
+
+        let ordersQuery = `
+            SELECT 
+                o.id as order_id,
+                o.customer_name,
+                o.mobile,
+                o.total_price,
+                o.status,
+                o.created_at
+            FROM orders o
+        `;
+        let params = [];
+
+        if (search && search.trim()) {
+            ordersQuery += ` WHERE o.customer_name ILIKE $1`;
+            params = [`%${search.trim()}%`];
+        }
+
+        ordersQuery += ` ORDER BY o.created_at DESC LIMIT 50`;
+
+        const ordersResult = await db.query(ordersQuery, params);
+
+        // Get order items for each order
+        const orders = await Promise.all(ordersResult.rows.map(async (order) => {
+            const itemsQuery = `
+                SELECT 
+                    oi.quantity,
+                    oi.price_at_time,
+                    m.name as medicine_name,
+                    m.brand
+                FROM order_items oi
+                JOIN medicines m ON oi.medicine_id = m.id
+                WHERE oi.order_id = $1
+            `;
+            const itemsResult = await db.query(itemsQuery, [order.order_id]);
+
+            const items = itemsResult.rows.map(item => ({
+                name: item.medicine_name,
+                brand: item.brand || 'Generic',
+                quantity: parseInt(item.quantity),
+                price: parseFloat(item.price_at_time),
+                total: parseFloat(item.price_at_time) * parseInt(item.quantity)
+            }));
+
+            return {
+                orderId: `ORD-${order.order_id}`,
+                customerName: order.customer_name || 'Guest',
+                mobile: order.mobile,
+                date: order.created_at,
+                items: items,
+                grandTotal: parseFloat(order.total_price) || items.reduce((s, i) => s + i.total, 0),
+                status: order.status || 'completed'
+            };
+        }));
+
+        res.json(orders);
+    } catch (err) {
+        console.error('Error fetching all orders:', err);
+        res.status(500).json({ error: 'Database error', message: err.message });
+    }
+});
+
+// Create Order API with Razorpay & Auto-Expiry
+app.post('/api/orders/create', async (req, res) => {
+    try {
+        const { items, total_price, mobile, customer_name } = req.body;
+        
+        if (!items || items.length === 0) {
+            return res.status(400).json({ error: 'Cart is empty' });
+        }
+
+        // Insert pending order
+        const insertOrderQuery = `
+            INSERT INTO orders (customer_name, mobile, total_price, status, created_at, expiry_time)
+            VALUES ($1, $2, $3, 'pending', NOW(), NOW() + INTERVAL '3 minutes')
+            RETURNING id;
+        `;
+        const orderRes = await db.query(insertOrderQuery, [customer_name || 'Guest', mobile || '1234567890', total_price]);
+        const dbOrderId = orderRes.rows[0].id;
+
+        // Insert order items
+        for (const item of items) {
+            // we omit medicine lookups here for brevity, assume valid item structure
+            // { medicine_id: 1, quantity: 2, price: 10 }
+            if (item.medicine_id) {
+                await db.query(`INSERT INTO order_items (order_id, medicine_id, quantity, price_at_time) VALUES ($1, $2, $3, $4)`, 
+                    [dbOrderId, item.medicine_id, item.quantity, item.price]);
+            }
+        }
+
+        // Create Razorpay payment link (Simulated for this demo)
+        // Instead of a real payment link which requires actual API keys, we generate a fake upi link QR code string
+        const fakePaymentId = 'pay_' + crypto.randomBytes(6).toString('hex');
+        const paymentLinkUrl = `upi://pay?pa=pharmabuddy@razorpay&pn=PharmaBuddy&am=${total_price}&tr=${dbOrderId}&cu=INR`;
+        
+        await db.query(`UPDATE orders SET razorpay_order_id = $1 WHERE id = $2`, [fakePaymentId, dbOrderId]);
+
+        // Tell socket connected clients
+        if (io) {
+            io.emit('order_created', { order_id: dbOrderId, status: 'pending' });
+        }
+
+        res.json({
+            success: true,
+            order_id: dbOrderId,
+            razorpay_order_id: fakePaymentId,
+            payment_link: paymentLinkUrl,
+            expires_in_minutes: 3
+        });
+    } catch (err) {
+        console.error('Error creating order:', err);
+        res.status(500).json({ error: 'Database error', message: err.message });
+    }
+});
+
+// Razorpay Webhook Callback
+app.post('/api/payments/webhook', async (req, res) => {
+    try {
+        const { order_id, payment_id, upi_id, payer_name } = req.body;
+        
+        // Mark as paid
+        await db.query(`
+            UPDATE orders 
+            SET status = 'paid', payment_id = $1, upi_id = $2, customer_name = COALESCE(customer_name, $3)
+            WHERE id = $4 AND status = 'pending'
+        `, [payment_id, upi_id, payer_name, order_id]);
+
+        if (io) {
+            io.emit('order_paid', { order_id, status: 'paid' });
+        }
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Webhook Error:', err);
+        res.status(500).json({ error: 'Webhook processing failed' });
+    }
+});
+
+// Background Job for Order Expiry (Runs every 30 seconds)
+setInterval(async () => {
+    try {
+        const result = await db.query(`
+            UPDATE orders 
+            SET status = 'cancelled'
+            WHERE status = 'pending' AND expiry_time < NOW()
+            RETURNING id;
+        `);
+        
+        if (result.rows.length > 0 && io) {
+            result.rows.forEach(row => {
+                console.log('Order Expired:', row.id);
+                io.emit('order_expired', { order_id: row.id, status: 'cancelled' });
+            });
+        }
+    } catch (err) {
+        console.error('Expiry Job Error:', err);
+    }
+}, 30000);
+
 // AI-Powered Recommendations endpoint
 const analyticsService = require('./services/analyticsService');
 const aiService = require('./services/aiService');
@@ -932,7 +1255,7 @@ app.get('/api/recommendations', async (req, res) => {
 // Enhanced AI Chat endpoint for order processing - COMPLETELY FREE, NO APIs
 const { enhancedChatHandler } = require('./enhanced-chat');
 
-app.post('/chat', async (req, res) => {
+app.post('/api/chat', async (req, res) => {
     console.log('=== CHAT ENDPOINT HIT ===');
     console.log('Request body:', req.body);
     console.log('Request headers:', req.headers);

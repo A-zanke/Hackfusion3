@@ -1,0 +1,74 @@
+/* Role Selection Styles */
+.role-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.role-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.role-option:hover {
+    border-color: #3b82f6;
+    background: #f8fafc;
+}
+
+.role-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #3b82f6;
+}
+
+.role-option input[type="radio"]:checked + .role-label {
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+.role-option:has(input:checked) {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.role-label {
+    font-size: 14px;
+    color: #374151;
+    transition: all 0.3s ease;
+}
+
+.admin-note {
+    margin: 8px 0 0 0;
+    padding: 8px 12px;
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #92400e;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .role-selector {
+        gap: 8px;
+    }
+    
+    .role-option {
+        padding: 12px;
+    }
+    
+    .role-label {
+        font-size: 13px;
+    }
+}

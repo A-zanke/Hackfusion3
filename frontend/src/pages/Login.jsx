@@ -30,8 +30,15 @@ const Login = () => {
             if (response.ok) {
                 // Use AuthContext login function
                 login(data.user);
-                // Redirect to AI chat page after successful login
-                navigate('/chat');
+                
+                // Role-based redirect
+                if (data.user.role === 'admin') {
+                    // Admin goes to dashboard
+                    navigate('/dashboard');
+                } else {
+                    // Client goes to AI chat
+                    navigate('/chat');
+                }
             } else {
                 setError(data.error || 'Login failed');
             }

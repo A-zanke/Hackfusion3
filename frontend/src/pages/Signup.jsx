@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../App.css';
+import '../components/RoleStyles.css';
 
 const Signup = () => {
     const navigate = useNavigate();
@@ -8,6 +9,7 @@ const Signup = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [role, setRole] = useState('client');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -29,7 +31,7 @@ const Signup = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username, email, password }),
+                body: JSON.stringify({ username, email, password, role }),
             });
 
             const data = await response.json();
@@ -122,6 +124,37 @@ const Signup = () => {
                             className="login-input"
                             required
                         />
+                    </div>
+
+                    <div className="input-group">
+                        <label>ACCOUNT TYPE</label>
+                        <div className="role-selector">
+                            <label className="role-option">
+                                <input
+                                    type="radio"
+                                    name="role"
+                                    value="client"
+                                    checked={role === 'client'}
+                                    onChange={(e) => setRole(e.target.value)}
+                                />
+                                <span className="role-label">Client - Access AI Chat</span>
+                            </label>
+                            <label className="role-option">
+                                <input
+                                    type="radio"
+                                    name="role"
+                                    value="admin"
+                                    checked={role === 'admin'}
+                                    onChange={(e) => setRole(e.target.value)}
+                                />
+                                <span className="role-label">Admin - Full Access</span>
+                            </label>
+                        </div>
+                        {role === 'admin' && (
+                            <p className="admin-note">
+                                ⚠️ Only one admin account is allowed for the entire system.
+                            </p>
+                        )}
                     </div>
 
                     <button
